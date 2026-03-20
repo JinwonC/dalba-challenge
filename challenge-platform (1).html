@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>d'Alba Piedmont · GLOW-TO-GOLD Challenge 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    color: #2A1F00;
+    min-height: 100vh;
+    background: linear-gradient(180deg,
+      #F4D991 0%, #F8E8B0 15%, #FDF6E0 32%,
+      #FFFBF0 48%, #FDF5DC 64%, #F9E8A8 80%, #F4D991 100%
+    );
+    background-attachment: fixed;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 52px;
+    background: rgba(255,252,240,0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(180,140,40,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo img { height: 42px; width: auto; display: block; }
+
+  
+  
+
+  /* HERO */
+  .hero { padding: 80px 48px 88px; text-align: center; }
+
+  .hero-eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.22em;
+    text-transform: uppercase; color: #8B6800; margin-bottom: 22px;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 5.2vw, 58px);
+    font-weight: 900; line-height: 1.08; letter-spacing: -0.5px;
+    color: #1C1400; margin-bottom: 14px;
+  }
+
+  .hero-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 400; font-style: italic;
+    color: #7A5500; margin-bottom: 28px; letter-spacing: 0.01em;
+  }
+
+  .hero-tagline {
+    font-size: 14px; font-weight: 300; color: #5A4518;
+    max-width: 560px; margin: 0 auto 28px; line-height: 1.85;
+  }
+  .hero-tagline strong { color: #1C1400; font-weight: 500; }
+
+  .hero-date {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 400; letter-spacing: 0.06em; color: #6B5020;
+    margin-bottom: 30px;
+    background: rgba(255,252,240,0.7); border: 1px solid rgba(140,104,0,0.22);
+    padding: 8px 22px; border-radius: 2px; backdrop-filter: blur(8px);
+  }
+
+  .btn-discord {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 30px; background: #1C1400; color: #F4D991;
+    border: none; border-radius: 3px;
+    font-family: 'Noto Sans', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 24px rgba(28,20,0,0.2); margin-bottom: 32px;
+  }
+  .btn-discord:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(28,20,0,0.28); }
+
+  .hero-hashtag {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #6B5000;
+    background: rgba(244,217,145,0.55); border: 1px solid rgba(140,104,0,0.28);
+    padding: 7px 18px; border-radius: 2px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    max-width: 1080px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .divider-line { flex: 1; height: 1px; background: rgba(140,104,0,0.2); }
+  .divider-text {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #8B6800; font-weight: 600; white-space: nowrap;
+  }
+
+  /* SECTION */
+  .section { max-width: 1080px; margin: 0 auto; padding: 52px 24px; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #8B6800; font-weight: 600; text-align: center; margin-bottom: 10px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600;
+    text-align: center; margin-bottom: 6px; color: #1C1400;
+  }
+
+  /* FORMATS */
+  .formats-wrap {
+    background: rgba(255,252,240,0.55); backdrop-filter: blur(16px);
+    border: 1px solid rgba(140,104,0,0.15); border-radius: 6px;
+    padding: 28px 32px; margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 32px;
+  }
+  .formats-label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8B6800; font-weight: 600; white-space: nowrap; padding-top: 3px;
+  }
+  .formats-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .format-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(244,217,145,0.45); border: 1px solid rgba(140,104,0,0.25);
+    border-radius: 3px; padding: 7px 16px;
+    font-size: 13px; font-weight: 500; color: #3A2800; letter-spacing: 0.02em;
+  }
+
+  /* PARTICIPATE */
+  .participate-wrap {
+    background: rgba(255,252,240,0.65); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px); border-radius: 6px;
+    padding: 44px 48px 48px; border: 1px solid rgba(140,104,0,0.15);
+  }
+
+  .hashtag-notice {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin: 10px auto 10px;
+    font-size: 12px; font-weight: 400; color: #6B5020; letter-spacing: 0.03em;
+  }
+  .hashtag-required {
+    font-weight: 700; font-size: 12px; letter-spacing: 0.08em; color: #6B5000;
+    background: rgba(244,217,145,0.55); border: 1px solid rgba(140,104,0,0.28);
+    padding: 5px 14px; border-radius: 2px;
+  }
+
+  .qualify-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; margin: 14px 0 24px;
+    padding: 12px 24px;
+    background: rgba(244,217,145,0.25); border: 1px solid rgba(140,104,0,0.15); border-radius: 3px;
+  }
+  .qualify-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #4A3810; }
+  .qualify-item strong { font-weight: 600; color: #1C1400; }
+  .qualify-sep { width: 1px; height: 18px; background: rgba(140,104,0,0.2); }
+
+  .participate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .challenge-box {
+    background: rgba(255,252,240,0.7); border: 1px solid rgba(140,104,0,0.15);
+    border-radius: 4px; padding: 28px;
+  }
+  .challenge-box-title {
+    font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700;
+    margin-bottom: 18px; color: #1C1400;
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 14px; border-bottom: 1px solid rgba(140,104,0,0.15);
+  }
+
+  .step-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 13px; }
+  .step-num {
+    min-width: 22px; height: 22px; border-radius: 50%;
+    background: #F4D991; color: #6B5000; font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px; border: 1px solid rgba(140,104,0,0.3);
+  }
+  .step-text { font-size: 13px; color: #4A3810; line-height: 1.65; font-weight: 300; }
+  .step-text strong { font-weight: 500; color: #2A1F00; }
+
+  /* ENTRY BUTTON */
+  .entry-center {
+    text-align: center; margin-top: 28px; padding-top: 24px;
+    border-top: 1px solid rgba(140,104,0,0.15);
+  }
+  .entry-label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #8B7040; font-weight: 500; margin-bottom: 12px;
+  }
+  .btn-entry {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 36px; background: #1C1400; color: #F4D991;
+    border: none; border-radius: 3px;
+    font-family: 'Noto Sans', sans-serif; font-size: 13px; font-weight: 500;
+    letter-spacing: 0.06em; cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 4px 16px rgba(28,20,0,0.18);
+  }
+  .btn-entry:hover { opacity: 0.82; transform: translateY(-1px); }
+
+  /* CARDS */
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+
+  .challenge-card {
+    background: rgba(255,252,240,0.65); backdrop-filter: blur(20px);
+    border: 1px solid rgba(140,104,0,0.15); border-radius: 6px; padding: 28px;
+    transition: transform 0.22s, box-shadow 0.22s;
+  }
+  .challenge-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(140,104,0,0.12); }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .card-icon { font-size: 22px; }
+  .active-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1C1400; color: #F4D991; padding: 4px 11px;
+    border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+  }
+  .active-dot { width: 5px; height: 5px; background: #F4D991; border-radius: 50%; animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .card-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #1C1400; margin-bottom: 5px; }
+  .card-subtitle { font-size: 11px; color: #7A6A40; margin-bottom: 18px; font-weight: 300; letter-spacing: 0.02em; }
+
+  .reward-list { list-style: none; margin-bottom: 22px; }
+  .reward-list li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #2A1F00;
+    padding: 7px 0; border-bottom: 1px solid rgba(140,104,0,0.1); font-weight: 300;
+  }
+  .reward-list li:last-child { border-bottom: none; }
+
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .rank-1 { background: #F4D991; color: #6B5000; border: 1px solid rgba(140,104,0,0.4); }
+  .rank-2 { background: #E8E0D0; color: #5A5248; border: 1px solid rgba(140,120,80,0.3); }
+  .rank-3 { background: #F0C8A0; color: #6B3C10; border: 1px solid rgba(140,80,20,0.3); }
+  .rank-n { background: rgba(244,217,145,0.35); color: #6B5000; border: 1px solid rgba(140,104,0,0.2); font-size: 10px; }
+  .reward-amount { font-weight: 600; color: #1C1400; }
+
+  .btn-leaderboard {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, #F0CB70 0%, #D4A017 60%, #B8860B 100%);
+    color: #1C1400; border: none; border-radius: 3px;
+    font-family: 'Noto Sans', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.08em; cursor: pointer; transition: opacity 0.2s, transform 0.2s;
+  }
+  .btn-leaderboard:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  .no-duplicate-note {
+    text-align: center; font-size: 11px; color: #8B7040;
+    margin-top: 14px; letter-spacing: 0.03em; font-weight: 300; font-style: italic;
+  }
+
+  /* DISQUALIFICATION */
+  .disq-wrap {
+    background: rgba(255,252,240,0.55); backdrop-filter: blur(16px);
+    border: 1px solid rgba(180,80,40,0.15); border-radius: 6px; padding: 32px 36px;
+  }
+  .disq-title {
+    font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600;
+    color: #7A2800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .disq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .disq-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(255,240,235,0.6); border: 1px solid rgba(180,80,40,0.12);
+    border-radius: 3px; padding: 12px 14px; font-size: 12px; color: #4A1800;
+    line-height: 1.55; font-weight: 300;
+  }
+  .disq-num {
+    min-width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(180,80,40,0.15); color: #7A2800;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .disq-item strong { font-weight: 600; color: #7A2800; display: block; margin-bottom: 2px; }
+
+  /* POLICY */
+  .policy-section {
+    background: rgba(255,252,240,0.65); backdrop-filter: blur(20px);
+    border-radius: 6px; padding: 44px 48px; border: 1px solid rgba(140,104,0,0.15);
+  }
+  .policy-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 600; margin-bottom: 5px; color: #1C1400; }
+  .policy-title em { font-style: italic; }
+  .policy-subtitle { font-size: 11px; color: #7A6A40; margin-bottom: 28px; letter-spacing: 0.04em; font-weight: 300; }
+
+  .accordion-item {
+    border: 1px solid rgba(140,104,0,0.14); border-radius: 4px;
+    margin-bottom: 8px; overflow: hidden;
+    background: rgba(255,252,240,0.5); transition: border-color 0.2s, background 0.2s;
+  }
+  .accordion-item.open { border-color: rgba(140,104,0,0.32); background: rgba(255,252,240,0.75); }
+
+  .accordion-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; cursor: pointer; user-select: none;
+  }
+  .acc-check {
+    width: 22px; height: 22px; border-radius: 50%; background: #3DAA5C;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: white; font-size: 11px; font-weight: 700;
+  }
+  .acc-label { flex: 1; }
+  .acc-title { font-weight: 500; font-size: 14px; color: #1C1400; margin-bottom: 1px; }
+  .acc-sub { font-size: 11px; color: #7A6A40; font-weight: 300; }
+  .acc-chevron { color: #9A8A60; font-size: 15px; transition: transform 0.3s; line-height: 1; }
+  .accordion-item.open .acc-chevron { transform: rotate(180deg); }
+
+  .accordion-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.3s;
+    padding: 0 20px; font-size: 13px; color: #5A4518; line-height: 1.85; font-weight: 300;
+  }
+  .accordion-body.open { max-height: 500px; padding: 2px 20px 18px 56px; }
+
+  .acc-note {
+    margin-top: 10px; padding: 10px 14px;
+    background: rgba(244,217,145,0.3); border-left: 2px solid rgba(140,104,0,0.4);
+    border-radius: 0 3px 3px 0; font-size: 12px; color: #5A4518; line-height: 1.7;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 44px 24px 36px;
+    border-top: 1px solid rgba(140,104,0,0.15);
+  }
+  footer h3 {
+    font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600;
+    font-style: italic; color: #7A5500; margin-bottom: 6px;
+  }
+  footer p { font-size: 12px; color: #7A6A40; font-weight: 300; margin-bottom: 3px; }
+  .footer-note { font-size: 11px; color: #9A8A60; font-weight: 300; font-style: italic; margin-top: 4px; }
+
+  @media (max-width: 720px) {
+    nav { padding: 14px 20px; }
+    .hero { padding: 56px 20px 68px; }
+    .participate-wrap, .policy-section, .disq-wrap { padding: 28px 20px; }
+    .participate-grid, .cards-grid, .disq-grid { grid-template-columns: 1fr; }
+    .section { padding: 36px 16px; }
+    .formats-wrap { flex-direction: column; gap: 12px; }
+    .qualify-bar { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="data:image/png;base64,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/BJz5syRe7fFugDBzTffjMzMTLk7z2azQVEUjB8//oSV3EcffUQlJSURy16FE41x48bhlVdeUX7zm9/Qk08+KZf63nbbbRg0aBCuuuqqY4b96quv0pNPPolPP/1Umsji4IS+ffvixRdfjMpRBACMGDGCli1bBqCpgvN6vbKiys/Px89//nOMGTNGHv9UUVFBb7/9NmbNmoUdO3ZIn4UzZ87Enj17MHHiRPmsxOCe3W5H586dceONN6K0tBShUAi1tbXIy8vDgAED4ttgJMNsCL8qKiqorKwswius8O2N793zXnLJJXT11VfT3XffTRMnTqQxY8ZI5/n43hOn1WqlG264QZo94jez2Uw2my3iuB5hKiHMnMvOzqb777+/RWbTpEmTyOl0ksViiTDprFYr6boe4bfb6XSSpmkRZmlGRga9+eabUZtopaWlpOs6paWlka7rsisizMjw45rC84bvXQoLc9jhcJDdbieLxUIPPPAAERFeeOEFaU4Ks9/pdMougdlsluEL3+jiXZlMJrLb7TLfaWlpLcrfunXrIlx9W61WmeaPPvpI3v/QQw9F/N/3Z+/RsGHD6I477qD777+fxo0bJ337OxwOmVfx/1arlW6//XbatGlTTKbxrl27qKioiGw2GzkcDnncU3jXU+QB33c9FEWRz699+/a0ZMkSIiJs376devXqFdEVEO9MeMMNL1f33ntv3M35pAtdXIsWLaK+ffuSqqoRfrjFA8zMzJQFW/ymqiplZ2dTt27dmrlOFmIQD188vPz8/IgCJV5URkYG3XLLLS16oLfffrt8CeFiUhRF9mV1XZe/iZcuCoHT6aT58+dH/fKuvPLKCMGF9znF3+HPSNM0SktLi3APLcYsxGch9Oeffz7i/44WdHjFomlaxDMU34nfHQ5Hi4S+YsUKys/Pj0gPACouLm5278cff0zDhg2LcD199Kkn4RWsyEvXrl1pzJgxVF5eHhexjBo1Sj4T0a8W71SkS+RHjA1de+21zeJeuXIlDRkyRDZY6enp8rke/Z7uvvvuuAs9qab7j1FdXU2LFy/Gq6++iiNHjmDfvn2or6+XJr2u6/D5fOjWrRsGDx6M888/H7/61a+amTXl5eWUmZmJAwcOID09XZ7TJsxZ4XdNmKKKomDgwIEtMo927txJtbW1sNvt0sOs2NcszHSHwyG9h5hMJvh8PtmV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" alt="d'Alba Piedmont" />
+  </div>
+  
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">d'Alba Piedmont · Official Creator Campaign</p>
+  <h1 class="hero-title">GLOW-TO-GOLD<br>with d'Alba</h1>
+  <p class="hero-subtitle">Spring Creator Challenge 2026</p>
+  <p class="hero-tagline">
+    Why choose between perfect skin and a bigger paycheck?<br>
+    Show us your <strong>Instant Glow</strong> or <strong>Cakey Makeup Rescue</strong> — the most radiant content wins.<br>
+    Top creators unlock exclusive access to the <strong>Allthera Double Shot</strong>, launching April 2026.
+  </p>
+  <div class="hero-date">📅 March 20 – March 31, 2026 &nbsp;·&nbsp; Winner Announcement: April 7, 2026</div>
+  <br>
+  <a href="https://discord.gg/BQdk86ZH" target="_blank" class="btn-discord">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+    Join d'Alba Discord · Meet Challenge Mates
+  </a>
+  <div><span class="hero-hashtag">REQUIRED HASHTAG: #dalbaspringglow</span></div>
+</section>
+
+<!-- CONTENT FORMATS -->
+<div class="divider"><div class="divider-line"></div><div class="divider-text">Recommended Content Formats</div><div class="divider-line"></div></div>
+<div class="section" style="padding-top: 32px; padding-bottom: 0;">
+  <div class="formats-wrap">
+    <span class="formats-label">Viral-Ready<br>Formats</span>
+    <div class="formats-pills">
+      <span class="format-pill">✨ &nbsp;1. Instant Glow Content</span>
+      <span class="format-pill">💄 &nbsp;2. Cakey Makeup Rescue Content</span>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO PARTICIPATE -->
+<div class="divider" style="margin-top: 24px;"><div class="divider-line"></div><div class="divider-text">How to Participate</div><div class="divider-line"></div></div>
+
+<div class="section">
+  <div class="participate-wrap">
+    <div class="section-label">Challenge Guide</div>
+    <h2 class="section-title">How to Participate</h2>
+
+    <div class="hashtag-notice">
+      <span>Required hashtag for both challenges:</span>
+      <span class="hashtag-required">#dalbaspringglow</span>
+    </div>
+
+    <!-- Qualification bar -->
+    <div class="qualify-bar">
+      <div class="qualify-item">📦 <span>Tag <strong>White Truffle First Spray Serum 3.38 fl oz</strong> in all content</span></div>
+      <div class="qualify-sep"></div>
+      <div class="qualify-item">🎥 <span>Upload at least <strong>5 shoppable videos</strong> during the challenge period</span></div>
+      <div class="qualify-sep"></div>
+      <div class="qualify-item">💰 <span>Drive at least <strong>$500 GMV</strong> (excl. refunds &amp; cancellations)</span></div>
+    </div>
+
+    <div class="participate-grid">
+      <!-- GMV-Based -->
+      <div class="challenge-box">
+        <div class="challenge-box-title">🏆 &nbsp;GMV-Based</div>
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Use <strong>#dalbaspringglow</strong> in every post</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">Tag <strong>White Truffle First Spray Serum 3.38 fl oz</strong> — only tagged posts count</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Upload at least <strong>5 shoppable videos</strong> &amp; drive at least <strong>$500 GMV</strong></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">Ranked by <strong>total GMV</strong> generated during campaign period — top 5 win</div>
+        </div>
+      </div>
+
+      <!-- Post Quantity -->
+      <div class="challenge-box">
+        <div class="challenge-box-title">🏆 &nbsp;Post Quantity</div>
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Use <strong>#dalbaspringglow</strong> in every post</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">Tag <strong>White Truffle First Spray Serum 3.38 fl oz</strong> — only tagged posts count</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Upload at least <strong>5 shoppable videos</strong> &amp; drive at least <strong>$500 GMV</strong></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">Ranked by <strong>total number of shoppable videos</strong> posted — top 5 win</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shared entry button -->
+    <div class="entry-center">
+      <div class="entry-label">Submit your entry — applies to both challenges</div>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLScDEf6LmL0l37YFyuCW9TRJSJ-y6-anCYHIKfo7aqOOs241kQ/viewform" target="_blank" class="btn-entry">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Click for Entry
+      </a>
+    </div>
+  </div>
+
+  <!-- REWARD CARDS -->
+  <div class="cards-grid">
+    <div class="challenge-card">
+      <div class="card-header">
+        <div class="card-icon">🏆</div>
+        <div class="active-badge"><div class="active-dot"></div>&nbsp;ACTIVE</div>
+      </div>
+      <div class="card-title">GMV-Based</div>
+      <div class="card-subtitle">Ranked by net GMV generated · Top 5 win</div>
+      <ul class="reward-list">
+        <li><span class="rank-badge rank-1">1</span><span><span class="reward-amount">,000</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-2">2</span><span><span class="reward-amount">00</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-3">3</span><span><span class="reward-amount">00</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-n">4</span><span>Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-n">5</span><span>Allthera Double Shot</span></li>
+      </ul>
+      <button class="btn-leaderboard" onclick="openModal()">View Leaderboard</button>
+    </div>
+
+    <div class="challenge-card">
+      <div class="card-header">
+        <div class="card-icon">🏆</div>
+        <div class="active-badge"><div class="active-dot"></div>&nbsp;ACTIVE</div>
+      </div>
+      <div class="card-title">Post Quantity</div>
+      <div class="card-subtitle">Ranked by number of shoppable videos · Top 5 win</div>
+      <ul class="reward-list">
+        <li><span class="rank-badge rank-1">1</span><span><span class="reward-amount">,000</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-2">2</span><span><span class="reward-amount">00</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-3">3</span><span><span class="reward-amount">00</span> + Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-n">4</span><span>Allthera Double Shot</span></li>
+        <li><span class="rank-badge rank-n">5</span><span>Allthera Double Shot</span></li>
+      </ul>
+      <button class="btn-leaderboard" onclick="openModal()">View Leaderboard</button>
+    </div>
+  </div>
+  <p class="no-duplicate-note">⚠️ If ranked Top 5 in both challenges, only the higher-ranking reward applies — the other passes to the next eligible creator.</p>
+</div>
+
+<!-- DISQUALIFICATION -->
+<div class="divider"><div class="divider-line"></div><div class="divider-text">Disqualification Criteria</div><div class="divider-line"></div></div>
+<div class="section" style="padding-top: 32px; padding-bottom: 40px;">
+  <div class="disq-wrap">
+    <div class="disq-title">⚠️ &nbsp;The Following Content Will Be Disqualified</div>
+    <div class="disq-grid">
+      <div class="disq-item">
+        <div class="disq-num">1</div>
+        <div><strong>AI-Generated Content</strong>Visuals or voice created by AI without clear human involvement</div>
+      </div>
+      <div class="disq-item">
+        <div class="disq-num">2</div>
+        <div><strong>Product Not Clearly Shown</strong>The selected product is not clearly displayed, used, or demonstrated</div>
+      </div>
+      <div class="disq-item">
+        <div class="disq-num">3</div>
+        <div><strong>Faceless Content</strong>The creator does not appear on camera or speak in the video</div>
+      </div>
+      <div class="disq-item">
+        <div class="disq-num">4</div>
+        <div><strong>Spam / Misinformation</strong>Content that contradicts accurate details about d'Alba Piedmont products</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMPAIGN POLICY -->
+<div class="divider"><div class="divider-line"></div><div class="divider-text">Campaign Policy</div><div class="divider-line"></div></div>
+
+<div class="section" style="padding-top: 40px;">
+  <div class="policy-section">
+    <div class="policy-title"><em>d'Alba Piedmont</em> TikTok Shop / Affiliate Challenge Policy</div>
+    <div class="policy-subtitle">March 20 – March 31, 2026 &nbsp;·&nbsp; Official Campaign Terms &amp; Guidelines</div>
+
+    <div class="accordion-item open" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Campaign Overview</div><div class="acc-sub">(March 20 – March 31, 2026)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body open">
+        The GLOW-TO-GOLD with d'Alba Spring Creator Challenge runs March 20–31, 2026. Creators compete across two independent categories — GMV-Based (ranked by net sales GMV) and Post Quantity (ranked by number of qualifying shoppable videos). Both categories share the same eligibility requirements. Winner announcement: April 7, 2026.
+        <div class="acc-note">Challenge Product: White Truffle First Spray Serum 3.38 fl oz · Required hashtag: #dalbaspringglow</div>
+      </div>
+    </div>
+
+    <div class="accordion-item" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Eligibility Requirements</div><div class="acc-sub">(who can participate)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body">
+        Open to all creators enrolled in TikTok Shop Affiliate program with an active TikTok account. Must be 18 years or older. Employees and contractors of d'Alba Piedmont are not eligible.
+        <div class="acc-note">To qualify for ranking: (1) Upload at least 5 shoppable videos tagging White Truffle First Spray Serum 3.38 fl oz during the campaign period. (2) Achieve at least $500 GMV (excluding refunds and cancellations) from the selected product. Only videos posted during the campaign period with correct product tagging will count.</div>
+      </div>
+    </div>
+
+    <div class="accordion-item" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Campaign Rules</div><div class="acc-sub">(important guidelines to follow)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body">
+        All content must authentically feature White Truffle First Spray Serum 3.38 fl oz and be tagged correctly as a shoppable video. Hashtag #dalbaspringglow is required in every post. Content must comply with TikTok Community Guidelines. Purchased views, engagement pods, or fraudulent GMV will result in immediate disqualification.
+        <div class="acc-note">⚠️ Duplicate Reward Policy: If a creator ranks within the Top 5 in both challenges, they will receive only one set of rewards from the higher-ranking challenge. The other reward passes to the next eligible creator on that leaderboard.</div>
+      </div>
+    </div>
+
+    <div class="accordion-item" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Rewards &amp; Payouts</div><div class="acc-sub">(how you get paid)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body">
+        Prize will be paid to Talent net thirty (30) days after Talent's bank info has been received. Cash prize winners will be required to fill out a secure Payment Info Form (including bank details) for accounting purposes before the payout.
+        <div class="acc-note">Prize winners are responsible for all applicable taxes, which will be withheld at the source. The Allthera Double Shot is a premium skincare device launching in April 2026 — fulfillment will follow the product launch schedule.</div>
+      </div>
+    </div>
+
+    <div class="accordion-item" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Content Guidelines</div><div class="acc-sub">(creating compliant content)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body">
+        Videos must be shoppable, clearly feature the creator on camera, and demonstrate d'Alba White Truffle First Spray Serum. Recommended formats: Instant Glow Content or Cakey Makeup Rescue Content. Clearly disclose affiliate relationship with #ad or #sponsored alongside #dalbaspringglow. Minimum video length: 15 seconds. No misleading claims about product results.
+      </div>
+    </div>
+
+    <div class="accordion-item" onclick="toggleAcc(this)">
+      <div class="accordion-header">
+        <div class="acc-check">✓</div>
+        <div class="acc-label"><div class="acc-title">Important Terms</div><div class="acc-sub">(key policy details)</div></div>
+        <div class="acc-chevron">⌄</div>
+      </div>
+      <div class="accordion-body">
+        d'Alba Piedmont reserves the right to modify or cancel the campaign at any time. Participation constitutes acceptance of all terms. d'Alba Piedmont may use submitted content for marketing purposes with creator credit. Campaign details and full guidelines are available in the official Discord channel.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <h3>GLOW-TO-GOLD with d'Alba · #dalbaspringglow</h3>
+  <p>Campaign: March 20 – March 31, 2026 &nbsp;·&nbsp; Winner Announcement: April 7, 2026</p>
+  <p class="footer-note">Prize paid net 30 days after bank info received · Full guidelines available in Discord · Campaign details and full guidelines can be found in our Discord channel.</p>
+</footer>
+
+
+<!-- POPUP MODAL -->
+<div id="leaderboard-modal" style="display:none; position:fixed; inset:0; background:rgba(28,20,0,0.45); z-index:999; align-items:center; justify-content:center;">
+  <div style="background:#FFFBF0; border:1px solid rgba(140,104,0,0.25); border-radius:8px; padding:40px 48px; text-align:center; max-width:360px; width:90%; box-shadow:0 16px 48px rgba(28,20,0,0.2);">
+    <div style="font-size:28px; margin-bottom:16px;">🏆</div>
+    <div style="font-family:'Playfair Display', serif; font-size:18px; font-weight:600; color:#1C1400; margin-bottom:10px;">Leaderboard</div>
+    <div style="font-size:13px; color:#7A6A40; font-weight:300; line-height:1.7; margin-bottom:24px;">Will be updated soon.<br>Check back during the campaign period.</div>
+    <button onclick="closeModal()" style="padding:10px 28px; background:#1C1400; color:#F4D991; border:none; border-radius:3px; font-family:'Noto Sans', sans-serif; font-size:12px; font-weight:500; letter-spacing:0.06em; cursor:pointer;">Close</button>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    var m = document.getElementById('leaderboard-modal');
+    m.style.display = 'flex';
+  }
+  function closeModal() {
+    document.getElementById('leaderboard-modal').style.display = 'none';
+  }
+  document.getElementById('leaderboard-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  function toggleAcc(item) {
+    const body = item.querySelector('.accordion-body');
+    const isOpen = item.classList.contains('open');
+    item.classList.toggle('open', !isOpen);
+    body.classList.toggle('open', !isOpen);
+  }
+</script>
+</body>
+</html>
