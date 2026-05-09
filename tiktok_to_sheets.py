@@ -28,7 +28,7 @@ VIDEO_SHEET_NAME = "영상성과데이터"
 
 # Google Sheets 스프레드시트 ID (URL에서 복사)
 # 예: https://docs.google.com/spreadsheets/d/xxxxxx/edit → "xxxxxx"
-SPREADSHEET_ID = "여기에_스프레드시트_ID_입력"
+SPREADSHEET_ID = "1_qkd6LZ1wFoihhJSuYdabQ4iRbx-jsFYVxeGIoEb-_g"
 
 # 서비스 계정 JSON 키 파일 경로
 SERVICE_ACCOUNT_FILE = "service_account.json"
