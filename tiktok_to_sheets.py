@@ -184,6 +184,8 @@ def run_sync(from_date: datetime, to_date: datetime):
             post_time_str = video.get("video_post_time") or ""
             try:
                 post_date = datetime.fromisoformat(post_time_str.replace("Z", "+00:00")) if post_time_str else datetime(1970, 1, 1, tzinfo=timezone.utc)
+                if post_date.tzinfo is None:
+                    post_date = post_date.replace(tzinfo=timezone.utc)
             except ValueError:
                 post_date = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
