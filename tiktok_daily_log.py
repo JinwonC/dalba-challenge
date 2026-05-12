@@ -1,10 +1,11 @@
 """
 TikTok Shop 상품별 일별 성과 로그 → Google Sheets (Python)
-날짜를 직접 입력하면 해당 날짜 데이터를 가져옵니다.
+날짜 범위를 입력하면 각 날짜별로 따로 수집해서 저장합니다.
 """
 
 import hashlib
 import hmac
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode, quote
@@ -116,7 +117,7 @@ def get_sheet():
 # 메인 동기화 로직
 # ─────────────────────────────────────────
 
-def sync_daily_log(target_date_str: str):
+def sync_daily_log(target_date_str: str, sheet=None):
     """
     target_date_str: "2026-05-01" 형식
     """
@@ -124,10 +125,10 @@ def sync_daily_log(target_date_str: str):
     next_date = target_date + timedelta(days=1)
     end_date_str = next_date.strftime("%Y-%m-%d")
 
-    print(f"\n=== 상품별 일별 성과 수집 시작 ===")
-    print(f"대상 날짜: {target_date_str}")
+    print(f"\n[{target_date_str}] 수집 중...")
 
-    sheet = get_sheet()
+    if sheet is None:
+        sheet = get_sheet()
 
     page_token = None
     page_count = 0
@@ -190,15 +191,36 @@ def sync_daily_log(target_date_str: str):
 
 
 # ─────────────────────────────────────────
+# 날짜 범위 파싱
+# ─────────────────────────────────────────
+
+def parse_date_range(user_input: str):
+    pattern = r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})\s*-\s*(\d{4})[.-](\d{1,2})[.-](\d{1,2})"
+    match = re.search(pattern, user_input.strip())
+    if not match:
+        raise ValueError("날짜 형식이 잘못되었습니다. 예: 2026.05.01 - 2026.05.05")
+    y1, m1, d1, y2, m2, d2 = map(int, match.groups())
+    from_dt = datetime(y1, m1, d1)
+    to_dt = datetime(y2, m2, d2)
+    if to_dt < from_dt:
+        raise ValueError("종료일은 시작일보다 같거나 뒤여야 합니다.")
+    return from_dt, to_dt
+
+
+# ─────────────────────────────────────────
 # 실행
 # ─────────────────────────────────────────
 
 if __name__ == "__main__":
-    date_input = input("날짜 입력 (예: 2026-05-01): ").strip()
+    date_input = input("날짜 범위 입력 (예: 2026.05.01 - 2026.05.05): ").strip()
     try:
-        datetime.strptime(date_input, "%Y-%m-%d")
-    except ValueError:
-        print("날짜 형식이 잘못됐습니다. yyyy-MM-dd 형식으로 입력해주세요.")
+        from_dt, to_dt = parse_date_range(date_input)
+    except ValueError as e:
+        print(e)
         exit(1)
 
-    sync_daily_log(date_input)
+    sheet = get_sheet()
+    current = from_dt
+    while current <= to_dt:
+        sync_daily_log(current.strftime("%Y-%m-%d"), sheet=sheet)
+        current += timedelta(days=1)
