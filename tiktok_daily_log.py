@@ -13,13 +13,15 @@ from urllib.parse import urlencode, quote
 import requests
 from google.oauth2.service_account import Credentials
 import gspread
+from token_manager import get_valid_token, handle_token_expired
 
 # ─────────────────────────────────────────
 # 설정값
 # ─────────────────────────────────────────
 APP_KEY = "6jd7l2nu36rd4"
 APP_SECRET = "9ab6f9c3467d53c72ca6e346c18b8071338f0ce4"
-ACCESS_TOKEN = "TTP_mn2IxwAAAAAKxe5s-tyxQjFx-BLmHCzEUHx_N8KtbJs8REguA-PlojAyV0wGbdEfcH65GTeVkz7R1pOu5g44xImqf4SrMwS1lO9DYpNMbWgm0cWkq23XF2YLKNYP0Q9AWsQoqwJr7vXYF-ZqwGImOOFyM8PZAxutDVhpkZrj-VwpotDYlw_kig"
+ACCESS_TOKEN = "TTP_8qmwDAAAAAAKxe5s-tyxQjFx-BLmHCzEUHx_N8KtbJs8REguA-PlojAyV0wGbdEfcH65GTeVkz7R1pOu5g44xImqf4SrMwS1YxCDFaFiR71wCyyvCuiX9V4xVHdkwwVZjC2fEb9DckyVqVjeUiW-H2PBtsmHPpwLM6krtq-pI3-bR3oq5XS_LA"
+REFRESH_TOKEN = "TTP_77fQXQAAAACRYHgjQ_4vEa-Xhe5ikMt0yvs0Zs2i5flXWHMzwGflyAsL_dJ53tHERRwYkVRh9AI"
 SHOP_CIPHER = "TTP_uE19hAAAAADx5Flb4Y_fjmWFiQfOEyTT"
 SHEET_NAME = "상품별_일별_로그"
 
@@ -77,10 +79,18 @@ def fetch_video_data(start_date_str: str, end_date_str: str, page_token: str | N
 
     for attempt in range(1, 4):
         try:
+            current_token = get_valid_token(ACCESS_TOKEN, REFRESH_TOKEN)
+            headers["x-tts-access-token"] = current_token
             resp = requests.get(url, headers=headers, timeout=30)
             data = resp.json()
             if data.get("code") == 0:
                 return data
+            if data.get("code") == 105002:
+                print("  [토큰 만료] 자동 갱신 시도...")
+                new_token = handle_token_expired(REFRESH_TOKEN)
+                if new_token:
+                    headers["x-tts-access-token"] = new_token
+                    continue
             print(f"  [경고] API code={data.get('code')}, msg={data.get('message')} (시도 {attempt}/3)")
         except Exception as e:
             print(f"  [오류] {e} (시도 {attempt}/3)")

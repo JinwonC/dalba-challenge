@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from google.oauth2.service_account import Credentials
 import gspread
+from token_manager import get_valid_token, handle_token_expired
 
 # =========================
 # 1. 기본 설정
@@ -15,7 +16,8 @@ import gspread
 
 APP_KEY = "6jd7l2nu36rd4"
 APP_SECRET = "9ab6f9c3467d53c72ca6e346c18b8071338f0ce4"
-ACCESS_TOKEN = "TTP_mn2IxwAAAAAKxe5s-tyxQjFx-BLmHCzEUHx_N8KtbJs8REguA-PlojAyV0wGbdEfcH65GTeVkz7R1pOu5g44xImqf4SrMwS1lO9DYpNMbWgm0cWkq23XF2YLKNYP0Q9AWsQoqwJr7vXYF-ZqwGImOOFyM8PZAxutDVhpkZrj-VwpotDYlw_kig"
+ACCESS_TOKEN = "TTP_8qmwDAAAAAAKxe5s-tyxQjFx-BLmHCzEUHx_N8KtbJs8REguA-PlojAyV0wGbdEfcH65GTeVkz7R1pOu5g44xImqf4SrMwS1YxCDFaFiR71wCyyvCuiX9V4xVHdkwwVZjC2fEb9DckyVqVjeUiW-H2PBtsmHPpwLM6krtq-pI3-bR3oq5XS_LA"
+REFRESH_TOKEN = "TTP_77fQXQAAAACRYHgjQ_4vEa-Xhe5ikMt0yvs0Zs2i5flXWHMzwGflyAsL_dJ53tHERRwYkVRh9AI"
 SHOP_CIPHER = "TTP_uE19hAAAAADx5Flb4Y_fjmWFiQfOEyTT"
 
 SPREADSHEET_ID = "1wGM9UFdFMtXZtm2TQUsuUsQQZkREYBB4Q8okuIqC3UU"
@@ -132,6 +134,7 @@ def fetch_orders_by_date_range(from_dt: datetime, to_dt: datetime, page_token: s
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
+            headers["x-tts-access-token"] = get_valid_token(ACCESS_TOKEN, REFRESH_TOKEN)
             response = requests.post(url, params=query_params, headers=headers, data=body, timeout=60)
             try:
                 result = response.json()
@@ -139,6 +142,12 @@ def fetch_orders_by_date_range(from_dt: datetime, to_dt: datetime, page_token: s
                 raise RuntimeError(f"JSON 파싱 실패: {response.text[:500]}")
             if result.get("code") == 0:
                 return result
+            if result.get("code") == 105002:
+                print("  [토큰 만료] 자동 갱신 시도...")
+                new_token = handle_token_expired(REFRESH_TOKEN)
+                if new_token:
+                    headers["x-tts-access-token"] = new_token
+                    continue
             last_error = result
             print(f"[재시도 {attempt}/{MAX_RETRIES}] API 에러:", result.get("message"), result.get("code"))
             time.sleep(2 * attempt)
