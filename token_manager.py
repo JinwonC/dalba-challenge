@@ -13,7 +13,8 @@ import requests
 APP_KEY = "6jd7l2nu36rd4"
 APP_SECRET = "9ab6f9c3467d53c72ca6e346c18b8071338f0ce4"
 
-TOKEN_FILE = "tokens.json"
+# 항상 스크립트 파일과 같은 폴더에 저장
+TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tokens.json")
 
 
 def save_tokens(access_token: str, refresh_token: str):
