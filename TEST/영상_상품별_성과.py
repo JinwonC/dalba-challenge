@@ -69,12 +69,15 @@ def run(date_str: str):
             break
         data = result.get("data") or {}
         videos = data.get("videos") or []
+        has_sales = False
         for v in videos:
             vid = v.get("id") or v.get("video_id") or ""
-            if vid:
+            if vid and int(v.get("sku_orders") or 0) >= 1:
                 video_ids.append(vid)
+                has_sales = True
+        # sku_orders가 0인 영상만 남은 페이지는 더 볼 필요 없음 (gmv DESC 정렬)
         next_token = data.get("next_page_token")
-        if not next_token or next_token == page_token:
+        if not next_token or next_token == page_token or not has_sales:
             break
         page_token = next_token
 
