@@ -22,6 +22,7 @@ echo 11. [TEST] 라이브 분당 성과
 echo 12. [TEST] 라이브 상품별 성과
 echo 13. [TEST] 영상 상품별 성과
 echo 14. [진단] API 응답 구조 확인 (수정용)
+echo 15. [TEST] 상품별 성과 상세
 echo  0. [전체] TEST 스크립트 전부 한번에 실행
 echo.
 set /p choice="번호 입력: "
@@ -40,6 +41,7 @@ if "%choice%"=="11" cd TEST && python 라이브_분당_성과.py
 if "%choice%"=="12" cd TEST && python 라이브_상품별_성과.py
 if "%choice%"=="13" cd TEST && python 영상_상품별_성과.py
 if "%choice%"=="14" cd TEST && python _진단.py && git config user.email "jinwon@dalba.com" && git config user.name "JinwonC" && git add _진단_결과.json && git commit -m "진단 결과" && git push
+if "%choice%"=="15" cd TEST && python 상품별_성과_상세.py
 if "%choice%"=="0"  cd TEST && python _전체실행.py
 
 echo.

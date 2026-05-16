@@ -85,10 +85,17 @@ results["라이브_전체_요약"] = call_get("/analytics/202509/shop_lives/over
 # live_id 추출 (분당/상품별 성과에 필요)
 live_id = None
 lives_data = (results["라이브_성과"].get("data") or {})
-lives = lives_data.get("lives") or lives_data.get("list") or []
+lives = lives_data.get("live_stream_sessions") or lives_data.get("lives") or lives_data.get("list") or []
 if lives:
-    live_id = lives[0].get("live_id") or lives[0].get("id")
+    live_id = lives[0].get("id") or lives[0].get("live_id")
     print(f"  → live_id: {live_id}")
+
+# 상품 ID 추출 (상품별 성과 상세에 필요)
+product_id = None
+prods = (results["상품별_성과"].get("data") or {}).get("products") or []
+if prods:
+    product_id = prods[0].get("id")
+    print(f"  → product_id: {product_id}")
 
 # video_id 추출 (영상 상품별 성과에 필요)
 video_id = None
@@ -135,6 +142,18 @@ if video_id:
 else:
     results["영상_상품별_성과"] = {"skipped": "영상 없음"}
     print("  [8/8] 영상_상품별_성과 - 스킵 (영상 없음)")
+
+# 9. 상품별 성과 상세
+if product_id:
+    print(f"  [신규] 상품별_성과_상세 ({product_id})...")
+    path = f"/analytics/202509/shop_products/{product_id}/performance"
+    results["상품별_성과_상세"] = call_get(path, {
+        "start_date_ge": date_str, "end_date_lt": next_day,
+        "granularity": "ALL", "currency": "USD"
+    })
+else:
+    results["상품별_성과_상세"] = {"skipped": "상품 없음"}
+    print("  [신규] 상품별_성과_상세 - 스킵 (상품 없음)")
 
 # 결과 저장
 out_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_진단_결과.json")
