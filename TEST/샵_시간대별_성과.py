@@ -8,7 +8,7 @@ import time
 
 SHEET_NAME = "샵_시간대별_성과"
 
-HEADERS = ["날짜", "시간(0~23)", "페이지뷰", "방문자수", "상품클릭수", "주문수", "GMV", "통화"]
+HEADERS = ["날짜", "시간(0~23)", "방문자수", "구매고객수", "판매수량", "GMV", "통화"]
 
 def fetch(date_str: str):
     path = f"/analytics/202510/shop/performance/{date_str}/performance_per_hour"
@@ -44,21 +44,20 @@ def run(date_str: str):
         return
 
     data = result.get("data") or {}
-    items = data.get("hourly_performances") or data.get("list") or []
+    performance = data.get("performance") or {}
+    items = performance.get("intervals") or []
 
     rows = []
     for item in items:
-        metrics = item.get("metrics") or item
-        gmv = metrics.get("gmv") or {}
+        gmv = item.get("gmv") or {}
         rows.append([
             date_str,
-            item.get("hour") or item.get("time") or "",
-            metrics.get("page_views") or metrics.get("pv") or "",
-            metrics.get("unique_visitors") or metrics.get("uv") or "",
-            metrics.get("product_clicks") or "",
-            metrics.get("order_count") or metrics.get("orders") or "",
-            gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-            gmv.get("currency") if isinstance(gmv, dict) else "USD",
+            item.get("index", ""),
+            item.get("visitors") or "",
+            item.get("customers") or "",
+            item.get("items_sold") or "",
+            gmv.get("amount") or "",
+            gmv.get("currency") or "USD",
         ])
 
     write_to_sheet(sheet, HEADERS, rows)
