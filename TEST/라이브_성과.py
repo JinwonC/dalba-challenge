@@ -7,9 +7,10 @@ PATH = "/analytics/202509/shop_lives/performance"
 
 HEADERS = [
     "날짜", "라이브ID", "계정", "시작시간(unix)", "종료시간(unix)",
-    "GMV", "24h GMV", "통화", "SKU주문수", "판매수량",
-    "구매고객수", "판매상품종류수", "평균단가", "주문전환율",
-    "시청자수", "조회수", "좋아요", "댓글", "공유", "신규팔로워", "상품클릭수"
+    "GMV", "24h GMV", "통화", "SKU주문수", "생성SKU주문수", "판매수량",
+    "구매고객수", "판매상품종류수", "추가상품수", "평균단가", "주문전환율",
+    "시청자수", "조회수", "평균시청시간(초)", "좋아요", "댓글", "공유",
+    "신규팔로워", "상품클릭수", "상품노출수", "CTR"
 ]
 
 def run(date_str: str):
@@ -54,18 +55,23 @@ def run(date_str: str):
                 gmv_24h.get("amount") or "",
                 gmv.get("currency") or "USD",
                 sales.get("sku_orders") or "",
+                sales.get("created_sku_orders") or "",
                 sales.get("items_sold") or "",
                 sales.get("customers") or "",
                 sales.get("different_products_sold") or "",
+                sales.get("products_added") or "",
                 avg_price.get("amount") or "",
                 sales.get("click_to_order_rate") or "",
                 inter.get("viewers") or "",
                 inter.get("views") or "",
+                inter.get("avg_viewing_duration") or "",
                 inter.get("likes") or "",
                 inter.get("comments") or "",
                 inter.get("shares") or "",
                 inter.get("new_followers") or "",
                 inter.get("product_clicks") or "",
+                inter.get("product_impressions") or "",
+                inter.get("click_through_rate") or "",
             ])
 
         next_token = data.get("next_page_token")
