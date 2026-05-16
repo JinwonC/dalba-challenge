@@ -1,0 +1,343 @@
+{
+  "상품별_성과": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "next_page_token": "cGFnZV9udW1iZXI9MQ==",
+      "products": [
+        {
+          "id": "1732030444618027740",
+          "overall_performance": {
+            "gmv": {
+              "amount": "2987.27",
+              "currency": "USD"
+            },
+            "items_sold": 154,
+            "orders": 151
+          }
+        },
+        {
+          "id": "1732268708636299996",
+          "overall_performance": {
+            "gmv": {
+              "amount": "1488.95",
+              "currency": "USD"
+            },
+            "items_sold": 24,
+            "orders": 24
+          }
+        },
+        {
+          "id": "1732389843953357532",
+          "overall_performance": {
+            "gmv": {
+              "amount": "1328.02",
+              "currency": "USD"
+            },
+            "items_sold": 21,
+            "orders": 21
+          }
+        }
+      ],
+      "total_count": 92
+    },
+    "message": "Success",
+    "request_id": "202605161602090561A1E258406A3C1D29"
+  },
+  "SKU별_성과": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "next_page_token": "cGFnZV9udW1iZXI9MQ==",
+      "skus": [
+        {
+          "gmv": {
+            "amount": "1488.95",
+            "currency": "USD"
+          },
+          "id": 1732268715501851356,
+          "product_id": 1732268708636299996,
+          "sku_orders": 24,
+          "units_sold": 24
+        },
+        {
+          "gmv": {
+            "amount": "1328.02",
+            "currency": "USD"
+          },
+          "id": 1732389843406983900,
+          "product_id": 1732389843953357532,
+          "sku_orders": 21,
+          "units_sold": 21
+        },
+        {
+          "gmv": {
+            "amount": "1154.65",
+            "currency": "USD"
+          },
+          "id": 1732030457673847516,
+          "product_id": 1732030444618027740,
+          "sku_orders": 68,
+          "units_sold": 70
+        }
+      ],
+      "total_count": 42
+    },
+    "message": "Success",
+    "request_id": "202605161602105CB7F20BC29A703C7A69"
+  },
+  "영상_전체_요약": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "performance": {
+        "intervals": [
+          {
+            "avg_customers": 219,
+            "click_through_rate": "0.0402",
+            "end_date": "2026-05-15",
+            "gmv": {
+              "amount": "5601.26",
+              "currency": "USD"
+            },
+            "product_clicks": 8472,
+            "product_impressions": 210651,
+            "sku_orders": 225,
+            "start_date": "2026-05-14"
+          }
+        ]
+      }
+    },
+    "message": "Success",
+    "request_id": "202605161602113E5906FFFF7715365BC5"
+  },
+  "라이브_성과": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-14",
+      "live_stream_sessions": [
+        {
+          "end_time": "1778807548",
+          "id": "7639853850979011358",
+          "sales_performance": {
+            "24h_live_gmv": {
+              "amount": "2414.01",
+              "currency": "USD"
+            },
+            "avg_price": {
+              "amount": "31.81",
+              "currency": "USD"
+            },
+            "click_to_order_rate": "3.98%",
+            "created_sku_orders": 79,
+            "customers": 43,
+            "different_products_sold": 18,
+            "gmv": {
+              "amount": "2449.09",
+              "currency": "USD"
+            },
+            "items_sold": 77,
+            "products_added": 26,
+            "sku_orders": 77
+          },
+          "start_time": "1778792199",
+          "username": "59andflawless"
+        },
+        {
+          "end_time": "1778786405",
+          "id": "7639782471961185037",
+          "interaction_performance": {
+            "avg_viewing_duration": "89",
+            "click_through_rate": "4.68%",
+            "comments": 331,
+            "likes": 16658,
+            "new_followers": 23,
+            "product_clicks": 688,
+            "product_impressions": 14687,
+            "shares": 82,
+            "viewers": 2071,
+            "views": 3033
+          },
+          "sales_performance": {
+            "24h_live_gmv": {
+              "amount": "1271.62",
+              "currency": "USD"
+            },
+            "avg_price": {
+              "amount": "26.62",
+              "currency": "USD"
+            },
+            "click_to_order_rate": "5.96%",
+            "created_sku_orders": 41,
+            "customers": 26,
+            "different_products_sold": 12,
+            "gmv": {
+              "amount": "1198.03",
+              "currency": "USD"
+            },
+            "items_sold": 45,
+            "products_added": 36,
+            "sku_orders": 41
+          },
+          "start_time": "1778775596",
+          "username": "dalba_global"
+        },
+        {
+          "end_time": "1778770577",
+          "id": "7639728035976989454",
+          "sales_performance": {
+            "24h_live_gmv": {
+              "amount": "154.3",
+              "currency": "USD"
+            },
+            "avg_price": {
+              "amount": "38.58",
+              "currency": "USD"
+            },
+            "click_to_order_rate": "4.49%",
+            "created_sku_orders": 6,
+            "customers": 3,
+            "different_products_sold": 3,
+            "gmv": {
+              "amount": "154.3",
+              "currency": "USD"
+            },
+            "items_sold": 4,
+            "products_added": 7,
+            "sku_orders": 4
+          },
+          "start_time": "1778762953",
+          "username": "helensaysyes"
+        }
+      ],
+      "next_page_token": "cGFnZV9udW1iZXI9MQ==",
+      "total_count": 123
+    },
+    "message": "Success",
+    "request_id": "20260516160212B12C6431310D993C3168"
+  },
+  "라이브_전체_요약": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "performance": {
+        "intervals": [
+          {
+            "click_through_rate": "0.06",
+            "click_to_order_rate": "0.05",
+            "customers": 70,
+            "end_date": "2026-05-15",
+            "gmv": {
+              "amount": "4114.56",
+              "currency": "USD"
+            },
+            "items_sold": 147,
+            "sku_orders": 142,
+            "start_date": "2026-05-14"
+          }
+        ]
+      }
+    },
+    "message": "Success",
+    "request_id": "20260516160213C916589F37952F35E4A9"
+  },
+  "영상_목록": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "next_page_token": "cGFnZV9udW1iZXI9MQ==",
+      "total_count": 5407,
+      "videos": [
+        {
+          "click_through_rate": "0.0232",
+          "gmv": {
+            "amount": "185.93",
+            "currency": "USD"
+          },
+          "id": "7608675200757943565",
+          "products": [
+            {
+              "id": "1732057536500110044",
+              "name": "[OFFICIAL d'Alba] White Truffle Intensive Volufiline Grinding Cream - Skin Firming Vegan Collagen Cream & Moisturizer (1.58 fl oz) Hydrating Moisture"
+            }
+          ],
+          "sku_orders": 6,
+          "title": "I love learning about new skincare ingredients and the science behind them, not just the hype. Botox is an injection and cannot be brushed onto the skin, but it was fun to try this product and see why everyone is calling it that.  This formula left my skin feeling deeply hydrated, plump, and glassy.  Linked above!  @d'Alba Piedmont US #dalba #dalbaVolufilineGrindingCream #brushOnbotox #volufiline #skincare",
+          "units_sold": 6,
+          "username": "carejohnston",
+          "video_post_time": "2026-02-19 12:26:29",
+          "views": 2411
+        },
+        {
+          "click_through_rate": "0.0168",
+          "gmv": {
+            "amount": "178.14",
+            "currency": "USD"
+          },
+          "id": "7625104603046071565",
+          "products": [
+            {
+              "id": "1732030444618027740",
+              "name": "[OFFICIAL d'Alba] White Truffle First Spray Serum - Authentic Face Glow Serum - Lightweight & Vegan Korean Serum Face Spray"
+            }
+          ],
+          "sku_orders": 10,
+          "title": "Deal ends today😭",
+          "units_sold": 10,
+          "username": "shop_shiesty",
+          "video_post_time": "2026-04-04 19:00:39",
+          "views": 7091
+        },
+        {
+          "click_through_rate": "0.0238",
+          "gmv": {
+            "amount": "125.58",
+            "currency": "USD"
+          },
+          "id": "7597925255662914829",
+          "products": [
+            {
+              "id": "1732093806458802908",
+              "name": "[OFFICIAL d'Alba] [Set] Daily 3 Step Radiant Glow Full Skincare Set l Vita Toning Line l Even Out Skin & Reduce Dark Spots l Simplify Your Skincare with All-In-One Vitamin Routine l Toner + Serum + Cream"
+            }
+          ],
+          "sku_orders": 3,
+          "title": "#dalba #dalbasprayserum #koreanskincare #skincarebundle #skincareover30 ",
+          "units_sold": 3,
+          "username": "ceciliajoycoloring",
+          "video_post_time": "2026-01-21 13:11:07",
+          "views": 1844
+        }
+      ]
+    },
+    "message": "Success",
+    "request_id": "20260516160213925EC113F8A9AD349505"
+  },
+  "라이브_분당_성과": {
+    "skipped": "라이브 없음"
+  },
+  "라이브_상품별_성과": {
+    "skipped": "라이브 없음"
+  },
+  "영상_상품별_성과": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "next_page_token": "",
+      "products": [
+        {
+          "daily_avg_buyers": "7.00",
+          "gmv": {
+            "amount": "218.92",
+            "currency": "USD"
+          },
+          "id": "1732057536500110044",
+          "units_sold": 7
+        }
+      ],
+      "total_count": 1
+    },
+    "message": "Success",
+    "request_id": "20260516160215B052998FE7544834CABD"
+  }
+}
