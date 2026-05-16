@@ -1,5 +1,5 @@
 """상품별 성과 상세 → Google Sheets '상품별_성과_상세' 탭
-주문 1건 이상인 상품만 상세 조회
+주문 1건 이상인 상품만 상세 조회 (채널별 GMV·트래픽·취소환불 포함)
 """
 from _공통 import call_api, get_sheet, write_to_sheet, get_date_input, make_sign, get_current_token, BASE_URL, APP_KEY, SHOP_CIPHER
 from urllib.parse import urlencode, quote
@@ -12,9 +12,16 @@ LIST_PATH = "/analytics/202509/shop_products/performance"
 
 HEADERS = [
     "날짜", "상품ID",
-    "주문수", "판매수량", "GMV", "통화",
-    "GMV(라이브)", "GMV(영상)", "GMV(상품카드)",
-    "방문자수", "페이지뷰", "상품클릭수", "CTR", "구매전환율"
+    # 전체
+    "주문수", "판매수량", "GMV(전체)", "통화",
+    # 취소·환불
+    "취소수", "환불수", "반품수",
+    # 라이브
+    "GMV(라이브)", "판매수량(라이브)", "평균구매고객(라이브)", "노출수(라이브)", "페이지뷰(라이브)", "CTR(라이브)", "전환율(라이브)",
+    # 영상
+    "GMV(영상)", "판매수량(영상)", "평균구매고객(영상)", "노출수(영상)", "페이지뷰(영상)", "CTR(영상)", "전환율(영상)",
+    # 상품카드
+    "GMV(상품카드)", "판매수량(상품카드)", "평균구매고객(상품카드)", "노출수(상품카드)", "페이지뷰(상품카드)", "CTR(상품카드)", "전환율(상품카드)",
 ]
 
 def fetch_detail(product_id: str, date_str: str, next_day: str):
@@ -44,13 +51,23 @@ def fetch_detail(product_id: str, date_str: str, next_day: str):
         time.sleep(2 * attempt)
     return None
 
+def parse_channel(breakdowns, channel_type):
+    """채널별 sales/traffic 데이터 추출"""
+    sales_data, traffic_data = {}, {}
+    for bd in breakdowns:
+        if bd.get("content_type") == channel_type:
+            sales_data = bd.get("sales") or {}
+            traffic_data = bd.get("traffic") or {}
+            break
+    return sales_data, traffic_data
+
 def run(date_str: str):
     print(f"\n=== 상품별 성과 상세 [{date_str}] ===")
     sheet = get_sheet(SHEET_NAME)
 
     next_day = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # 1. 상품 목록 조회 (주문 1건 이상만 필터)
+    # 1. 상품 목록 조회 (주문 1건 이상만)
     page_token = None
     product_ids = []
     while True:
@@ -88,39 +105,61 @@ def run(date_str: str):
         if not detail:
             continue
 
-        # 실제 응답 구조에 맞게 파싱 (진단 후 수정 예정)
-        d = detail.get("data") or {}
-        intervals = (d.get("performance") or {}).get("intervals") or []
-        perf = intervals[0] if intervals else d.get("overall_performance") or d
+        intervals = (detail.get("data") or {}).get("performance", {}).get("intervals") or []
+        if not intervals:
+            continue
+        inv = intervals[0]
 
-        gmv = perf.get("gmv") or {}
-        breakdowns = (perf.get("gmv") or {}).get("breakdowns") or []
-        gmv_live = gmv_video = gmv_card = ""
-        for bd in breakdowns:
-            val = (bd.get("gmv") or {}).get("amount") or bd.get("amount") or ""
-            t = bd.get("type") or ""
-            if t == "LIVE":       gmv_live  = val
-            elif t == "VIDEO":    gmv_video = val
-            elif t == "PRODUCT_CARD": gmv_card = val
+        sales = inv.get("sales") or {}
+        gmv = sales.get("gmv") or {}
+        cr  = inv.get("cancel_and_refunds") or {}
 
-        traffic = perf.get("traffic") or {}
-        sales   = perf.get("sales") or perf
+        sales_bds   = sales.get("breakdowns") or []
+        traffic_bds = (inv.get("traffic") or {}).get("breakdowns") or []
+
+        # 채널별 breakdowns를 딕셔너리로 변환
+        sales_by_channel   = {bd.get("content_type"): bd.get("sales") or {}   for bd in sales_bds}
+        traffic_by_channel = {bd.get("content_type"): bd.get("traffic") or {} for bd in traffic_bds}
+
+        def s(channel): return sales_by_channel.get(channel, {})
+        def t(channel): return traffic_by_channel.get(channel, {})
 
         all_rows.append([
             date_str,
             product_id,
-            sales.get("orders") or perf.get("orders") or "",
-            sales.get("items_sold") or perf.get("items_sold") or "",
-            gmv.get("amount") or perf.get("gmv_amount") or "",
+            # 전체
+            sales.get("orders") or "",
+            sales.get("items_sold") or "",
+            gmv.get("amount") or "",
             gmv.get("currency") or "USD",
-            gmv_live,
-            gmv_video,
-            gmv_card,
-            traffic.get("visitors") or perf.get("visitors") or "",
-            traffic.get("page_views") or perf.get("page_views") or "",
-            traffic.get("product_clicks") or perf.get("product_clicks") or "",
-            traffic.get("click_through_rate") or perf.get("click_through_rate") or "",
-            traffic.get("conversion_rate") or perf.get("conversion_rate") or "",
+            # 취소·환불
+            cr.get("canceled") or "",
+            cr.get("refunded") or "",
+            cr.get("returned") or "",
+            # 라이브
+            (s("LIVE").get("gmv") or {}).get("amount") or "",
+            s("LIVE").get("items_sold") or "",
+            s("LIVE").get("avg_customers") or "",
+            t("LIVE").get("impressions") or "",
+            t("LIVE").get("page_views") or "",
+            t("LIVE").get("ctr") or "",
+            t("LIVE").get("avg_conversion_rate") or "",
+            # 영상
+            (s("VIDEO").get("gmv") or {}).get("amount") or "",
+            s("VIDEO").get("items_sold") or "",
+            s("VIDEO").get("avg_customers") or "",
+            t("VIDEO").get("impressions") or "",
+            t("VIDEO").get("page_views") or "",
+            t("VIDEO").get("ctr") or "",
+            t("VIDEO").get("avg_conversion_rate") or "",
+            # 상품카드
+            (s("PRODUCT_CARD").get("gmv") or {}).get("amount") or "",
+            s("PRODUCT_CARD").get("items_sold") or "",
+            s("PRODUCT_CARD").get("avg_customers") or "",
+            t("PRODUCT_CARD").get("impressions") or "",
+            t("PRODUCT_CARD").get("page_views") or "",
+            t("PRODUCT_CARD").get("ctr") or "",
+            t("PRODUCT_CARD").get("avg_conversion_rate") or "",
         ])
 
     write_to_sheet(sheet, HEADERS, all_rows)
