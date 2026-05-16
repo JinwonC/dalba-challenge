@@ -12,6 +12,8 @@ LIST_PATH = "/analytics/202509/shop_lives/performance"
 
 HEADERS = ["날짜", "라이브ID", "상품ID", "상품명", "직접GMV", "통화", "주문수", "판매수량", "클릭수"]
 
+NO_PERMISSION = 28001022
+
 def fetch_live_products(live_id: str, page_token=None):
     path = f"/analytics/202512/shop/{live_id}/products_performance"
     for attempt in range(1, 4):
@@ -34,6 +36,8 @@ def fetch_live_products(live_id: str, page_token=None):
             data = resp.json()
             if data.get("code") == 0:
                 return data
+            if data.get("code") == NO_PERMISSION:
+                return {"no_permission": True}
             print(f"  [경고] code={data.get('code')}, msg={data.get('message')} (시도 {attempt}/3)")
         except Exception as e:
             print(f"  [오류] {e} (시도 {attempt}/3)")
@@ -76,6 +80,10 @@ def run(date_str: str):
             detail = fetch_live_products(live_id, page_token)
             if not detail:
                 break
+            if detail.get("no_permission"):
+                print("  ❌ 권한 없음 (TikTok 앱에서 라이브 상품별 성과 API 권한 필요) - 종료")
+                write_to_sheet(sheet, HEADERS, all_rows)
+                return
 
             detail_data = detail.get("data") or {}
             items = detail_data.get("products") or detail_data.get("list") or []
