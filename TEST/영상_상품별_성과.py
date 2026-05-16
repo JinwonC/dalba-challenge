@@ -10,7 +10,7 @@ import time
 SHEET_NAME = "영상_상품별_성과"
 VIDEO_LIST_PATH = "/analytics/202409/shop_videos/performance"
 
-HEADERS = ["날짜", "영상ID", "상품ID", "상품명", "GMV", "통화", "주문수", "판매수량", "클릭수"]
+HEADERS = ["날짜", "영상ID", "상품ID", "일평균구매자수", "GMV", "통화", "판매수량"]
 
 def fetch_video_products(video_id: str, date_str: str, next_day: str, page_token=None):
     path = f"/analytics/202509/shop_videos/{video_id}/products/performance"
@@ -91,20 +91,17 @@ def run(date_str: str):
             if not detail:
                 break
             detail_data = detail.get("data") or {}
-            items = detail_data.get("products") or detail_data.get("list") or []
+            items = detail_data.get("products") or []
             for item in items:
-                metrics = item.get("metrics") or item
-                gmv = metrics.get("gmv") or {}
+                gmv = item.get("gmv") or {}
                 all_rows.append([
                     date_str,
                     video_id,
-                    item.get("product_id") or item.get("id") or "",
-                    item.get("product_name") or item.get("name") or "",
-                    gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-                    gmv.get("currency") if isinstance(gmv, dict) else "USD",
-                    metrics.get("order_count") or metrics.get("orders") or "",
-                    metrics.get("item_sold_count") or metrics.get("units_sold") or "",
-                    metrics.get("product_clicks") or metrics.get("clicks") or "",
+                    item.get("id") or "",
+                    item.get("daily_avg_buyers") or "",
+                    gmv.get("amount") or "",
+                    gmv.get("currency") or "USD",
+                    item.get("units_sold") or "",
                 ])
             next_token = detail_data.get("next_page_token")
             if not next_token or next_token == page_token:

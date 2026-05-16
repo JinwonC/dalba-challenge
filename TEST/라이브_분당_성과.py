@@ -44,7 +44,6 @@ def run(date_str: str):
 
     next_day = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # 라이브 목록 조회
     result = call_api(LIST_PATH, {
         "start_date_ge": date_str,
         "end_date_lt": next_day,
@@ -57,7 +56,7 @@ def run(date_str: str):
         return
 
     data = result.get("data") or {}
-    lives = data.get("lives") or data.get("list") or []
+    lives = data.get("live_stream_sessions") or []
 
     if not lives:
         print("  해당 날짜 라이브 없음")
@@ -65,7 +64,7 @@ def run(date_str: str):
 
     all_rows = []
     for live in lives:
-        live_id = live.get("live_id") or live.get("id") or ""
+        live_id = live.get("id") or ""
         if not live_id:
             continue
 

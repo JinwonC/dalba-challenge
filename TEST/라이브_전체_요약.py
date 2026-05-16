@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 SHEET_NAME = "라이브_전체_요약"
 PATH = "/analytics/202509/shop_lives/overview_performance"
 
-HEADERS = ["날짜", "총라이브수", "총시청자수", "총주문수", "총GMV", "통화", "총상품클릭수"]
+HEADERS = ["날짜(시작)", "날짜(종료)", "구매고객수", "GMV", "통화", "SKU주문수", "판매수량", "CTR", "주문전환율"]
 
 def run(date_str: str):
     print(f"\n=== 라이브 전체 요약 [{date_str}] ===")
@@ -25,20 +25,23 @@ def run(date_str: str):
         print("  API 호출 실패")
         return
 
-    data = result.get("data") or {}
-    metrics = data.get("metrics") or data
-    gmv = metrics.get("gmv") or {}
+    intervals = (result.get("data") or {}).get("performance", {}).get("intervals") or []
+    rows = []
+    for item in intervals:
+        gmv = item.get("gmv") or {}
+        rows.append([
+            item.get("start_date") or date_str,
+            item.get("end_date") or "",
+            item.get("customers") or "",
+            gmv.get("amount") or "",
+            gmv.get("currency") or "USD",
+            item.get("sku_orders") or "",
+            item.get("items_sold") or "",
+            item.get("click_through_rate") or "",
+            item.get("click_to_order_rate") or "",
+        ])
 
-    row = [
-        date_str,
-        metrics.get("live_count") or metrics.get("total_lives") or "",
-        metrics.get("total_viewers") or metrics.get("viewers") or "",
-        metrics.get("order_count") or metrics.get("orders") or "",
-        gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-        gmv.get("currency") if isinstance(gmv, dict) else "USD",
-        metrics.get("product_clicks") or "",
-    ]
-    write_to_sheet(sheet, HEADERS, [row])
+    write_to_sheet(sheet, HEADERS, rows)
 
 if __name__ == "__main__":
     run(get_date_input())

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 SHEET_NAME = "영상_전체_요약"
 PATH = "/analytics/202509/shop_videos/overview_performance"
 
-HEADERS = ["날짜", "총조회수", "총GMV", "통화", "총주문수", "총판매수량", "평균CTR", "평균GPM"]
+HEADERS = ["날짜(시작)", "날짜(종료)", "평균구매고객수", "CTR", "GMV", "통화", "상품클릭수", "상품노출수", "SKU주문수"]
 
 def run(date_str: str):
     print(f"\n=== 영상 전체 요약 [{date_str}] ===")
@@ -25,21 +25,23 @@ def run(date_str: str):
         print("  API 호출 실패")
         return
 
-    data = result.get("data") or {}
-    metrics = data.get("metrics") or data
-    gmv = metrics.get("gmv") or {}
+    intervals = (result.get("data") or {}).get("performance", {}).get("intervals") or []
+    rows = []
+    for item in intervals:
+        gmv = item.get("gmv") or {}
+        rows.append([
+            item.get("start_date") or date_str,
+            item.get("end_date") or "",
+            item.get("avg_customers") or "",
+            item.get("click_through_rate") or "",
+            gmv.get("amount") or "",
+            gmv.get("currency") or "USD",
+            item.get("product_clicks") or "",
+            item.get("product_impressions") or "",
+            item.get("sku_orders") or "",
+        ])
 
-    row = [
-        date_str,
-        metrics.get("video_play_count") or metrics.get("views") or "",
-        gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-        gmv.get("currency") if isinstance(gmv, dict) else "USD",
-        metrics.get("order_count") or metrics.get("orders") or "",
-        metrics.get("item_sold_count") or metrics.get("units_sold") or "",
-        metrics.get("click_through_rate") or metrics.get("ctr") or "",
-        metrics.get("gpm") or "",
-    ]
-    write_to_sheet(sheet, HEADERS, [row])
+    write_to_sheet(sheet, HEADERS, rows)
 
 if __name__ == "__main__":
     run(get_date_input())

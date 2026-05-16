@@ -5,7 +5,12 @@ from datetime import datetime, timedelta
 SHEET_NAME = "라이브_성과"
 PATH = "/analytics/202509/shop_lives/performance"
 
-HEADERS = ["날짜", "라이브ID", "제목", "시작시간", "종료시간", "시청자수", "최대동시시청", "주문수", "GMV", "통화", "상품클릭수", "계정타입"]
+HEADERS = [
+    "날짜", "라이브ID", "계정", "시작시간(unix)", "종료시간(unix)",
+    "GMV", "24h GMV", "통화", "SKU주문수", "판매수량",
+    "구매고객수", "판매상품종류수", "평균단가", "주문전환율",
+    "시청자수", "조회수", "좋아요", "댓글", "공유", "신규팔로워", "상품클릭수"
+]
 
 def run(date_str: str):
     print(f"\n=== 라이브 성과 [{date_str}] ===")
@@ -22,8 +27,6 @@ def run(date_str: str):
             "currency": "USD",
             "account_type": "ALL",
             "page_size": "100",
-            "sort_field": "gmv",
-            "sort_order": "DESC",
         }
         if page_token:
             params["page_token"] = page_token
@@ -33,24 +36,36 @@ def run(date_str: str):
             break
 
         data = result.get("data") or {}
-        items = data.get("lives") or data.get("list") or []
+        items = data.get("live_stream_sessions") or []
 
         for item in items:
-            metrics = item.get("metrics") or item
-            gmv = metrics.get("gmv") or {}
+            sales = item.get("sales_performance") or {}
+            inter = item.get("interaction_performance") or {}
+            gmv = sales.get("gmv") or {}
+            gmv_24h = sales.get("24h_live_gmv") or {}
+            avg_price = sales.get("avg_price") or {}
             all_rows.append([
                 date_str,
-                item.get("live_id") or item.get("id") or "",
-                item.get("title") or "",
+                item.get("id") or "",
+                item.get("username") or "",
                 item.get("start_time") or "",
                 item.get("end_time") or "",
-                metrics.get("total_viewers") or metrics.get("viewers") or "",
-                metrics.get("peak_concurrent_viewers") or metrics.get("peak_viewers") or "",
-                metrics.get("order_count") or metrics.get("orders") or "",
-                gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-                gmv.get("currency") if isinstance(gmv, dict) else "USD",
-                metrics.get("product_clicks") or metrics.get("clicks") or "",
-                item.get("account_type") or "",
+                gmv.get("amount") or "",
+                gmv_24h.get("amount") or "",
+                gmv.get("currency") or "USD",
+                sales.get("sku_orders") or "",
+                sales.get("items_sold") or "",
+                sales.get("customers") or "",
+                sales.get("different_products_sold") or "",
+                avg_price.get("amount") or "",
+                sales.get("click_to_order_rate") or "",
+                inter.get("viewers") or "",
+                inter.get("views") or "",
+                inter.get("likes") or "",
+                inter.get("comments") or "",
+                inter.get("shares") or "",
+                inter.get("new_followers") or "",
+                inter.get("product_clicks") or "",
             ])
 
         next_token = data.get("next_page_token")

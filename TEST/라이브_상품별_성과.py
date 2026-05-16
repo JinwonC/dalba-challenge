@@ -58,7 +58,7 @@ def run(date_str: str):
         return
 
     data = result.get("data") or {}
-    lives = data.get("lives") or data.get("list") or []
+    lives = data.get("live_stream_sessions") or []
 
     if not lives:
         print("  해당 날짜 라이브 없음")
@@ -66,7 +66,7 @@ def run(date_str: str):
 
     all_rows = []
     for live in lives:
-        live_id = live.get("live_id") or live.get("id") or ""
+        live_id = live.get("id") or ""
         if not live_id:
             continue
 

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 SHEET_NAME = "SKU별_성과"
 PATH = "/analytics/202509/shop_skus/performance"
 
-HEADERS = ["날짜", "상품ID", "SKU ID", "SKU명", "주문수", "GMV", "통화", "판매수량", "CTR"]
+HEADERS = ["날짜", "상품ID", "SKU ID", "SKU주문수", "판매수량", "GMV", "통화"]
 
 def run(date_str: str):
     print(f"\n=== SKU별 성과 [{date_str}] ===")
@@ -32,21 +32,18 @@ def run(date_str: str):
             break
 
         data = result.get("data") or {}
-        items = data.get("skus") or data.get("list") or []
+        items = data.get("skus") or []
 
         for item in items:
-            metrics = item.get("metrics") or item
-            gmv = metrics.get("gmv") or {}
+            gmv = item.get("gmv") or {}
             all_rows.append([
                 date_str,
                 item.get("product_id") or "",
-                item.get("sku_id") or item.get("id") or "",
-                item.get("sku_name") or item.get("name") or "",
-                metrics.get("order_count") or metrics.get("orders") or "",
-                gmv.get("amount") if isinstance(gmv, dict) else gmv or "",
-                gmv.get("currency") if isinstance(gmv, dict) else "USD",
-                metrics.get("item_sold_count") or metrics.get("units_sold") or "",
-                metrics.get("click_through_rate") or metrics.get("ctr") or "",
+                item.get("id") or "",
+                item.get("sku_orders") or "",
+                item.get("units_sold") or "",
+                gmv.get("amount") or "",
+                gmv.get("currency") or "USD",
             ])
 
         next_token = data.get("next_page_token")
