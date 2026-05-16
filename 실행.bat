@@ -38,7 +38,7 @@ if "%choice%"=="10" cd TEST && python 라이브_전체_요약.py
 if "%choice%"=="11" cd TEST && python 라이브_분당_성과.py
 if "%choice%"=="12" cd TEST && python 라이브_상품별_성과.py
 if "%choice%"=="13" cd TEST && python 영상_상품별_성과.py
-if "%choice%"=="14" cd TEST && python _진단.py && git add _진단_결과.json && git commit -m "진단 결과" && git push
+if "%choice%"=="14" cd TEST && python _진단.py && git config user.email "jinwon@dalba.com" && git config user.name "JinwonC" && git add _진단_결과.json && git commit -m "진단 결과" && git push
 
 echo.
 pause
