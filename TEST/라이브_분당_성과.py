@@ -1,22 +1,55 @@
 """라이브 분당 성과 → Google Sheets '라이브_분당_성과' 탭
-먼저 해당 날짜의 라이브 목록을 가져온 후, 각 라이브의 분당 데이터를 수집합니다.
+라이브 목록 먼저 조회 후 각 라이브별 분당 데이터 수집
 """
-from _공통 import call_api, get_sheet, write_to_sheet, get_date_input
+from _공통 import call_api, get_sheet, write_to_sheet, get_date_input, make_sign, get_current_token, BASE_URL, APP_KEY, SHOP_CIPHER
+from urllib.parse import urlencode, quote
+from datetime import datetime, timedelta
+import requests
+import time
 
 SHEET_NAME = "라이브_분당_성과"
-LIST_PATH = "/analytics/202309/lives/performance"
-DETAIL_PATH = "/analytics/202309/lives/performance/minutely"
+LIST_PATH = "/analytics/202509/shop_lives/performance"
 
-HEADERS = ["날짜", "라이브ID", "분(timestamp)", "동시시청자수", "누적시청자수", "좋아요수"]
+HEADERS = ["날짜", "라이브ID", "분(timestamp)", "동시시청자수", "누적시청자수", "좋아요수", "상품클릭수"]
+
+def fetch_per_minutes(live_id: str, page_token=None):
+    path = f"/analytics/202510/shop_lives/{live_id}/performance_per_minutes"
+    for attempt in range(1, 4):
+        timestamp = str(int(time.time()))
+        params = {
+            "app_key": APP_KEY,
+            "currency": "USD",
+            "shop_cipher": SHOP_CIPHER,
+            "timestamp": timestamp,
+        }
+        if page_token:
+            params["page_token"] = page_token
+        params["sign"] = make_sign(path, params)
+        url = BASE_URL + path + "?" + urlencode(params, quote_via=quote)
+        headers = {"x-tts-access-token": get_current_token(), "content-type": "application/json"}
+        try:
+            resp = requests.get(url, headers=headers, timeout=30)
+            data = resp.json()
+            if data.get("code") == 0:
+                return data
+            print(f"  [경고] code={data.get('code')}, msg={data.get('message')} (시도 {attempt}/3)")
+        except Exception as e:
+            print(f"  [오류] {e} (시도 {attempt}/3)")
+        time.sleep(2 * attempt)
+    return None
 
 def run(date_str: str):
     print(f"\n=== 라이브 분당 성과 [{date_str}] ===")
     sheet = get_sheet(SHEET_NAME)
 
-    # 1. 라이브 목록 조회
+    next_day = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # 라이브 목록 조회
     result = call_api(LIST_PATH, {
-        "start_date": date_str,
-        "end_date": date_str,
+        "start_date_ge": date_str,
+        "end_date_lt": next_day,
+        "currency": "USD",
+        "account_type": "ALL",
         "page_size": "100",
     })
     if not result:
@@ -37,23 +70,31 @@ def run(date_str: str):
             continue
 
         print(f"  라이브 [{live_id}] 분당 데이터 수집 중...")
-        detail = call_api(DETAIL_PATH, {"live_id": live_id})
-        if not detail:
-            continue
+        page_token = None
+        while True:
+            detail = fetch_per_minutes(live_id, page_token)
+            if not detail:
+                break
 
-        items = detail.get("data") or []
-        if isinstance(items, dict):
-            items = items.get("list") or items.get("minutely") or []
+            detail_data = detail.get("data") or {}
+            items = detail_data.get("performances") or detail_data.get("list") or []
 
-        for item in items:
-            all_rows.append([
-                date_str,
-                live_id,
-                item.get("minute") or item.get("timestamp") or "",
-                item.get("concurrent_viewers") or item.get("peak_viewers") or "",
-                item.get("total_viewers") or "",
-                item.get("likes") or "",
-            ])
+            for item in items:
+                metrics = item.get("metrics") or item
+                all_rows.append([
+                    date_str,
+                    live_id,
+                    item.get("minute") or item.get("timestamp") or "",
+                    metrics.get("concurrent_viewers") or "",
+                    metrics.get("total_viewers") or "",
+                    metrics.get("likes") or "",
+                    metrics.get("product_clicks") or "",
+                ])
+
+            next_token = detail_data.get("next_page_token")
+            if not next_token or next_token == page_token:
+                break
+            page_token = next_token
 
     write_to_sheet(sheet, HEADERS, all_rows)
 
