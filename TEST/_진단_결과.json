@@ -42,7 +42,7 @@
       "total_count": 92
     },
     "message": "Success",
-    "request_id": "202605161602090561A1E258406A3C1D29"
+    "request_id": "202605161624069F02DE5CBE13B6379342"
   },
   "SKU별_성과": {
     "code": 0,
@@ -84,7 +84,7 @@
       "total_count": 42
     },
     "message": "Success",
-    "request_id": "202605161602105CB7F20BC29A703C7A69"
+    "request_id": "20260516162407A93AF6CF07AB9C3582D6"
   },
   "영상_전체_요약": {
     "code": 0,
@@ -109,7 +109,7 @@
       }
     },
     "message": "Success",
-    "request_id": "202605161602113E5906FFFF7715365BC5"
+    "request_id": "20260516162408A93AF6CF07AB9C358305"
   },
   "라이브_성과": {
     "code": 0,
@@ -214,7 +214,7 @@
       "total_count": 123
     },
     "message": "Success",
-    "request_id": "20260516160212B12C6431310D993C3168"
+    "request_id": "2026051616240837DB12A619C1593D2B7D"
   },
   "라이브_전체_요약": {
     "code": 0,
@@ -239,7 +239,7 @@
       }
     },
     "message": "Success",
-    "request_id": "20260516160213C916589F37952F35E4A9"
+    "request_id": "20260516162409A162E9C372517E3DD5F4"
   },
   "영상_목록": {
     "code": 0,
@@ -311,13 +311,19 @@
       ]
     },
     "message": "Success",
-    "request_id": "20260516160213925EC113F8A9AD349505"
+    "request_id": "20260516162410D01F493165A8B33DB378"
   },
   "라이브_분당_성과": {
-    "skipped": "라이브 없음"
+    "code": 28001022,
+    "data": null,
+    "message": "invalid request params; detail:no permission.",
+    "request_id": "202605161624116DB42E3D6F10303DE361"
   },
   "라이브_상품별_성과": {
-    "skipped": "라이브 없음"
+    "code": 28001022,
+    "data": null,
+    "message": "invalid request params; detail:sort field is not supported.",
+    "request_id": "20260516162412E5C71D37F0BA4A356EDD"
   },
   "영상_상품별_성과": {
     "code": 0,
@@ -338,6 +344,151 @@
       "total_count": 1
     },
     "message": "Success",
-    "request_id": "20260516160215B052998FE7544834CABD"
+    "request_id": "20260516162412376EF3A2BB4B033570FD"
+  },
+  "상품별_성과_상세": {
+    "code": 0,
+    "data": {
+      "latest_available_date": "2026-05-15",
+      "performance": {
+        "intervals": [
+          {
+            "cancel_and_refunds": {
+              "canceled": 2,
+              "refunded": 1,
+              "returned": 7
+            },
+            "end_date": "2026-05-15",
+            "sales": {
+              "breakdowns": [
+                {
+                  "content_type": "LIVE",
+                  "sales": {
+                    "avg_customers": 12,
+                    "gmv": {
+                      "amount": "227.00",
+                      "currency": "USD"
+                    },
+                    "items_sold": 13
+                  }
+                },
+                {
+                  "content_type": "VIDEO",
+                  "sales": {
+                    "avg_customers": 85,
+                    "gmv": {
+                      "amount": "1651.24",
+                      "currency": "USD"
+                    },
+                    "items_sold": 86
+                  }
+                },
+                {
+                  "content_type": "PRODUCT_CARD",
+                  "sales": {
+                    "avg_customers": 52,
+                    "gmv": {
+                      "amount": "1109.03",
+                      "currency": "USD"
+                    },
+                    "items_sold": 55
+                  }
+                }
+              ],
+              "gmv": {
+                "amount": "2987.27",
+                "currency": "USD"
+              },
+              "items_sold": 154,
+              "orders": 151
+            },
+            "start_date": "2026-05-14",
+            "traffic": {
+              "breakdowns": [
+                {
+                  "content_type": "LIVE",
+                  "traffic": {
+                    "avg_conversion_rate": "0.10",
+                    "avg_unique_page_views": 122,
+                    "ctr": "0.06",
+                    "impressions": 3162,
+                    "page_views": 179
+                  }
+                },
+                {
+                  "content_type": "VIDEO",
+                  "traffic": {
+                    "avg_conversion_rate": "0.04",
+                    "avg_unique_page_views": 2181,
+                    "ctr": "0.04",
+                    "impressions": 83234,
+                    "page_views": 3039
+                  }
+                },
+                {
+                  "content_type": "PRODUCT_CARD",
+                  "traffic": {
+                    "avg_conversion_rate": "0.09",
+                    "avg_unique_page_views": 552,
+                    "ctr": "0.03",
+                    "impressions": 25411,
+                    "page_views": 758
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "ratings": [
+          {
+            "count": 1329,
+            "percentage": "0.8624",
+            "stars": "5_STAR"
+          },
+          {
+            "count": 59,
+            "percentage": "0.0383",
+            "stars": "1_STAR"
+          },
+          {
+            "count": 20,
+            "percentage": "0.0130",
+            "stars": "2_STAR"
+          },
+          {
+            "count": 32,
+            "percentage": "0.0208",
+            "stars": "3_STAR"
+          },
+          {
+            "count": 101,
+            "percentage": "0.0655",
+            "stars": "4_STAR"
+          }
+        ],
+        "top_contents": [
+          {
+            "contents": [
+              {
+                "content_id": "7639782471961185037",
+                "gmv": {
+                  "amount": "119.29",
+                  "currency": "USD"
+                },
+                "items_sold": 7
+              }
+            ],
+            "type": "LIVE"
+          },
+          {
+            "contents": [],
+            "type": "VIDEO"
+          }
+        ],
+        "top_creators": []
+      }
+    },
+    "message": "Success",
+    "request_id": "20260516162413F56566592DC1D73CC33F"
   }
 }
