@@ -32,7 +32,9 @@ LA_TZ = ZoneInfo("America/Los_Angeles")
 PAGE_SIZE = 50
 MAX_RETRIES = 3
 
-HEADERS = [
+SAMPLE_SHEET_NAME = "샘플출고"
+
+SAMPLE_HEADERS = ["날짜", "상품ID", "상품명", "SKU ID", "SKU명", "샘플수량"]
     "주문번호", "주문일시(LA)", "업데이트일시(LA)", "주문상태", "구매자닉네임", "구매자이메일",
     "상품ID", "상품명", "SKU명", "SKU ID",
     "수량", "정가", "판매가", "셀러할인", "플랫폼할인",
@@ -255,7 +257,38 @@ def fetch_all_orders(from_dt: datetime, to_dt: datetime) -> list[list]:
 
 
 # =========================
-# 7. Google Sheets 저장
+# 7. 샘플 집계
+# =========================
+
+def aggregate_samples(all_rows: list[list]) -> list[list]:
+    """AG열(32)=='Y'인 행만 날짜+상품ID+SKU ID별로 수량 합산"""
+    from collections import defaultdict
+    summary = defaultdict(int)
+    meta = {}  # key → (상품명, SKU명)
+
+    for row in all_rows:
+        if str(row[32]).strip().upper() != "Y":
+            continue
+        date = str(row[1])[:10]       # 주문일시 → 날짜만
+        product_id = str(row[6])
+        product_name = str(row[7])
+        sku_id = str(row[9])
+        sku_name = str(row[8])
+        qty = int(row[10]) if str(row[10]).isdigit() else 1
+
+        key = (date, product_id, sku_id)
+        summary[key] += qty
+        meta[key] = (product_name, sku_name)
+
+    result = []
+    for (date, product_id, sku_id), qty in sorted(summary.items()):
+        product_name, sku_name = meta[(date, product_id, sku_id)]
+        result.append([date, product_id, product_name, sku_id, sku_name, qty])
+    return result
+
+
+# =========================
+# 8. Google Sheets 저장
 # =========================
 
 def get_sheet():
@@ -278,23 +311,50 @@ def get_sheet():
     return sheet
 
 
-def save_to_sheets(rows: list[list]):
-    if not rows:
-        print("저장할 주문 데이터가 없습니다.")
-        return
-
-    sheet = get_sheet()
-
+def append_to_sheet(sheet, rows: list[list], label: str):
     for attempt in range(1, 6):
         try:
             sheet.append_rows(rows, value_input_option="USER_ENTERED")
-            print(f"✅ Google Sheets 저장 완료! {len(rows)}건")
+            print(f"✅ {label} 저장 완료! {len(rows)}건")
             return
         except Exception as e:
             if attempt == 5:
                 raise
             print(f"  시트 쓰기 실패 (시도 {attempt}/5), 재시도 중...")
             time.sleep(3 * attempt)
+
+
+def save_to_sheets(rows: list[list]):
+    if not rows:
+        print("저장할 주문 데이터가 없습니다.")
+        return
+
+    sheet = get_sheet()
+    append_to_sheet(sheet, rows, "주문데이터")
+
+
+def save_sample_sheet(rows: list[list]):
+    if not rows:
+        print("샘플 주문 없음 - 샘플출고 탭 업데이트 스킵")
+        return
+
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=scopes)
+    client = gspread.authorize(creds)
+    spreadsheet = client.open_by_key(SPREADSHEET_ID)
+
+    try:
+        sheet = spreadsheet.worksheet(SAMPLE_SHEET_NAME)
+    except gspread.WorksheetNotFound:
+        sheet = spreadsheet.add_worksheet(title=SAMPLE_SHEET_NAME, rows="1000", cols=str(len(SAMPLE_HEADERS)))
+        sheet.append_row(SAMPLE_HEADERS)
+        sheet.freeze(rows=1)
+        print(f"  시트 '{SAMPLE_SHEET_NAME}' 새로 생성됨")
+
+    append_to_sheet(sheet, rows, "샘플출고")
 
 
 # =========================
@@ -314,6 +374,11 @@ def main():
 
     print(f"\n총 주문 라인 수: {len(rows)}")
     save_to_sheets(rows)
+
+    print("\n샘플 집계 중...")
+    sample_rows = aggregate_samples(rows)
+    print(f"샘플 주문 {len(sample_rows)}건 (날짜×상품×SKU 기준)")
+    save_sample_sheet(sample_rows)
 
 
 if __name__ == "__main__":
