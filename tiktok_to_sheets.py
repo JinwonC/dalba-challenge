@@ -152,15 +152,16 @@ def run_sync(from_date: datetime, to_date: datetime):
     sheet = get_sheet()
 
     # 기존 데이터 로드 (헤더 포함)
-    for attempt in range(1, 6):
+    for attempt in range(1, 9):
         try:
             existing = sheet.get_all_values()
             break
         except Exception as e:
-            if attempt == 5:
+            if attempt == 8:
                 raise
-            print(f"  시트 읽기 실패 (시도 {attempt}/5), 재시도 중...")
-            time.sleep(3 * attempt)
+            wait = min(3 * attempt, 30)
+            print(f"  시트 읽기 실패 (시도 {attempt}/8), {wait}초 후 재시도...")
+            time.sleep(wait)
 
     # Video ID → 행번호(1-based) 매핑
     video_index_map: dict[str, int] = {}
