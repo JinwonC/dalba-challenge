@@ -286,14 +286,4 @@ def sync_by_date_range(start_str: str, end_str: str):
 
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) == 3:
-        sync_by_date_range(sys.argv[1], sys.argv[2])
-    else:
-        raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15) / 엔터 시 최근 30일: ").strip()
-        if raw:
-            parts = [p.strip() for p in raw.replace("~", " ").split()]
-            parts = [p for p in parts if p]
-            sync_by_date_range(parts[0], parts[-1])
-        else:
-            sync_last_30_days()
+    sync_last_30_days()
