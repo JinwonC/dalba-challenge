@@ -48,9 +48,7 @@ def call_post(path, body_obj, extra_params={}):
 print("\n[Product API 테스트]")
 print("  상품 목록 조회 중 (최대 10개)...")
 
-resp = call_post("/product/202309/products/search", {
-    "page_size": 10
-})
+resp = call_post("/product/202309/products/search", {}, {"page_size": "10"})
 
 print(json.dumps(resp, ensure_ascii=False, indent=2)[:3000])
 
