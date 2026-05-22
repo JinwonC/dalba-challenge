@@ -144,32 +144,19 @@ def get_gmv_campaign_ids(token, start_date, end_date) -> list[str]:
     return list(ids)
 
 
-def get_adgroups(token, campaign_ids: list[str]) -> list[dict]:
-    """campaign_ids에 속한 adgroup 목록 반환"""
-    groups, page = [], 1
-    while True:
-        d = api_get(ADGROUP_URL, token, {
-            "advertiser_id": ADVERTISER_ID,
-            "page": page, "page_size": 100,
-            "filtering": json.dumps({
-                "campaign_ids": campaign_ids,
-                "primary_status": "STATUS_ALL",
-            }),
-        })
-        if not d:
-            break
-        for g in d.get("data", {}).get("list", []):
-            groups.append({
-                "adgroup_id": str(g.get("adgroup_id", "")),
-                "adgroup_name": g.get("adgroup_name", ""),
-                "campaign_id": str(g.get("campaign_id", "")),
-                "campaign_name": g.get("campaign_name", ""),
-            })
-        if page >= d.get("data", {}).get("page_info", {}).get("total_page", 1):
-            break
-        page += 1
-        time.sleep(0.3)
-    return groups
+def get_campaign_info(token, campaign_id: str) -> dict:
+    """/campaign/gmv_max/info/ 로 item_group_ids 포함 캠페인 정보 반환"""
+    try:
+        r = requests.get(f"{BASE}/campaign/gmv_max/info/",
+                         headers={"Access-Token": token},
+                         params={"advertiser_id": ADVERTISER_ID, "campaign_id": campaign_id},
+                         timeout=30)
+        d = r.json()
+        if d.get("code") == 0:
+            return d.get("data", {})
+    except Exception as e:
+        print(f"  [오류] campaign info {campaign_id}: {e}")
+    return {}
 
 
 def fetch_item_rows(token, start_date, end_date,
@@ -226,32 +213,17 @@ def fetch_all_item_rows(token, start_date, end_date) -> list[list]:
         return []
     print(f"  캠페인 {len(campaign_ids)}개 발견")
 
-    print("  아이템그룹(adgroup) 조회 중...")
-    # 100개씩 나눠서 조회
-    all_groups = []
-    for i in range(0, len(campaign_ids), 100):
-        all_groups.extend(get_adgroups(token, campaign_ids[i:i+100]))
-    print(f"  아이템그룹 {len(all_groups)}개 발견")
-
-    # campaign_id → {adgroup_id: adgroup_info}
-    camp_to_groups: dict[str, dict] = {}
-    camp_names: dict[str, str] = {}
-    for g in all_groups:
-        cid = g["campaign_id"]
-        if cid not in camp_to_groups:
-            camp_to_groups[cid] = {}
-            camp_names[cid] = g["campaign_name"]
-        camp_to_groups[cid][g["adgroup_id"]] = g
-
     all_rows = []
     for cid in campaign_ids:
-        if cid not in camp_to_groups:
+        info = get_campaign_info(token, cid)
+        cname = info.get("campaign_name", cid)
+        item_group_ids = [str(g) for g in (info.get("item_group_ids") or [])]
+        if not item_group_ids:
             continue
-        gmap = camp_to_groups[cid]
-        cname = camp_names.get(cid, "")
-        gids = list(gmap.keys())
-        print(f"  [{cname}] 소재 데이터 조회 중... ({len(gids)}개 그룹)")
-        rows = fetch_item_rows(token, start_date, end_date, cid, gids, cname, gmap)
+        # item_group_id → name 매핑 (이름 정보는 없으므로 ID만 사용)
+        gmap = {gid: {"adgroup_name": gid} for gid in item_group_ids}
+        print(f"  [{cname}] 소재 데이터 조회 중... ({len(item_group_ids)}개 그룹)")
+        rows = fetch_item_rows(token, start_date, end_date, cid, item_group_ids, cname, gmap)
         all_rows.extend(rows)
         time.sleep(0.3)
     return all_rows
