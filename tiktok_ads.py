@@ -26,16 +26,14 @@ BASE_URL = "https://business-api.tiktok.com/open_api/v1.3/gmv_max/report/get/"
 DIMENSIONS = ["stat_time_day", "campaign_id"]
 
 METRICS = [
-    "campaign_name",
-    "spend",
     "gross_revenue",
     "orders",
     "roi",
 ]
 
 HEADERS = [
-    "날짜", "캠페인ID", "캠페인명",
-    "지출금액", "총매출(GMV)", "주문수", "ROI",
+    "날짜", "캠페인ID",
+    "총매출(GMV)", "주문수", "ROI",
 ]
 
 
@@ -113,8 +111,6 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
             all_rows.append([
                 dims.get("stat_time_day", "")[:10],
                 dims.get("campaign_id", ""),
-                mets.get("campaign_name", ""),
-                mets.get("spend", ""),
                 mets.get("gross_revenue", ""),
                 mets.get("orders", ""),
                 mets.get("roi", ""),
