@@ -33,8 +33,7 @@ METRICS = [
     "average_video_play", "average_video_play_per_user",
     "conversion", "cost_per_conversion", "conversion_rate",
     "real_time_conversion", "real_time_cost_per_conversion",
-    "onsite_shopping", "onsite_order_value",
-    "value_per_1000_impressions",
+    "onsite_shopping",
 ]
 
 HEADERS = [
@@ -46,8 +45,7 @@ HEADERS = [
     "평균시청시간", "1인당평균시청시간",
     "전환수", "전환당비용(CPA)", "전환율",
     "실시간전환수", "실시간CPA",
-    "온사이트주문수", "온사이트주문금액(GMV)",
-    "1000노출당가치(ROAS)",
+    "온사이트주문수",
 ]
 
 
@@ -151,8 +149,6 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
                 mets.get("real_time_conversion", ""),
                 mets.get("real_time_cost_per_conversion", ""),
                 mets.get("onsite_shopping", ""),
-                mets.get("onsite_order_value", ""),
-                mets.get("value_per_1000_impressions", ""),
             ])
 
         total_page = page_info.get("total_page", 1)
