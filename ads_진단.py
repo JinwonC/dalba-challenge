@@ -1,4 +1,4 @@
-"""GMV MAX item_group 엔드포인트 탐색"""
+"""GMV MAX item_id 리포트에서 product_id dimension 지원 여부 확인"""
 import requests, json, os
 
 TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ads_tokens.json")
@@ -10,73 +10,52 @@ STORE_ID      = "7494221571082258140"
 BASE = "https://business-api.tiktok.com/open_api/v1.3"
 headers = {"Access-Token": token}
 
-# 알려진 GMV MAX 캠페인 ID 하나 (리포트에서 확인된 것)
-SAMPLE_CAMPAIGN_ID = "1855368265340113"
+CAMPAIGN_ID   = "1855368265340113"
+ITEM_GROUP_ID = None  # 아래에서 자동 조회
 
-def call(path, params={}):
-    try:
-        r = requests.get(f"{BASE}{path}", headers=headers,
-                         params={"advertiser_id": ADVERTISER_ID, **params}, timeout=30)
-        return r.status_code, r.json()
-    except Exception as e:
-        return 0, {"error": str(e)}
+# item_group_ids 가져오기
+r = requests.get(f"{BASE}/campaign/gmv_max/info/", headers=headers,
+                 params={"advertiser_id": ADVERTISER_ID, "campaign_id": CAMPAIGN_ID}, timeout=30)
+info = r.json().get("data", {})
+item_group_ids = [str(g) for g in (info.get("item_group_ids") or [])]
+print(f"item_group_ids: {item_group_ids[:3]}")
 
-print("=" * 50)
-print(f"[1] adgroup/get - GMV MAX campaign_id 필터링 시도")
-status, d = call("/adgroup/get/", {
-    "page_size": 10,
-    "filtering": json.dumps({
-        "campaign_ids": [SAMPLE_CAMPAIGN_ID],
-        "primary_status": "STATUS_ALL",
-    })
-})
-print(f"  http={status}, code={d.get('code')}, msg={d.get('message')}")
-print(f"  total={d.get('data',{}).get('page_info',{}).get('total_number',0)}")
+if not item_group_ids:
+    print("item_group_ids 없음 - 종료")
+    exit()
 
+# [1] product_id dimension 포함 시도
 print()
-print("[2] GMV MAX 전용 adgroup/item_group 엔드포인트 탐색")
-for path in [
-    "/gmv_max/adgroup/get/",
-    "/gmv_max/item_group/get/",
-    "/gmv_max/ad/get/",
-    "/campaign/gmv_max/item_group/list/",
-]:
-    status, d = call(path, {"page_size": 5,
-                             "filtering": json.dumps({"campaign_ids": [SAMPLE_CAMPAIGN_ID]})})
-    code = d.get("code", "?")
-    msg  = d.get("message", "")[:80]
-    total = d.get("data", {}).get("page_info", {}).get("total_number", "?")
-    print(f"  {path}")
-    print(f"    http={status}, code={code}, total={total}, msg={msg}")
-    if code == 0:
-        for item in (d.get("data", {}).get("list") or [])[:3]:
-            print(f"      {item}")
+print("[1] dimensions에 product_id 추가 시도")
+r = requests.get(f"{BASE}/gmv_max/report/get/", headers=headers, params={
+    "advertiser_id": ADVERTISER_ID,
+    "store_ids": json.dumps([STORE_ID]),
+    "dimensions": json.dumps(["stat_time_day", "item_id", "product_id"]),
+    "metrics": json.dumps(["cost", "orders", "gross_revenue", "roi"]),
+    "start_date": "2026-05-01", "end_date": "2026-05-01",
+    "filtering": json.dumps({"campaign_ids": [CAMPAIGN_ID], "item_group_ids": item_group_ids[:5]}),
+    "page": 1, "page_size": 3,
+}, timeout=30)
+d = r.json()
+print(f"  code={d.get('code')}, msg={d.get('message')}")
+for item in (d.get("data", {}).get("list") or [])[:3]:
+    print(f"  dims keys: {list(item.get('dimensions', {}).keys())}")
+    print(f"  {item}")
 
+# [2] product_id 없이 item_id만 (기존 방식) - dimensions 확인
 print()
-print("[3] campaign/gmv_max/info - campaign_id 포함해서 호출")
-status, d = call("/campaign/gmv_max/info/", {"campaign_id": SAMPLE_CAMPAIGN_ID})
-code = d.get("code", "?")
-print(f"  http={status}, code={code}, msg={d.get('message','')}")
-data = d.get("data") or {}
-print(f"  data keys: {list(data.keys()) if isinstance(data, dict) else data}")
-
-print()
-print("[4] item_id 리포트를 item_group_ids 없이 campaign_ids만으로 시도")
-try:
-    r = requests.get(f"{BASE}/gmv_max/report/get/", headers=headers, params={
-        "advertiser_id": ADVERTISER_ID,
-        "store_ids": json.dumps([STORE_ID]),
-        "dimensions": json.dumps(["stat_time_day", "item_id"]),
-        "metrics": json.dumps(["cost", "orders", "gross_revenue", "roi"]),
-        "start_date": "2026-05-01",
-        "end_date": "2026-05-01",
-        "filtering": json.dumps({"campaign_ids": [SAMPLE_CAMPAIGN_ID]}),
-        "page": 1, "page_size": 5,
-    }, timeout=30)
-    d = r.json()
-    print(f"  code={d.get('code')}, msg={d.get('message')}")
-    print(f"  total={d.get('data',{}).get('page_info',{}).get('total_number',0)}")
-    for item in (d.get("data",{}).get("list") or [])[:3]:
-        print(f"    {item}")
-except Exception as e:
-    print(f"  오류: {e}")
+print("[2] dimensions에 item_id만 (기존) - 응답에 product_id 있는지 확인")
+r = requests.get(f"{BASE}/gmv_max/report/get/", headers=headers, params={
+    "advertiser_id": ADVERTISER_ID,
+    "store_ids": json.dumps([STORE_ID]),
+    "dimensions": json.dumps(["stat_time_day", "item_id"]),
+    "metrics": json.dumps(["cost", "orders", "gross_revenue", "roi"]),
+    "start_date": "2026-05-01", "end_date": "2026-05-01",
+    "filtering": json.dumps({"campaign_ids": [CAMPAIGN_ID], "item_group_ids": item_group_ids[:5]}),
+    "page": 1, "page_size": 3,
+}, timeout=30)
+d = r.json()
+print(f"  code={d.get('code')}, msg={d.get('message')}")
+for item in (d.get("data", {}).get("list") or [])[:3]:
+    print(f"  dims keys: {list(item.get('dimensions', {}).keys())}")
+    print(f"  {item}")
