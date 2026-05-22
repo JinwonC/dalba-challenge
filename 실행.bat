@@ -11,7 +11,8 @@ echo.
 echo  1. 영상 성과 (tiktok_to_sheets.py)
 echo  2. 상품별 일별 로그 (tiktok_daily_log.py)
 echo  3. 주문 데이터 (tiktok_orders.py)
-echo  A. TikTok 광고 성과 (tiktok_ads.py)
+echo  A. TikTok 광고 성과 - 캠페인+소재 전체 (tiktok_ads.py)
+echo  B. TikTok 광고 성과 - 캠페인만 (tiktok_ads_campaign.py)
 echo  4. [TEST] 샵 일별 성과
 echo  5. [TEST] 샵 시간대별 성과
 echo  6. [TEST] 상품별 성과
@@ -34,6 +35,8 @@ if "%choice%"=="2"  python tiktok_daily_log.py
 if "%choice%"=="3"  python tiktok_orders.py
 if "%choice%"=="A"  python tiktok_ads.py
 if "%choice%"=="a"  python tiktok_ads.py
+if "%choice%"=="B"  python tiktok_ads_campaign.py
+if "%choice%"=="b"  python tiktok_ads_campaign.py
 if "%choice%"=="4"  cd TEST && python 샵_일별_성과.py
 if "%choice%"=="5"  cd TEST && python 샵_시간대별_성과.py
 if "%choice%"=="6"  cd TEST && python 상품별_성과.py
