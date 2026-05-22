@@ -1,4 +1,4 @@
-"""상품 ID로 상품명 조회 가능한지 확인"""
+"""상품 리스팅 API 탐색"""
 import hashlib, hmac, time, json, os
 from urllib.parse import urlencode, quote
 import requests
@@ -26,8 +26,11 @@ def call_get(path, extra={}):
     params["sign"] = make_sign(path, params)
     url = BASE_URL + path + "?" + urlencode(params, quote_via=quote)
     hdrs = {"x-tts-access-token": get_token(), "content-type": "application/json"}
-    r = requests.get(url, headers=hdrs, timeout=30)
-    return r.json()
+    try:
+        r = requests.get(url, headers=hdrs, timeout=30)
+        return r.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 def call_post(path, body_obj, extra={}):
     ts = str(int(time.time()))
@@ -40,46 +43,51 @@ def call_post(path, body_obj, extra={}):
     params["sign"] = hmac.new(APP_SECRET.encode(), s.encode(), hashlib.sha256).hexdigest()
     url = BASE_URL + path + "?" + urlencode(params, quote_via=quote)
     hdrs = {"x-tts-access-token": get_token(), "content-type": "application/json"}
-    r = requests.post(url, headers=hdrs, data=body, timeout=30)
-    return r.json()
+    try:
+        r = requests.post(url, headers=hdrs, data=body, timeout=30)
+        return r.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-# 알려진 상품 ID (진단에서 확인된 것)
-PRODUCT_ID = "1732030444618027740"
+print("상품 리스팅 API 탐색\n" + "=" * 50)
 
-print(f"테스트 상품 ID: {PRODUCT_ID}")
-print()
+# GET 엔드포인트들
+get_paths = [
+    "/product/202309/products",
+    "/product/202312/products",
+    "/product/202405/products",
+    "/product/202309/seller/products",
+]
+for path in get_paths:
+    d = call_get(path, {"page_size": "5"})
+    code = d.get("code", "?")
+    msg  = str(d.get("message", ""))[:60]
+    total = (d.get("data") or {}).get("total_count", "?")
+    print(f"GET {path}")
+    print(f"  code={code}, msg={msg}, total={total}")
+    if code == 0:
+        products = (d.get("data") or {}).get("products") or []
+        for p in products[:2]:
+            print(f"  → id={p.get('id')}, title={p.get('title') or p.get('name') or list(p.keys())}")
+    print()
 
-# [1] 개별 상품 상세 조회
-print("[1] GET /product/202309/products/{id}")
-d = call_get(f"/product/202309/products/{PRODUCT_ID}")
-print(f"  code={d.get('code')}, msg={d.get('message')}")
-data = d.get("data") or {}
-if data:
-    print(f"  keys: {list(data.keys())}")
-    print(f"  title/name: {data.get('title') or data.get('name') or '없음'}")
+# POST 엔드포인트들
+post_paths = [
+    ("/product/202309/products/search", {}),
+    ("/product/202312/products/search", {}),
+    ("/product/202405/products/search", {}),
+]
+for path, body in post_paths:
+    d = call_post(path, body, {"page_size": "5"})
+    code = d.get("code", "?")
+    msg  = str(d.get("message", ""))[:60]
+    total = (d.get("data") or {}).get("total_count", "?")
+    print(f"POST {path}")
+    print(f"  code={code}, msg={msg}, total={total}")
+    if code == 0:
+        products = (d.get("data") or {}).get("products") or []
+        for p in products[:2]:
+            print(f"  → id={p.get('id')}, title={p.get('title') or p.get('name') or list(p.keys())}")
+    print()
 
-print()
-
-# [2] 상품 목록 검색 (POST)
-print("[2] POST /product/202309/products/search")
-d = call_post("/product/202309/products/search",
-              {"product_ids": [PRODUCT_ID]},
-              {"page_size": "1"})
-print(f"  code={d.get('code')}, msg={d.get('message')}")
-products = (d.get("data") or {}).get("products") or []
-if products:
-    p = products[0]
-    print(f"  keys: {list(p.keys())}")
-    print(f"  title: {p.get('title') or p.get('name') or '없음'}")
-
-print()
-
-# [3] 다른 버전 시도
-print("[3] GET /product/202312/products/{id}")
-d = call_get(f"/product/202312/products/{PRODUCT_ID}")
-print(f"  code={d.get('code')}, msg={d.get('message')}")
-data = d.get("data") or {}
-if data:
-    print(f"  title: {data.get('title') or data.get('name') or list(data.keys())}")
-
-input("\n완료. 엔터 누르면 종료...")
+input("완료. 엔터 누르면 종료...")
