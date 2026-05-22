@@ -61,11 +61,11 @@ def run(date_str: str):
             gmv = item.get("gmv") or {}
             all_rows.append([
                 date_str,
-                item.get("product_id") or "",
-                item.get("id") or "",
-                item.get("sku_orders") or "",
-                item.get("units_sold") or "",
-                gmv.get("amount") or "",
+                "'" + str(item.get("product_id") or ""),   # 텍스트 강제
+                "'" + str(item.get("id") or ""),            # 텍스트 강제
+                item.get("sku_orders") or 0,
+                item.get("units_sold") or 0,
+                gmv.get("amount") or 0,
                 gmv.get("currency") or "USD",
             ])
 
