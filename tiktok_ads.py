@@ -1,4 +1,4 @@
-"""TikTok Ads API → Google Sheets '광고성과' 탭"""
+"""TikTok Ads API (GMV MAX) → Google Sheets '광고성과' 탭"""
 import json
 import os
 import time
@@ -12,40 +12,38 @@ import gspread
 # ─────────────────────────────────────────
 # 설정
 # ─────────────────────────────────────────
-APP_ID       = "7641873128328101904"
+APP_ID        = "7641873128328101904"
 ADVERTISER_ID = "7573855166672355345"
 
-SPREADSHEET_ID      = "1AhVPPUq6Npri72uhtFcOUVMBl1jA7nf2P0qDCDRRKfA"
-SHEET_NAME          = "광고성과"
+SPREADSHEET_ID       = "1AhVPPUq6Npri72uhtFcOUVMBl1jA7nf2P0qDCDRRKfA"
+SHEET_NAME           = "광고성과"
 SERVICE_ACCOUNT_FILE = "service_account.json"
-TOKEN_FILE          = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ads_tokens.json")
+TOKEN_FILE           = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ads_tokens.json")
 
-BASE_URL = "https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/"
+BASE_URL = "https://business-api.tiktok.com/open_api/v1.3/gmv_max/report/get/"
 
-DIMENSIONS = ["ad_id", "stat_time_day"]
+DIMENSIONS = ["stat_time_day", "campaign_id"]
 
 METRICS = [
-    "ad_name", "adgroup_name", "campaign_name",
-    "spend", "impressions", "clicks", "ctr", "cpm", "cpc",
-    "reach", "frequency",
-    "video_play_actions", "video_watched_2s", "video_watched_6s",
-    "video_views_p25", "video_views_p50", "video_views_p75", "video_views_p100",
-    "average_video_play", "average_video_play_per_user",
-    "conversion", "cost_per_conversion", "conversion_rate",
-    "real_time_conversion", "real_time_cost_per_conversion",
-    "onsite_shopping",
+    "campaign_name",
+    "spend",
+    "gross_revenue",
+    "orders",
+    "roi",
+    "impressions",
+    "clicks",
+    "ctr",
+    "cpm",
+    "cpc",
+    "reach",
+    "frequency",
 ]
 
 HEADERS = [
-    "날짜", "광고ID", "광고명", "광고그룹명", "캠페인명",
-    "지출금액", "노출수", "클릭수", "CTR", "CPM", "CPC",
+    "날짜", "캠페인ID", "캠페인명",
+    "지출금액", "총매출(GMV)", "주문수", "ROI",
+    "노출수", "클릭수", "CTR", "CPM", "CPC",
     "도달수", "빈도",
-    "영상재생수", "2초시청", "6초시청",
-    "25%시청", "50%시청", "75%시청", "100%시청",
-    "평균시청시간", "1인당평균시청시간",
-    "전환수", "전환당비용(CPA)", "전환율",
-    "실시간전환수", "실시간CPA",
-    "온사이트주문수",
 ]
 
 
@@ -77,15 +75,12 @@ def parse_date_range(raw: str):
 def fetch_page(token: str, start_date: str, end_date: str, page: int) -> dict | None:
     params = {
         "advertiser_id": ADVERTISER_ID,
-        "report_type": "BASIC",
-        "data_level": "AUCTION_AD",
         "dimensions": json.dumps(DIMENSIONS),
         "metrics": json.dumps(METRICS),
         "start_date": start_date,
         "end_date": end_date,
         "page": page,
         "page_size": 1000,
-        "lifetime": "false",
     }
     for attempt in range(1, 4):
         try:
@@ -99,6 +94,8 @@ def fetch_page(token: str, start_date: str, end_date: str, page: int) -> dict | 
             if data.get("code") == 0:
                 return data
             print(f"  [경고] code={data.get('code')}, msg={data.get('message')} (시도 {attempt}/3)")
+            if data.get("code") in (40002, 40100):
+                return None
         except Exception as e:
             print(f"  [오류] {e} (시도 {attempt}/3)")
         time.sleep(2 * attempt)
@@ -122,11 +119,12 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
             mets = item.get("metrics", {})
             all_rows.append([
                 dims.get("stat_time_day", "")[:10],
-                dims.get("ad_id", ""),
-                mets.get("ad_name", ""),
-                mets.get("adgroup_name", ""),
+                dims.get("campaign_id", ""),
                 mets.get("campaign_name", ""),
                 mets.get("spend", ""),
+                mets.get("gross_revenue", ""),
+                mets.get("orders", ""),
+                mets.get("roi", ""),
                 mets.get("impressions", ""),
                 mets.get("clicks", ""),
                 mets.get("ctr", ""),
@@ -134,21 +132,6 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
                 mets.get("cpc", ""),
                 mets.get("reach", ""),
                 mets.get("frequency", ""),
-                mets.get("video_play_actions", ""),
-                mets.get("video_watched_2s", ""),
-                mets.get("video_watched_6s", ""),
-                mets.get("video_views_p25", ""),
-                mets.get("video_views_p50", ""),
-                mets.get("video_views_p75", ""),
-                mets.get("video_views_p100", ""),
-                mets.get("average_video_play", ""),
-                mets.get("average_video_play_per_user", ""),
-                mets.get("conversion", ""),
-                mets.get("cost_per_conversion", ""),
-                mets.get("conversion_rate", ""),
-                mets.get("real_time_conversion", ""),
-                mets.get("real_time_cost_per_conversion", ""),
-                mets.get("onsite_shopping", ""),
             ])
 
         total_page = page_info.get("total_page", 1)
@@ -190,16 +173,17 @@ def save(rows: list[list]):
     if not existing:
         sheet.append_row(HEADERS)
         sheet.freeze(rows=1)
-    for attempt in range(1, 6):
+    for attempt in range(1, 9):
         try:
             sheet.append_rows(rows, value_input_option="USER_ENTERED")
             print(f"  ✅ {len(rows)}행 저장 완료")
             return
         except Exception as e:
-            if attempt == 5:
+            if attempt == 8:
                 raise
-            print(f"  시트 쓰기 실패 (시도 {attempt}/5), 재시도 중...")
-            time.sleep(3 * attempt)
+            wait = min(3 * attempt, 30)
+            print(f"  시트 쓰기 실패 (시도 {attempt}/8), {wait}초 후 재시도...")
+            time.sleep(wait)
 
 
 # ─────────────────────────────────────────
@@ -208,7 +192,7 @@ def save(rows: list[list]):
 def main():
     raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15): ").strip()
     start_date, end_date = parse_date_range(raw)
-    print(f"\n=== TikTok Ads 성과 [{start_date} ~ {end_date}] ===")
+    print(f"\n=== TikTok GMV MAX 광고 성과 [{start_date} ~ {end_date}] ===")
 
     token = get_token()
     rows = fetch_all(token, start_date, end_date)
