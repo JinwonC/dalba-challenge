@@ -65,17 +65,19 @@ def make_order_sign(path, params, body):
 
 
 def fetch_product_name_map(start_date: str, end_date: str) -> dict:
-    """start_date ~ end_date 기간 주문에서 product_id → 상품명 매핑 반환"""
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=LA_TZ)
-    end_dt   = (datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)).replace(tzinfo=LA_TZ)
+    """상품명 매핑: 전체 기간 대신 최근 30일만 조회 (상품명은 변하지 않음)"""
+    from datetime import date
+    # 최근 30일로 제한 (너무 긴 기간이면 속도 저하)
+    lookup_end = datetime.now(LA_TZ)
+    lookup_start = lookup_end - timedelta(days=30)
 
     name_map = {}
     page_token = None
 
     while True:
         body_obj = {
-            "create_time_ge": int(start_dt.timestamp()),
-            "create_time_lt": int(end_dt.timestamp()),
+            "create_time_ge": int(lookup_start.timestamp()),
+            "create_time_lt": int(lookup_end.timestamp()),
         }
         body = json.dumps(body_obj, separators=(",", ":"))
         params = {
