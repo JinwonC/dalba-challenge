@@ -14,6 +14,7 @@ import gspread
 # ─────────────────────────────────────────
 APP_ID        = "7641873128328101904"
 ADVERTISER_ID = "7573855166672355345"
+STORE_ID      = "7494221571082258140"
 
 SPREADSHEET_ID       = "1AhVPPUq6Npri72uhtFcOUVMBl1jA7nf2P0qDCDRRKfA"
 SHEET_NAME           = "광고성과"
@@ -75,6 +76,7 @@ def parse_date_range(raw: str):
 def fetch_page(token: str, start_date: str, end_date: str, page: int) -> dict | None:
     params = {
         "advertiser_id": ADVERTISER_ID,
+        "store_ids": json.dumps([STORE_ID]),
         "dimensions": json.dumps(DIMENSIONS),
         "metrics": json.dumps(METRICS),
         "start_date": start_date,
