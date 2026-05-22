@@ -31,25 +31,11 @@ METRICS = [
     "cost_per_order",
     "gross_revenue",
     "roi",
-    "product_impressions",
-    "product_clicks",
-    "product_click_rate",
-    "ad_click_rate",
-    "ad_conversion_rate",
-    "ad_video_view_rate_2s",
-    "ad_video_view_rate_6s",
-    "ad_video_view_rate_p25",
-    "ad_video_view_rate_p50",
-    "ad_video_view_rate_p75",
-    "ad_video_view_rate_p100",
 ]
 
 HEADERS = [
     "날짜", "캠페인ID",
-    "지출금액(cost)", "주문수", "주문당비용", "총매출(GMV)", "ROI",
-    "상품노출수", "상품클릭수", "상품클릭률",
-    "광고클릭률", "광고전환율",
-    "2초시청률", "6초시청률", "25%시청률", "50%시청률", "75%시청률", "100%시청률",
+    "지출금액", "주문수", "주문당비용", "총매출(GMV)", "ROI",
 ]
 
 
@@ -132,17 +118,6 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
                 mets.get("cost_per_order", ""),
                 mets.get("gross_revenue", ""),
                 mets.get("roi", ""),
-                mets.get("product_impressions", ""),
-                mets.get("product_clicks", ""),
-                mets.get("product_click_rate", ""),
-                mets.get("ad_click_rate", ""),
-                mets.get("ad_conversion_rate", ""),
-                mets.get("ad_video_view_rate_2s", ""),
-                mets.get("ad_video_view_rate_6s", ""),
-                mets.get("ad_video_view_rate_p25", ""),
-                mets.get("ad_video_view_rate_p50", ""),
-                mets.get("ad_video_view_rate_p75", ""),
-                mets.get("ad_video_view_rate_p100", ""),
             ])
 
         total_page = page_info.get("total_page", 1)
