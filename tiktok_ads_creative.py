@@ -116,11 +116,10 @@ def fetch_item_rows(token, start_date, end_date, campaign_id, item_group_ids, ca
             break
         for item in d.get("data", {}).get("list", []):
             dims, mets = item["dimensions"], item["metrics"]
-            if dims.get("item_id") == "-1":   # 귀속 불가 기타 행 제외
-                continue
+            item_id = dims.get("item_id", "")
             rows.append([
                 dims.get("stat_time_day", "")[:10],
-                dims.get("item_id", ""),
+                "프로덕트카드" if item_id == "-1" else item_id,
                 campaign_id, campaign_name,
                 dims.get("item_group_id", ""),
                 mets.get("creative_delivery_status", ""),
