@@ -10,8 +10,7 @@ STORE_ID      = "7494221571082258140"
 BASE = "https://business-api.tiktok.com/open_api/v1.3"
 headers = {"Access-Token": token}
 
-CAMPAIGN_ID   = "1855368265340113"
-ITEM_GROUP_ID = None  # 아래에서 자동 조회
+CAMPAIGN_ID = "1855368265340113"
 
 # item_group_ids 가져오기
 r = requests.get(f"{BASE}/campaign/gmv_max/info/", headers=headers,
@@ -22,6 +21,7 @@ print(f"item_group_ids: {item_group_ids[:3]}")
 
 if not item_group_ids:
     print("item_group_ids 없음 - 종료")
+    input("엔터 누르면 종료...")
     exit()
 
 # [1] product_id dimension 포함 시도
@@ -42,9 +42,9 @@ for item in (d.get("data", {}).get("list") or [])[:3]:
     print(f"  dims keys: {list(item.get('dimensions', {}).keys())}")
     print(f"  {item}")
 
-# [2] product_id 없이 item_id만 (기존 방식) - dimensions 확인
+# [2] item_id만 (기존) - 응답에 product_id 포함 여부 확인
 print()
-print("[2] dimensions에 item_id만 (기존) - 응답에 product_id 있는지 확인")
+print("[2] dimensions에 item_id만 - 응답에 product_id 있는지 확인")
 r = requests.get(f"{BASE}/gmv_max/report/get/", headers=headers, params={
     "advertiser_id": ADVERTISER_ID,
     "store_ids": json.dumps([STORE_ID]),
@@ -59,3 +59,5 @@ print(f"  code={d.get('code')}, msg={d.get('message')}")
 for item in (d.get("data", {}).get("list") or [])[:3]:
     print(f"  dims keys: {list(item.get('dimensions', {}).keys())}")
     print(f"  {item}")
+
+input("\n완료. 엔터 누르면 종료...")
