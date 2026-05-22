@@ -180,6 +180,8 @@ def fetch_item_rows(token, start_date, end_date,
             break
         for item in d.get("data", {}).get("list", []):
             dims, mets = item["dimensions"], item["metrics"]
+            if dims.get("item_id") == "-1":   # 귀속 불가 기타 행 제외
+                continue
             gid = dims.get("item_group_id", "")
             g = adgroup_map.get(gid, {})
             rows.append([
