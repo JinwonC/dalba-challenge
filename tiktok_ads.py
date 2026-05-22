@@ -31,20 +31,11 @@ METRICS = [
     "gross_revenue",
     "orders",
     "roi",
-    "impressions",
-    "clicks",
-    "ctr",
-    "cpm",
-    "cpc",
-    "reach",
-    "frequency",
 ]
 
 HEADERS = [
     "날짜", "캠페인ID", "캠페인명",
     "지출금액", "총매출(GMV)", "주문수", "ROI",
-    "노출수", "클릭수", "CTR", "CPM", "CPC",
-    "도달수", "빈도",
 ]
 
 
@@ -127,13 +118,6 @@ def fetch_all(token: str, start_date: str, end_date: str) -> list[list]:
                 mets.get("gross_revenue", ""),
                 mets.get("orders", ""),
                 mets.get("roi", ""),
-                mets.get("impressions", ""),
-                mets.get("clicks", ""),
-                mets.get("ctr", ""),
-                mets.get("cpm", ""),
-                mets.get("cpc", ""),
-                mets.get("reach", ""),
-                mets.get("frequency", ""),
             ])
 
         total_page = page_info.get("total_page", 1)
