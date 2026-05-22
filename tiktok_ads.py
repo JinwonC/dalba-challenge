@@ -80,6 +80,7 @@ def fetch_page(token: str, start_date: str, end_date: str, page: int) -> dict | 
     params = {
         "advertiser_id": ADVERTISER_ID,
         "report_type": "BASIC",
+        "data_level": "AUCTION_AD",
         "dimensions": json.dumps(DIMENSIONS),
         "metrics": json.dumps(METRICS),
         "start_date": start_date,
