@@ -5,7 +5,7 @@ from google.oauth2.service_account import Credentials
 import gspread, re, sys
 
 SPREADSHEET_ID = "15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o"
-SHEET_NAME = "(중요) SKU Order"
+SHEET_NAME = "(중요, 자동) SKU Order"
 PATH = "/analytics/202509/shop_skus/performance"
 
 HEADERS = ["날짜", "상품ID", "SKU ID", "SKU주문수", "판매수량", "GMV", "통화"]
