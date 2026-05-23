@@ -321,9 +321,9 @@ def refresh_all_existing():
     today = datetime.now(timezone.utc)
     updated_at = datetime.now(LA_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    # API 최대 범위 제한으로 180일 단위 청크로 조회
-    CHUNK_DAYS = 180
-    chunk_start = datetime(2024, 9, 1, tzinfo=timezone.utc)
+    # API 최대 범위 제한으로 30일 단위 청크로 조회 (최근 12개월)
+    CHUNK_DAYS = 30
+    chunk_start = today - timedelta(days=365)
 
     batch_updates: list[dict] = []
     matched = 0
