@@ -309,21 +309,32 @@ def refresh_all_existing():
         print("  시트에 데이터 없음")
         return
 
-    # Video ID → 행번호 매핑
+    # Video ID → 행번호 + B열 포스팅일 매핑
     video_index_map: dict[str, int] = {}
+    post_dates: list[datetime] = []
     for i, row in enumerate(existing[1:], start=2):
         vid = str(row[0]).strip().lstrip("'")
-        if vid:
-            video_index_map[vid] = i
+        if not vid:
+            continue
+        video_index_map[vid] = i
+        # B열 포스팅일 파싱
+        raw_date = str(row[1]).strip()[:10] if len(row) > 1 else ""
+        try:
+            post_dates.append(datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=timezone.utc))
+        except ValueError:
+            pass
 
     print(f"  기존 영상 {len(video_index_map)}개 발견")
 
     today = datetime.now(timezone.utc)
     updated_at = datetime.now(LA_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    # API 최대 90일 범위 제한 — 90일 단위 청크로 조회 (최근 12개월)
-    CHUNK_DAYS = 90
-    chunk_start = today - timedelta(days=365)
+    # B열 포스팅일 기준 최솟값부터 오늘까지 89일 청크로 조회
+    CHUNK_DAYS = 89
+    if post_dates:
+        chunk_start = min(post_dates).replace(hour=0, minute=0, second=0)
+    else:
+        chunk_start = today - timedelta(days=89)
 
     batch_updates: list[dict] = []
     matched = 0
