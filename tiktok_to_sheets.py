@@ -286,5 +286,125 @@ def sync_by_date_range(start_str: str, end_str: str):
     run_sync(from_date, to_date)
 
 
+def refresh_all_existing():
+    """A열 기존 영상 전체를 오늘 기준 최신 데이터로 업데이트 (신규 추가 없음)
+    업데이트 컬럼: B(포스팅일), C(크리에이터), E(GMV), G(SKU Orders),
+                  H(Units Sold), I(Views), J(CTR), K(Product IDs), M(마지막업데이트)
+    """
+    print("\n=== 기존 영상 전체 최신화 ===")
+    sheet = get_sheet()
+
+    for attempt in range(1, 9):
+        try:
+            existing = sheet.get_all_values()
+            break
+        except Exception as e:
+            if attempt == 8:
+                raise
+            wait = min(3 * attempt, 30)
+            print(f"  시트 읽기 실패 (시도 {attempt}/8), {wait}초 후 재시도...")
+            time.sleep(wait)
+
+    if len(existing) <= 1:
+        print("  시트에 데이터 없음")
+        return
+
+    # Video ID → 행번호 매핑
+    video_index_map: dict[str, int] = {}
+    for i, row in enumerate(existing[1:], start=2):
+        vid = str(row[0]).strip().lstrip("'")
+        if vid:
+            video_index_map[vid] = i
+
+    print(f"  기존 영상 {len(video_index_map)}개 발견")
+
+    today = datetime.now(timezone.utc)
+    from_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    updated_at = datetime.now(LA_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+    page_token = None
+    batch_updates: list[dict] = []
+    matched = 0
+
+    while True:
+        result = fetch_video_performance(from_date, today, page_token)
+        if not result:
+            break
+
+        videos = result.get("data", {}).get("videos") or []
+        for video in videos:
+            video_id = str(video.get("id") or "").strip()
+            if video_id not in video_index_map:
+                continue
+
+            r = video_index_map[video_id]
+            sn = VIDEO_SHEET_NAME
+            gmv = video.get("gmv") or {}
+            products = video.get("products") or []
+            product_ids = ", ".join(str(p.get("id") or "") for p in products)
+
+            # B:C — 포스팅일, 크리에이터
+            batch_updates.append({
+                "range": f"'{sn}'!B{r}:C{r}",
+                "values": [[video.get("video_post_time") or "", video.get("username") or ""]]
+            })
+            # E — GMV
+            batch_updates.append({
+                "range": f"'{sn}'!E{r}",
+                "values": [[float(gmv.get("amount") or 0)]]
+            })
+            # G:J — SKU Orders, Units Sold, Views, CTR
+            batch_updates.append({
+                "range": f"'{sn}'!G{r}:J{r}",
+                "values": [[
+                    video.get("sku_orders") or 0,
+                    video.get("units_sold") or 0,
+                    video.get("views") or 0,
+                    video.get("click_through_rate") or 0,
+                ]]
+            })
+            # K — Product IDs
+            batch_updates.append({
+                "range": f"'{sn}'!K{r}",
+                "values": [[product_ids]]
+            })
+            # M — 마지막업데이트
+            batch_updates.append({
+                "range": f"'{sn}'!M{r}",
+                "values": [[updated_at]]
+            })
+
+            matched += 1
+
+        new_token = result.get("data", {}).get("next_page_token") or None
+        if not new_token or new_token == page_token:
+            break
+        page_token = new_token
+        time.sleep(0.3)
+
+    print(f"  매칭된 영상 {matched}개 업데이트 중...")
+    if batch_updates:
+        body = {"valueInputOption": "USER_ENTERED", "data": batch_updates}
+        sheet.spreadsheet.values_batch_update(body)
+
+    print(f"\n✅ 완료! {matched}개 영상 최신화")
+
+
 if __name__ == "__main__":
-    sync_last_30_days()
+    print("실행 모드:")
+    print("  1. 날짜 범위로 동기화 (신규 영상 추가)")
+    print("  2. 기존 영상 전체 최신화 (A열 기준, 신규 추가 없음)")
+    choice = input("번호 입력: ").strip()
+    if choice == "2":
+        refresh_all_existing()
+    else:
+        raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15, 엔터=최근30일): ").strip()
+        if raw:
+            import re
+            nums = re.findall(r"\d{4}[-./]\d{1,2}[-./]\d{1,2}", raw)
+            if len(nums) >= 2:
+                sync_by_date_range(re.sub(r"[./]", "-", nums[0]), re.sub(r"[./]", "-", nums[1]))
+            elif len(nums) == 1:
+                sync_by_date_range(re.sub(r"[./]", "-", nums[0]), re.sub(r"[./]", "-", nums[0]))
+        else:
+            sync_last_30_days()
