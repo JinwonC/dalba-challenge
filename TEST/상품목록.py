@@ -28,20 +28,21 @@ def make_post_sign(path, params, body):
     return hmac.new(APP_SECRET.encode(), s.encode(), hashlib.sha256).hexdigest()
 
 
-def call_post(body_obj, page_token=None):
-    body_obj = {**body_obj}
+def call_post(page_token=None):
+    body_obj = {}
     if page_token:
         body_obj["page_token"] = page_token
-    body_str = json.dumps(body_obj, separators=(",", ":"))
+    body_str = json.dumps(body_obj, separators=(",", ":")) if body_obj else ""
 
     for attempt in range(1, 4):
         ts = str(int(time.time()))
-        params = {"app_key": APP_KEY, "shop_cipher": SHOP_CIPHER, "timestamp": ts}
+        params = {"app_key": APP_KEY, "shop_cipher": SHOP_CIPHER,
+                  "timestamp": ts, "page_size": "100"}
         params["sign"] = make_post_sign(PATH, params, body_str)
         url = BASE_URL + PATH + "?" + urlencode(params, quote_via=quote)
         hdrs = {"x-tts-access-token": get_current_token(), "content-type": "application/json"}
         try:
-            r = requests.post(url, headers=hdrs, data=body_str, timeout=30)
+            r = requests.post(url, headers=hdrs, data=body_str or None, timeout=30)
             d = r.json()
             if d.get("code") == 0:
                 return d
@@ -63,7 +64,7 @@ def fetch_all_products():
 
     while True:
         print(f"  페이지 {page} 조회 중...")
-        result = call_post({"page_size": 100}, page_token)
+        result = call_post(page_token)
         if not result:
             break
 
