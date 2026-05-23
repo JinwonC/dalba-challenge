@@ -272,11 +272,10 @@ def run_sync(from_date: datetime, to_date: datetime):
 # 실행 진입점
 # ─────────────────────────────────────────
 
-def sync_last_30_days():
-    """최근 30일 동기화 (Apps Script syncShopVideosToSheet 대응)"""
+def sync_last_60_days():
+    """최근 60일 동기화 — 기존 영상 업데이트 + 신규 영상 추가"""
     now = datetime.now(timezone.utc)
-    from_date = now - timedelta(days=30)
-    run_sync(from_date, now)
+    run_sync(now - timedelta(days=60), now)
 
 
 def sync_by_date_range(start_str: str, end_str: str):
@@ -420,7 +419,7 @@ if __name__ == "__main__":
     if choice == "2":
         refresh_all_existing()
     else:
-        raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15, 엔터=최근30일): ").strip()
+        raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15, 엔터=최근60일): ").strip()
         if raw:
             import re
             nums = re.findall(r"\d{4}[-./]\d{1,2}[-./]\d{1,2}", raw)
@@ -429,4 +428,4 @@ if __name__ == "__main__":
             elif len(nums) == 1:
                 sync_by_date_range(re.sub(r"[./]", "-", nums[0]), re.sub(r"[./]", "-", nums[0]))
         else:
-            sync_last_30_days()
+            sync_last_60_days()
