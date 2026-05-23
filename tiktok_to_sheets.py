@@ -319,68 +319,79 @@ def refresh_all_existing():
     print(f"  기존 영상 {len(video_index_map)}개 발견")
 
     today = datetime.now(timezone.utc)
-    from_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
     updated_at = datetime.now(LA_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
-    page_token = None
+    # API 최대 범위 제한으로 180일 단위 청크로 조회
+    CHUNK_DAYS = 180
+    chunk_start = datetime(2024, 9, 1, tzinfo=timezone.utc)
+
     batch_updates: list[dict] = []
     matched = 0
+    seen_ids: set[str] = set()
 
-    while True:
-        result = fetch_video_performance(from_date, today, page_token)
-        if not result:
-            break
+    while chunk_start <= today:
+        chunk_end = min(chunk_start + timedelta(days=CHUNK_DAYS), today)
+        print(f"  조회 중: {chunk_start.strftime('%Y-%m-%d')} ~ {chunk_end.strftime('%Y-%m-%d')}")
 
-        videos = result.get("data", {}).get("videos") or []
-        for video in videos:
-            video_id = str(video.get("id") or "").strip()
-            if video_id not in video_index_map:
-                continue
+        page_token = None
+        while True:
+            result = fetch_video_performance(chunk_start, chunk_end, page_token)
+            if not result:
+                break
 
-            r = video_index_map[video_id]
-            sn = VIDEO_SHEET_NAME
-            gmv = video.get("gmv") or {}
-            products = video.get("products") or []
-            product_ids = ", ".join(str(p.get("id") or "") for p in products)
+            videos = result.get("data", {}).get("videos") or []
+            for video in videos:
+                video_id = str(video.get("id") or "").strip()
+                if video_id not in video_index_map or video_id in seen_ids:
+                    continue
 
-            # B:C — 포스팅일, 크리에이터
-            batch_updates.append({
-                "range": f"'{sn}'!B{r}:C{r}",
-                "values": [[video.get("video_post_time") or "", video.get("username") or ""]]
-            })
-            # E — GMV
-            batch_updates.append({
-                "range": f"'{sn}'!E{r}",
-                "values": [[float(gmv.get("amount") or 0)]]
-            })
-            # G:J — SKU Orders, Units Sold, Views, CTR
-            batch_updates.append({
-                "range": f"'{sn}'!G{r}:J{r}",
-                "values": [[
-                    video.get("sku_orders") or 0,
-                    video.get("units_sold") or 0,
-                    video.get("views") or 0,
-                    video.get("click_through_rate") or 0,
-                ]]
-            })
-            # K — Product IDs
-            batch_updates.append({
-                "range": f"'{sn}'!K{r}",
-                "values": [[product_ids]]
-            })
-            # M — 마지막업데이트
-            batch_updates.append({
-                "range": f"'{sn}'!M{r}",
-                "values": [[updated_at]]
-            })
+                seen_ids.add(video_id)
+                r = video_index_map[video_id]
+                sn = VIDEO_SHEET_NAME
+                gmv = video.get("gmv") or {}
+                products = video.get("products") or []
+                product_ids = ", ".join(str(p.get("id") or "") for p in products)
 
-            matched += 1
+                # B:C — 포스팅일, 크리에이터
+                batch_updates.append({
+                    "range": f"'{sn}'!B{r}:C{r}",
+                    "values": [[video.get("video_post_time") or "", video.get("username") or ""]]
+                })
+                # E — GMV
+                batch_updates.append({
+                    "range": f"'{sn}'!E{r}",
+                    "values": [[float(gmv.get("amount") or 0)]]
+                })
+                # G:J — SKU Orders, Units Sold, Views, CTR
+                batch_updates.append({
+                    "range": f"'{sn}'!G{r}:J{r}",
+                    "values": [[
+                        video.get("sku_orders") or 0,
+                        video.get("units_sold") or 0,
+                        video.get("views") or 0,
+                        video.get("click_through_rate") or 0,
+                    ]]
+                })
+                # K — Product IDs
+                batch_updates.append({
+                    "range": f"'{sn}'!K{r}",
+                    "values": [[product_ids]]
+                })
+                # M — 마지막업데이트
+                batch_updates.append({
+                    "range": f"'{sn}'!M{r}",
+                    "values": [[updated_at]]
+                })
 
-        new_token = result.get("data", {}).get("next_page_token") or None
-        if not new_token or new_token == page_token:
-            break
-        page_token = new_token
-        time.sleep(0.3)
+                matched += 1
+
+            new_token = result.get("data", {}).get("next_page_token") or None
+            if not new_token or new_token == page_token:
+                break
+            page_token = new_token
+            time.sleep(0.3)
+
+        chunk_start = chunk_end + timedelta(days=1)
 
     print(f"  매칭된 영상 {matched}개 업데이트 중...")
     if batch_updates:
