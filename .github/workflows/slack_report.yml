@@ -1,0 +1,40 @@
+name: Slack Daily Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '리포트 날짜 (YYYY-MM-DD). 비워두면 어제 날짜 자동 사용'
+        required: false
+        default: ''
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.ADS_TOKENS_JSON }}' > ads_tokens.json
+
+      - name: Send Slack daily report
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          ADS_TOKENS_JSON: ${{ secrets.ADS_TOKENS_JSON }}
+          REPORT_DATE: ${{ github.event.inputs.report_date }}
+        run: python slack_report.py
