@@ -125,12 +125,15 @@ def short_name(name, max_len=28):
 # 날짜 계산 (LA 기준)
 # ──────────────────────────────────────────
 def get_report_dates():
-    """LA 시간 기준 어제/그제"""
-    la_offset = timedelta(hours=-7)  # PDT (여름)
-    now_la = datetime.now(timezone.utc) + la_offset
-    today_la = now_la.date()
-    report_date = today_la - timedelta(days=1)    # 어제
-    compare_date = today_la - timedelta(days=2)   # 그제
+    """환경변수 REPORT_DATE 있으면 사용, 없으면 LA 기준 어제"""
+    env_date = os.environ.get("REPORT_DATE", "").strip()
+    if env_date:
+        report_date = datetime.strptime(env_date, "%Y-%m-%d").date()
+    else:
+        la_offset = timedelta(hours=-7)  # PDT (여름)
+        now_la = datetime.now(timezone.utc) + la_offset
+        report_date = now_la.date() - timedelta(days=1)
+    compare_date = report_date - timedelta(days=1)
     return str(report_date), str(compare_date)
 
 

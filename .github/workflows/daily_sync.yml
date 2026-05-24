@@ -3,7 +3,12 @@ name: Daily TikTok Sync
 on:
   schedule:
     - cron: '0 7 * * *'  # 매일 KST 오후 4시 (UTC 오전 7시)
-  workflow_dispatch:      # 수동 실행 버튼
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '리포트 날짜 (YYYY-MM-DD). 비워두면 어제 날짜 자동 사용'
+        required: false
+        default: ''
 
 jobs:
   sync:
@@ -27,11 +32,14 @@ jobs:
           echo '${{ secrets.TOKENS_JSON }}' > tokens.json
           echo '${{ secrets.ADS_TOKENS_JSON }}' > ads_tokens.json
 
-      - name: Compute yesterday (LA time)
+      - name: Compute report date (LA time)
         id: date
         run: |
-          # LA 시간 기준 어제 날짜 (UTC-7 기준)
-          YESTERDAY=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            YESTERDAY="${{ github.event.inputs.report_date }}"
+          else
+            YESTERDAY=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+          fi
           echo "yesterday=$YESTERDAY" >> $GITHUB_OUTPUT
 
       - name: Run tiktok_to_sheets.py (최근 60일 업서트)
@@ -49,4 +57,5 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           ADS_TOKENS_JSON: ${{ secrets.ADS_TOKENS_JSON }}
+          REPORT_DATE: ${{ steps.date.outputs.yesterday }}
         run: python slack_report.py
