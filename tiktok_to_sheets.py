@@ -423,20 +423,22 @@ if __name__ == "__main__":
         elif len(nums) == 1:
             sync_by_date_range(_re.sub(r"[./]", "-", nums[0]), _re.sub(r"[./]", "-", nums[0]))
     else:
-        # 인자 없으면 대화형 메뉴
-        print("실행 모드:")
-        print("  1. 날짜 범위로 동기화 (신규 영상 추가)")
-        print("  2. 기존 영상 전체 최신화 (A열 기준, 신규 추가 없음)")
-        choice = input("번호 입력: ").strip()
-        if choice == "2":
-            refresh_all_existing()
-        else:
-            raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15, 엔터=최근60일): ").strip()
-            if raw:
-                nums = _re.findall(r"\d{4}[-./]\d{1,2}[-./]\d{1,2}", raw)
-                if len(nums) >= 2:
-                    sync_by_date_range(_re.sub(r"[./]", "-", nums[0]), _re.sub(r"[./]", "-", nums[1]))
-                elif len(nums) == 1:
-                    sync_by_date_range(_re.sub(r"[./]", "-", nums[0]), _re.sub(r"[./]", "-", nums[0]))
+        if _sys.stdin.isatty():
+            print("실행 모드:")
+            print("  1. 날짜 범위로 동기화 (신규 영상 추가)")
+            print("  2. 기존 영상 전체 최신화 (A열 기준, 신규 추가 없음)")
+            choice = input("번호 입력: ").strip()
+            if choice == "2":
+                refresh_all_existing()
             else:
-                sync_last_60_days()
+                raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15, 엔터=최근60일): ").strip()
+                if raw:
+                    nums = _re.findall(r"\d{4}[-./]\d{1,2}[-./]\d{1,2}", raw)
+                    if len(nums) >= 2:
+                        sync_by_date_range(_re.sub(r"[./]", "-", nums[0]), _re.sub(r"[./]", "-", nums[1]))
+                    elif len(nums) == 1:
+                        sync_by_date_range(_re.sub(r"[./]", "-", nums[0]), _re.sub(r"[./]", "-", nums[0]))
+                else:
+                    sync_last_60_days()
+        else:
+            sync_last_60_days()
