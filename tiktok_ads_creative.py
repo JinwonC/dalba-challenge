@@ -116,6 +116,10 @@ def fetch_item_rows(token, start_date, end_date, campaign_id, item_group_ids, ca
             break
         for item in d.get("data", {}).get("list", []):
             dims, mets = item["dimensions"], item["metrics"]
+            cost    = float(mets.get("cost") or 0)
+            revenue = float(mets.get("gross_revenue") or 0)
+            if cost == 0 and revenue == 0:
+                continue
             item_id = dims.get("item_id", "")
             rows.append([
                 dims.get("stat_time_day", "")[:10],
