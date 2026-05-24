@@ -43,3 +43,10 @@ jobs:
 
       - name: Run tiktok_ads.py (어제 날짜)
         run: python tiktok_ads.py "${{ steps.date.outputs.yesterday }} ~ ${{ steps.date.outputs.yesterday }}"
+
+      - name: Send Slack daily report
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          ADS_TOKENS_JSON: ${{ secrets.ADS_TOKENS_JSON }}
+        run: python slack_report.py
