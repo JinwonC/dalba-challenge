@@ -23,7 +23,7 @@ METRICS = [
     "ad_video_view_rate_p75", "ad_video_view_rate_p100",
 ]
 HEADERS = [
-    "날짜", "소재ID", "캠페인ID", "캠페인명", "아이템그룹ID",
+    "날짜", "소재ID", "캠페인ID", "캠페인명", "아이템그룹ID", "아이템그룹명",
     "게재상태", "지출금액", "주문수", "주문당비용", "총매출(GMV)", "ROI",
     "상품노출수", "상품클릭수", "상품클릭률",
     "광고클릭률", "광고전환율",
@@ -125,7 +125,7 @@ def fetch_item_rows(token, start_date, end_date, campaign_id, item_group_ids, ca
                 dims.get("stat_time_day", "")[:10],
                 "프로덕트카드" if item_id == "-1" else item_id,
                 campaign_id, campaign_name,
-                dims.get("item_group_id", ""),
+                dims.get("item_group_id", ""), "",
                 mets.get("creative_delivery_status", ""),
                 mets.get("cost", ""), mets.get("orders", ""),
                 mets.get("cost_per_order", ""), mets.get("gross_revenue", ""),
