@@ -4,11 +4,46 @@ from datetime import datetime, timedelta
 from google.oauth2.service_account import Credentials
 import gspread, re, sys
 
-SPREADSHEET_ID = "15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o"
-SHEET_NAME = "(중요, 자동) SKU Order"
-PATH = "/analytics/202509/shop_skus/performance"
+SPREADSHEET_ID      = "15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o"
+ORDERS_SPREADSHEET_ID = "1wGM9UFdFMtXZtm2TQUsuUsQQZkREYBB4Q8okuIqC3UU"
+SHEET_NAME          = "(중요, 자동) SKU Order"
+PATH                = "/analytics/202509/shop_skus/performance"
 
-HEADERS = ["날짜", "상품ID", "SKU ID", "SKU주문수", "판매수량", "GMV", "통화"]
+HEADERS = ["날짜", "상품ID", "상품명", "SKU ID", "SKU명", "SKU주문수", "판매수량", "GMV", "통화"]
+
+
+def load_name_maps():
+    """주문데이터 시트에서 product_id→상품명, sku_id→SKU명 매핑 로드"""
+    print("  주문데이터 시트에서 상품명 매핑 로드 중...")
+    creds = Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE,
+        scopes=["https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"]
+    )
+    try:
+        sheet = gspread.authorize(creds).open_by_key(ORDERS_SPREADSHEET_ID).worksheet("주문데이터")
+        rows = sheet.get_all_values()
+    except Exception as e:
+        print(f"  [경고] 매핑 로드 실패: {e} — 상품명 없이 진행")
+        return {}, {}
+
+    # 헤더: 상품ID=6, 상품명=7, SKU명=8, SKU ID=9 (0-based)
+    product_map: dict[str, str] = {}
+    sku_map: dict[str, str] = {}
+    for row in rows[1:]:
+        if len(row) < 10:
+            continue
+        pid   = str(row[6]).strip()
+        pname = str(row[7]).strip()
+        sname = str(row[8]).strip()
+        sid   = str(row[9]).strip()
+        if pid and pname and pid not in product_map:
+            product_map[pid] = pname
+        if sid and sname and sid not in sku_map:
+            sku_map[sid] = sname
+
+    print(f"  상품 {len(product_map)}개, SKU {len(sku_map)}개 매핑 완료")
+    return product_map, sku_map
 
 
 def get_target_sheet():
@@ -35,7 +70,7 @@ def parse_date_range(raw: str):
     raise ValueError("날짜 형식 오류. 예: 2026-05-01 또는 2026-05-01 ~ 2026-05-15")
 
 
-def run(date_str: str):
+def run(date_str: str, product_map: dict, sku_map: dict):
     next_day = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     page_token = None
     all_rows = []
@@ -58,11 +93,15 @@ def run(date_str: str):
 
         data = result.get("data") or {}
         for item in (data.get("skus") or []):
-            gmv = item.get("gmv") or {}
+            gmv   = item.get("gmv") or {}
+            pid   = str(item.get("product_id") or "")
+            sid   = str(item.get("id") or "")
             all_rows.append([
                 date_str,
-                "'" + str(item.get("product_id") or ""),
-                "'" + str(item.get("id") or ""),
+                "'" + pid,
+                product_map.get(pid, ""),
+                "'" + sid,
+                sku_map.get(sid, ""),
                 item.get("sku_orders") or 0,
                 item.get("units_sold") or 0,
                 gmv.get("amount") or 0,
@@ -84,6 +123,8 @@ if __name__ == "__main__":
         raw = input("기간 입력 (예: 2026-05-01 또는 2026-05-01 ~ 2026-05-15): ").strip()
 
     start_str, end_str = parse_date_range(raw)
+
+    product_map, sku_map = load_name_maps()
     sheet = get_target_sheet()
 
     current = datetime.strptime(start_str, "%Y-%m-%d")
@@ -93,7 +134,7 @@ if __name__ == "__main__":
     while current <= end:
         date_str = current.strftime("%Y-%m-%d")
         print(f"\n=== SKU별 성과 [{date_str}] ===")
-        rows = run(date_str)
+        rows = run(date_str, product_map, sku_map)
         if rows:
             write_to_sheet(sheet, HEADERS, rows)
             total += len(rows)
