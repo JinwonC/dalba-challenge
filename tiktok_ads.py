@@ -272,7 +272,11 @@ def save_to_sheet(sheet, rows, headers):
 # 메인
 # ─────────────────────────────────────────
 def main():
-    raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15): ").strip()
+    import sys as _sys
+    if len(_sys.argv) > 1:
+        raw = _sys.argv[1]
+    else:
+        raw = input("기간 입력 (예: 2026-05-01 ~ 2026-05-15): ").strip()
     start_date, end_date = parse_date_range(raw)
     print(f"\n=== TikTok GMV MAX 광고 성과 [{start_date} ~ {end_date}] ===")
 

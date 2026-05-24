@@ -1,0 +1,45 @@
+name: Daily TikTok Sync
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # 매일 KST 오후 4시 (UTC 오전 7시)
+  workflow_dispatch:      # 수동 실행 버튼
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+          echo '${{ secrets.ADS_TOKENS_JSON }}' > ads_tokens.json
+
+      - name: Compute yesterday (LA time)
+        id: date
+        run: |
+          # LA 시간 기준 어제 날짜 (UTC-7 기준)
+          YESTERDAY=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+          echo "yesterday=$YESTERDAY" >> $GITHUB_OUTPUT
+
+      - name: Run tiktok_to_sheets.py (최근 60일 업서트)
+        run: python tiktok_to_sheets.py
+
+      - name: Run SKU별_성과.py (어제 날짜)
+        run: python TEST/SKU별_성과.py ${{ steps.date.outputs.yesterday }}
+        working-directory: .
+
+      - name: Run tiktok_ads.py (어제 날짜)
+        run: python tiktok_ads.py "${{ steps.date.outputs.yesterday }} ~ ${{ steps.date.outputs.yesterday }}"
