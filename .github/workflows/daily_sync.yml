@@ -2,7 +2,7 @@ name: Daily TikTok Sync
 
 on:
   schedule:
-    - cron: '30 7 * * *'  # 매일 KST 오후 4시 30분 (UTC 오전 7시 30분)
+    - cron: '32 8 * * *'  # 테스트: KST 오후 5시 32분 (UTC 오전 8시 32분)
   workflow_dispatch:      # 수동 실행 버튼
 
 jobs:
