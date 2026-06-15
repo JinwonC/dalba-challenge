@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>d'Alba Outreach · 중복 컨택 감지 데모</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:#FFFBF0; color:#2A1F00; padding:32px 20px; line-height:1.5;
+  }
+  .wrap { max-width:980px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:4px; color:#1C1400; }
+  .sub { font-size:13px; color:#7A6A40; margin-bottom:20px; }
+  .summary {
+    display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .stat {
+    background:#fff; border:1px solid rgba(140,104,0,.18); border-radius:6px;
+    padding:12px 18px; min-width:130px;
+  }
+  .stat .n { font-size:24px; font-weight:700; color:#1C1400; }
+  .stat .l { font-size:11px; color:#7A6A40; letter-spacing:.04em; text-transform:uppercase; }
+  .stat.dup .n { color:#c0202a; }
+
+  .controls { margin-bottom:14px; font-size:13px; }
+  .controls label { cursor:pointer; user-select:none; }
+
+  table { width:100%; border-collapse:collapse; background:#fff;
+    border:1px solid rgba(140,104,0,.18); border-radius:6px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 14px; font-size:13px;
+    border-bottom:1px solid rgba(140,104,0,.10); }
+  th { background:rgba(244,217,145,.35); font-size:11px; letter-spacing:.05em;
+    text-transform:uppercase; color:#6B5000; font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+
+  /* 중복 행: 빨간 글씨 + 배지 */
+  tr.dup td, tr.dup td a { color:#c0202a !important; font-weight:600; }
+  tr.dup { background:#fff6f6; }
+  .dup-badge {
+    display:inline-block; margin-left:6px; padding:1px 7px; border-radius:3px;
+    font-size:10px; font-weight:700; letter-spacing:.04em;
+    background:#fbe3e5; color:#c0202a; border:1px solid #f0b8bc;
+  }
+  .persona-tag {
+    display:inline-block; margin-right:4px; padding:1px 7px; border-radius:3px;
+    font-size:11px; font-weight:600; background:rgba(244,217,145,.45);
+    border:1px solid rgba(140,104,0,.25); color:#3A2800;
+  }
+  .note { font-size:12px; color:#7A6A40; margin-top:16px; line-height:1.7; }
+  .note strong { color:#7A2800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>d'Alba 아웃리치 · 중복 컨택 감지</h1>
+  <p class="sub">같은 크리에이터를 <strong>서로 다른 담당자 2명 이상</strong>이 컨택한 경우를 빨간색으로 표시 · 로직 데모</p>
+
+  <div class="summary">
+    <div class="stat"><div class="n" id="s-total">0</div><div class="l">총 크리에이터</div></div>
+    <div class="stat dup"><div class="n" id="s-dup">0</div><div class="l">중복 컨택</div></div>
+    <div class="stat"><div class="n" id="s-personas">0</div><div class="l">담당자 수</div></div>
+  </div>
+
+  <div class="controls">
+    <label><input type="checkbox" id="only-dup"> 중복만 보기</label>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>크리에이터 (이메일)</th><th>컨택한 담당자</th><th>상태</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <p class="note">
+    ※ 담당자는 <strong>보낸사람 주소가 아니라 본문 서명</strong>("I'm Lizi" / "This is Anna" / "My name is Dohyeon")으로 판별합니다 —
+    세 명이 같은 메일함을 공유해 발송하기 때문입니다.<br>
+    ※ 이 데모는 현재까지 수집한 표본 데이터 기준이며, Lizi 발송분(최근 30일 400건+)은 일부만 포함돼 있습니다.
+    실제 트래커에 이식하면 전체 메일을 대상으로 자동 계산됩니다.
+  </p>
+</div>
+
+<script>
+// ── 핵심 로직 (실제 트래커에 그대로 이식 가능) ──────────────────────
+
+// 1) 본문/제목에서 담당자(persona) 판별
+function detectPersona(text = "") {
+  const t = text.toLowerCase();
+  if (/\bthis is anna\b|\bi'?m anna\b/.test(t)) return "Anna";
+  if (/\bmy name is dohyeon\b|\bthis is dohyeon\b|\bi'?m dohyeon\b/.test(t)) return "Dohyeon";
+  if (/\bi'?m lizi\b|\bthis is lizi\b/.test(t)) return "Lizi";
+  return "Unknown";
+}
+
+// 2) 수신자 이메일 정규화 (대소문자/공백 차이 흡수)
+const normEmail = (e = "") => e.trim().toLowerCase();
+
+// 3) 아웃리치 목록 → 크리에이터별 담당자 집계 + 중복 플래그
+function buildCreatorView(rows) {
+  const byCreator = new Map(); // email -> Set(persona)
+  for (const r of rows) {
+    const key = normEmail(r.recipient);
+    const persona = detectPersona(r.text);
+    if (!byCreator.has(key)) byCreator.set(key, new Set());
+    byCreator.get(key).add(persona);
+  }
+  return [...byCreator.entries()].map(([email, set]) => {
+    const personas = [...set].filter(p => p !== "Unknown");
+    return { email, personas, isDuplicate: personas.length >= 2 };
+  });
+}
+
+// ── 표본 데이터: recipient + 대표 본문 일부(서명 포함) ──────────────
+// (실제 트래커에서는 Gmail API 응답을 그대로 넣으면 됨)
+const L = "I'm Lizi from the d'Alba Creator Partnership Team";
+const A = "This is Anna from d'Alba Tiktokshop team";
+const D = "My name is Dohyeon, TiktokShop manager of d'Alba Global";
+
+const outreach = [
+  // 중복 케이스
+  { recipient:"fatima.abuk@gmail.com", text:L },
+  { recipient:"Fatima.abuk@gmail.com", text:A },
+  { recipient:"annekoiiugc@gmail.com", text:L },
+  { recipient:"annekoiiugc@gmail.com", text:D },
+  // Anna 전용
+  { recipient:"Charleywoods89@gmail.com", text:A },
+  { recipient:"ethantts01@gmail.com", text:A },
+  { recipient:"kiaraxcollab@gmail.com", text:A },
+  { recipient:"ashley@ashleyjernigan.com", text:A },
+  { recipient:"collabwithmollyp@gmail.com", text:A },
+  { recipient:"Businesswithroxy@gmail.com", text:A },
+  { recipient:"Gracielaymalcriado@gmail.com", text:A },
+  { recipient:"lilisepelife@gmail.com", text:A },
+  // Dohyeon 전용
+  { recipient:"halgrace88@gmail.com", text:D },
+  { recipient:"bri_lynn1@yahoo.com", text:D },
+  { recipient:"Dianafit021899@gmail.com", text:D },
+  { recipient:"Nadefit.creator@gmail.com", text:D },
+  { recipient:"collab.nathallie@gmail.com", text:D },
+  { recipient:"lisaparra2021@yahoo.com", text:D },
+  { recipient:"creatorkaylee@outlook.com", text:D },
+  { recipient:"shelby@pagermgmt.com", text:D },
+  { recipient:"jennileebarayuga@gmail.com", text:D },
+  { recipient:"mixonmethod@gmail.com", text:D },
+  { recipient:"adoseofwellness20@gmail.com", text:D },
+  { recipient:"Mariajosefaceglow@gmail.com", text:D },
+  { recipient:"michaela@zink-talent.com", text:D },
+  { recipient:"beauty.with.vi0letred@gmail.com", text:D },
+  { recipient:"Foodtometrist@gmail.com", text:D },
+  { recipient:"brandienicole.collabs@gmail.com", text:D },
+  { recipient:"Birzoneric@gmail.com", text:D },
+  { recipient:"Kate@rebelsocials.com", text:D },
+  { recipient:"e.tts.affiliate@gmail.com", text:D },
+  { recipient:"therphreviews@gmail.com", text:D },
+  // Lizi 전용 (표본)
+  { recipient:"alicias.tok.favs@gmail.com", text:L },
+  { recipient:"tiktokarsy@upandalive.com", text:L },
+  { recipient:"annishapromotes@gmail.com", text:L },
+  { recipient:"abbeykline@iampactmgmt.com", text:L },
+  { recipient:"itsfushascott@gmail.com", text:L },
+  { recipient:"herfitbeauty@gmail.com", text:L },
+  { recipient:"jillhite4@gmail.com", text:L },
+  { recipient:"fridablancomakeup@gmail.com", text:L },
+  { recipient:"emhayes@me.com", text:L },
+  { recipient:"gretchela@hotmail.com", text:L },
+  { recipient:"gmjcollab@gmail.com", text:L },
+  { recipient:"truecrimemama1@gmail.com", text:L },
+  { recipient:"jainicolecollabs@gmail.com", text:L },
+];
+
+// ── 렌더링 ──────────────────────────────────────────────────────────
+const view = buildCreatorView(outreach).sort((a,b) =>
+  (b.isDuplicate - a.isDuplicate) || a.email.localeCompare(b.email));
+
+const allPersonas = new Set();
+view.forEach(v => v.personas.forEach(p => allPersonas.add(p)));
+
+document.getElementById("s-total").textContent = view.length;
+document.getElementById("s-dup").textContent = view.filter(v => v.isDuplicate).length;
+document.getElementById("s-personas").textContent = allPersonas.size;
+
+function render() {
+  const onlyDup = document.getElementById("only-dup").checked;
+  const tbody = document.getElementById("rows");
+  tbody.innerHTML = "";
+  for (const v of view) {
+    if (onlyDup && !v.isDuplicate) continue;
+    const tr = document.createElement("tr");
+    if (v.isDuplicate) tr.className = "dup";
+    const tags = v.personas.map(p => `<span class="persona-tag">${p}</span>`).join("");
+    const badge = v.isDuplicate
+      ? `<span class="dup-badge">중복 · ${v.personas.join(" + ")}</span>` : "";
+    tr.innerHTML =
+      `<td>${v.email}${badge}</td>` +
+      `<td>${tags}</td>` +
+      `<td>${v.isDuplicate ? "⚠️ 중복 컨택" : "정상"}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+document.getElementById("only-dup").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
