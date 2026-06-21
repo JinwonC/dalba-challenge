@@ -2,6 +2,7 @@ import { detectPlatform, scrapeContent, scrapeTikTokComments } from './apify.js'
 import { downloadVideo, fetchSubtitles } from './vision.js';
 import { generateReport } from './report.js';
 import { analyzeComments } from './comments.js';
+import { saveVideo } from './videos.js';
 
 /** Extract the numeric TikTok video id from a URL (for the embed). */
 export function tiktokVideoId(url) {
@@ -109,8 +110,14 @@ export async function runReport({ videoUrl, subtitleUrl = '', meta = {} }) {
     fetchSubtitles(subtitleUrl),
   ]);
 
-  const report = await generateReport({ videoBuffer, transcriptVtt, meta, tries: 1 });
-  return { report };
+  // Generate the report and (concurrently) persist the mp4 to the public store
+  // so the player can stream/seek it — also lets history replay after deletion.
+  const videoId = tiktokVideoId(meta.url || '');
+  const [report, video] = await Promise.all([
+    generateReport({ videoBuffer, transcriptVtt, meta, tries: 1 }),
+    saveVideo(videoId, videoBuffer).catch((e) => { console.warn('Video save skipped:', e.message); return null; }),
+  ]);
+  return { report, video };
 }
 
 /** Combined one-shot (used locally / for tests; too slow for a single serverless call). */
