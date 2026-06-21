@@ -25,23 +25,37 @@ export async function saveVideo(videoId, buffer, contentType = 'video/mp4') {
 
 const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 30);
 const MAX_VIDEOS = Number(process.env.VIDEO_MAX_COUNT || 40);
+const MAX_TOTAL_BYTES = Number(process.env.VIDEO_MAX_TOTAL_MB || 800) * 1e6; // stay under ~1GB free tier
 
 /**
- * Prune stored videos so storage stays bounded: delete anything older than
- * MAX_AGE_DAYS, and keep at most MAX_VIDEOS newest. Best-effort; never throws.
- * History entries whose video was pruned fall back to the TikTok embed.
+ * Prune stored videos so storage stays bounded. Deletes (oldest first):
+ *  1) anything older than MAX_AGE_DAYS,
+ *  2) beyond the newest MAX_VIDEOS,
+ *  3) beyond a total-size budget (MAX_TOTAL_BYTES).
+ * Best-effort; never throws. Pruned entries fall back to the TikTok embed.
  */
 export async function pruneOldVideos() {
   if (!videosEnabled()) return;
   try {
     const { blobs } = await list({ prefix: 'videos/', token: token() });
     const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
-    const withTime = blobs.map((b) => ({ url: b.url, t: new Date(b.uploadedAt).getTime() }));
-    const tooOld = withTime.filter((b) => b.t < cutoff);
-    const fresh = withTime.filter((b) => b.t >= cutoff).sort((a, b) => b.t - a.t);
-    const overflow = fresh.slice(MAX_VIDEOS); // keep newest MAX_VIDEOS
-    const toDelete = [...tooOld, ...overflow].map((b) => b.url);
-    if (toDelete.length) await del(toDelete, { token: token() });
+    const items = blobs
+      .map((b) => ({ url: b.url, size: Number(b.size) || 0, t: new Date(b.uploadedAt).getTime() }))
+      .sort((a, b) => b.t - a.t); // newest first
+
+    const toDelete = new Set();
+    let kept = 0, bytes = 0;
+    for (const it of items) {
+      const expired = it.t < cutoff;
+      kept += 1;
+      bytes += it.size;
+      if (expired || kept > MAX_VIDEOS || bytes > MAX_TOTAL_BYTES) {
+        toDelete.add(it.url);
+        bytes -= it.size; // it won't be kept
+        kept -= 1;
+      }
+    }
+    if (toDelete.size) await del([...toDelete], { token: token() });
   } catch (e) {
     console.warn('Video prune skipped:', e.message);
   }
