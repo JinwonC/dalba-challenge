@@ -36,8 +36,8 @@ app.post('/api/report', async (req, res) => {
 
 app.post('/api/comments', async (req, res) => {
   try {
-    const { comments, meta } = req.body || {};
-    res.json(await runComments({ comments, meta }));
+    const { url, meta } = req.body || {};
+    res.json(await runComments({ url, meta }));
   } catch (err) { send(res, err); }
 });
 

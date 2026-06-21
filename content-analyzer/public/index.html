@@ -331,13 +331,12 @@ async function run(){
       });
     });
 
-    // Stage 3 — comment analysis (fast, text-only).
+    // Stage 3 — scrape + analyze comments (fast).
     (async ()=>{
       try{
-        const comments = s.comments||[];
-        if(!comments.length){ $('#commentsBody').innerHTML='<div style="color:var(--muted);font-size:13px">수집된 댓글이 없습니다.</div>'; return; }
-        const c = await postJSON('/api/comments', { comments, meta: s.meta||{} });
-        $('#commentsBody').innerHTML = commentsHTML(c.comments_analysis, c.count);
+        const c = await postJSON('/api/comments', { url: s.embed?.url || url, meta: s.meta||{} });
+        $('#commentsBody').innerHTML = c.count ? commentsHTML(c.comments_analysis, c.count)
+          : '<div style="color:var(--muted);font-size:13px">수집된 댓글이 없습니다.</div>';
       }catch(e){
         $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
       }

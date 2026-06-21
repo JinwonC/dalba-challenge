@@ -54,11 +54,7 @@ export async function runScrape({ url }) {
   if (detectPlatform(url) !== 'tiktok') throw new HttpError(400, 'Provide a TikTok video link.');
   if (!process.env.APIFY_TOKEN) throw new HttpError(500, 'APIFY_TOKEN is not set on the server.');
 
-  // Scrape post + comments in parallel (comments are best-effort).
-  const [content, comments] = await Promise.all([
-    scrapeContent(url),
-    scrapeTikTokComments(url, 40),
-  ]);
+  const content = await scrapeContent(url);
   if (!content.videoUrl) {
     throw new HttpError(502, 'Could not resolve a downloadable video URL from the scrape.');
   }
@@ -78,21 +74,25 @@ export async function runScrape({ url }) {
     meta,
     embed: { videoId: tiktokVideoId(url), url: content.url },
     media: { videoUrl: content.videoUrl, subtitleUrl: content.subtitleUrl || '' },
-    comments,
   };
 }
 
-/** Stage 3 — comment analysis (Gemini text-only; fast, no video). */
-export async function runComments({ comments = [], meta = {} }) {
+/**
+ * Stage 3 — scrape comments + analyze (Gemini text-only). Runs after stage 1 so it
+ * doesn't contend with the main scraper on Apify's concurrency limit. Fast (~25s).
+ */
+export async function runComments({ url, meta = {} }) {
+  url = (url || meta.url || '').trim();
+  if (detectPlatform(url) !== 'tiktok') throw new HttpError(400, 'Provide a TikTok video link.');
+  if (!process.env.APIFY_TOKEN) throw new HttpError(500, 'APIFY_TOKEN is not set on the server.');
   if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
-  const safe = (Array.isArray(comments) ? comments : []).slice(0, 60).map((c) => ({
-    text: String(c?.text || '').slice(0, 300),
-    likes: Number(c?.likes) || 0,
-    author: String(c?.author || '').slice(0, 80),
-    pinned: Boolean(c?.pinned),
-  }));
-  const comments_analysis = await analyzeComments({ comments: safe, meta });
-  return { comments_analysis, count: safe.length };
+
+  const comments = await scrapeTikTokComments(url, 40);
+  if (!comments.length) {
+    return { comments_analysis: await analyzeComments({ comments: [], meta }), count: 0 };
+  }
+  const comments_analysis = await analyzeComments({ comments, meta });
+  return { comments_analysis, count: comments.length };
 }
 
 /**
