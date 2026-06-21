@@ -13,6 +13,29 @@ function ai() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Whether a Gemini error is transient and worth retrying. */
+function isTransient(err) {
+  const s = err?.status || err?.code;
+  const msg = String(err?.message || '');
+  return s === 429 || s === 500 || s === 503 ||
+    /UNAVAILABLE|overload|high demand|rate limit|deadline|internal/i.test(msg);
+}
+
+/** Retry a transient call a few times with short backoff (keeps total under the serverless cap). */
+async function withRetry(fn, { tries = 3, base = 2500 } = {}) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      last = err;
+      if (i === tries - 1 || !isTransient(err)) throw err;
+      await sleep(base * (i + 1));
+    }
+  }
+  throw last;
+}
+
 // Structured-output schema for the scene-by-scene report + d'Alba insights.
 const REPORT_SCHEMA = {
   type: 'object',
@@ -115,7 +138,7 @@ Time-coded transcript (WebVTT):
 ${(transcriptVtt || '(none available — rely on what you hear/see)').slice(0, 30000)}
 """`;
 
-  const response = await client.models.generateContent({
+  const response = await withRetry(() => client.models.generateContent({
     model: MODEL,
     contents: createUserContent([
       createPartFromUri(file.uri, file.mimeType),
@@ -127,7 +150,7 @@ ${(transcriptVtt || '(none available — rely on what you hear/see)').slice(0, 3
       responseSchema: REPORT_SCHEMA,
       temperature: 0.4,
     },
-  });
+  }), { tries: 3, base: 2500 });
 
   const text = response.text;
   if (!text) throw new Error('No report returned by Gemini.');
