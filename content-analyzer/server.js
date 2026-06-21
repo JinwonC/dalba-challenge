@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { runScrape, runReport, runComments, runAnalysis, HttpError } from './lib/pipeline.js';
+import { saveAnalysis, listAnalyses, getAnalysis } from './lib/store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -38,6 +39,27 @@ app.post('/api/comments', async (req, res) => {
   try {
     const { url, meta } = req.body || {};
     res.json(await runComments({ url, meta }));
+  } catch (err) { send(res, err); }
+});
+
+app.post('/api/save', async (req, res) => {
+  try {
+    const { meta, embed, report, comments } = req.body || {};
+    const id = await saveAnalysis({ meta, embed, report, comments });
+    res.json({ id });
+  } catch (err) { send(res, err); }
+});
+
+app.get('/api/history', async (_req, res) => {
+  try { res.json({ items: await listAnalyses() }); }
+  catch (err) { send(res, err); }
+});
+
+app.get('/api/analysis', async (req, res) => {
+  try {
+    const rec = await getAnalysis(String(req.query.id || ''));
+    if (!rec) return res.status(404).json({ error: 'Not found.' });
+    res.json(rec);
   } catch (err) { send(res, err); }
 });
 

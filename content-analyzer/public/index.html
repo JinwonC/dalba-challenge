@@ -98,6 +98,18 @@
   .relev{font-size:13.5px;background:var(--gold-soft);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0}
   .copy{border:1px solid var(--line);background:#fff;color:var(--gold);font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
   .copy:hover{background:var(--gold-soft)}
+
+  /* history */
+  .history{max-width:1180px;margin:6px auto 18px;padding:0 20px}
+  .history h4{font-size:12px;color:var(--muted);letter-spacing:.5px;margin:0 0 8px;font-weight:600}
+  .hitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .hitem:hover{border-color:var(--gold);box-shadow:0 1px 8px rgba(184,137,46,.12)}
+  .hitem img{width:42px;height:54px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto}
+  .hitem .hmain{min-width:0;flex:1}
+  .hitem .hcreator{font-weight:700;font-size:13.5px}
+  .hitem .htitle{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hitem .hdate{font-size:11px;color:#aaa;flex:0 0 auto}
   .foot{max-width:1180px;margin:0 auto 50px;padding:0 20px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
@@ -114,6 +126,8 @@
   <div class="hint">스크랩 + 영상 화면분석에 보통 60~120초 걸립니다. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기.</div>
 
   <div class="status" id="status"></div>
+
+  <div class="history" id="history"></div>
 
   <div class="layout" id="layout" style="display:none">
     <div class="left">
@@ -260,6 +274,12 @@ async function postJSON(path, body){
   if(!r.ok){ const e=new Error(data.error||'요청 실패'); e.status=r.status; throw e; }
   return data;
 }
+async function getJSON(path){
+  const r = await fetch(path);
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(data.error||'요청 실패'); e.status=r.status; throw e; }
+  return data;
+}
 
 // Stage 2 can transiently fail (Gemini overload); retry a couple times client-side.
 async function reportWithRetry(media, meta, tries=3){
@@ -275,6 +295,86 @@ async function reportWithRetry(media, meta, tries=3){
 
 const rightLoading = (msg)=>`<div class="card"><div class="body"><div class="loading"><div class="spinner"></div><span id="rightStatus">${msg}</span></div></div></div>`;
 
+// ---- shared renderers (used by fresh analysis AND saved history) ----
+function showVideo(embed, meta){
+  renderTikTok(embed?.videoId, embed?.url);
+  renderMeta(meta||{});
+  $('#layout').style.display='grid';
+}
+function fillRight(rep){
+  rep = rep||{};
+  $('#right').innerHTML = `
+    <div class="card">
+      <div class="head"><h3>요약</h3><button class="copy" id="copyBtn">리포트 복사</button></div>
+      <div class="body summary">${esc(rep.summary||'')}</div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>🎬 오프닝 훅 분석 <span style="color:var(--muted);font-weight:400;font-size:12px">· 첫 3~6초</span></h3></div>
+      <div class="body">${hookHTML(rep.hook_breakdown)}</div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>씬별 분해</h3></div>
+      <div class="body" style="padding:0">${sceneTableHTML(rep.scenes)}</div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>🧲 설득 전환 요인</h3></div>
+      <div class="body">${persuasionHTML(rep.persuasion)}</div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>🔑 핵심 키워드</h3></div>
+      <div class="body">${keywordsHTML(rep.keywords)}</div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>크리에이티브 인사이트</h3></div>
+      <div class="body">${insightsHTML(rep.insights||{}, rep.dalba_relevance)}</div>
+    </div>
+    <div class="card" id="commentsCard">
+      <div class="head"><h3>💬 댓글 분석</h3></div>
+      <div class="body" id="commentsBody"><div class="loading"><div class="spinner"></div>댓글 분석 중…</div></div>
+    </div>`;
+  $('#copyBtn').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(reportToText(rep)).then(()=>{
+      const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='리포트 복사',1500);
+    });
+  });
+}
+function fillComments(ca, count){
+  $('#commentsBody').innerHTML = count
+    ? commentsHTML(ca, count)
+    : '<div style="color:var(--muted);font-size:13px">수집된 댓글이 없습니다.</div>';
+}
+
+// ---- history ----
+function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } }
+async function loadHistory(){
+  try{
+    const { items } = await getJSON('/api/history');
+    if(!items || !items.length){ $('#history').innerHTML=''; return; }
+    $('#history').innerHTML = `<h4>📁 분석 기록 (${items.length}) · 클릭하면 다시 봅니다</h4>` + items.map(it=>`
+      <div class="hitem" data-id="${esc(it.id)}">
+        ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
+        <div class="hmain"><div class="hcreator">@${esc(it.creator||'unknown')}</div><div class="htitle">${esc(it.title||'')}</div></div>
+        <div class="hdate">${fmtDate(it.savedAt)}</div>
+      </div>`).join('');
+    $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', ()=>openSaved(el.dataset.id)));
+  }catch(e){ /* history is best-effort */ }
+}
+async function openSaved(id){
+  $('#go').disabled=true;
+  $('#layout').style.display='none';
+  $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>저장된 분석 불러오는 중…</div>';
+  try{
+    const rec = await getJSON('/api/analysis?id='+encodeURIComponent(id));
+    showVideo(rec.embed, rec.meta);
+    fillRight(rec.report||{});
+    const c = rec.comments||{};
+    fillComments(c.analysis, c.count||0);
+    $('#status').innerHTML='';
+    window.scrollTo({ top: $('#layout').offsetTop-12, behavior:'smooth' });
+  }catch(e){ $('#status').innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+  finally{ $('#go').disabled=false; }
+}
+
 async function run(){
   const url = $('#url').value.trim();
   if(!url){ $('#status').innerHTML='<div class="err">틱톡 링크를 입력하세요.</div>'; return; }
@@ -285,61 +385,29 @@ async function run(){
   try{
     // Stage 1 — scrape (fast): render the video + meta immediately.
     const s = await postJSON('/api/scrape', { url });
-    renderTikTok(s.embed?.videoId, s.embed?.url || url);
-    renderMeta(s.meta||{});
+    showVideo(s.embed, s.meta);
     $('#status').innerHTML='';
     $('#right').innerHTML = rightLoading('2/2 · 영상 화면분석 + 리포트 생성 중… (최대 1분)');
-    $('#layout').style.display='grid';
 
     // Stage 2 — download + Gemini report (with retry).
     const data = await reportWithRetry(s.media||{}, s.meta||{});
-
     const rep = data.report||{};
-    $('#right').innerHTML = `
-      <div class="card">
-        <div class="head"><h3>요약</h3><button class="copy" id="copyBtn">리포트 복사</button></div>
-        <div class="body summary">${esc(rep.summary||'')}</div>
-      </div>
-      <div class="card">
-        <div class="head"><h3>🎬 오프닝 훅 분석 <span style="color:var(--muted);font-weight:400;font-size:12px">· 첫 3~6초</span></h3></div>
-        <div class="body">${hookHTML(rep.hook_breakdown)}</div>
-      </div>
-      <div class="card">
-        <div class="head"><h3>씬별 분해</h3></div>
-        <div class="body" style="padding:0">${sceneTableHTML(rep.scenes)}</div>
-      </div>
-      <div class="card">
-        <div class="head"><h3>🧲 설득 전환 요인</h3></div>
-        <div class="body">${persuasionHTML(rep.persuasion)}</div>
-      </div>
-      <div class="card">
-        <div class="head"><h3>🔑 핵심 키워드</h3></div>
-        <div class="body">${keywordsHTML(rep.keywords)}</div>
-      </div>
-      <div class="card">
-        <div class="head"><h3>크리에이티브 인사이트</h3></div>
-        <div class="body">${insightsHTML(rep.insights||{}, rep.dalba_relevance)}</div>
-      </div>
-      <div class="card" id="commentsCard">
-        <div class="head"><h3>💬 댓글 분석</h3></div>
-        <div class="body" id="commentsBody"><div class="loading"><div class="spinner"></div>댓글 분석 중…</div></div>
-      </div>`;
+    fillRight(rep);
 
-    $('#copyBtn').addEventListener('click', ()=>{
-      navigator.clipboard.writeText(reportToText(rep)).then(()=>{
-        const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='리포트 복사',1500);
-      });
-    });
-
-    // Stage 3 — scrape + analyze comments (fast).
+    // Stage 3 — scrape + analyze comments, then persist the whole thing.
     (async ()=>{
+      let commentsRec = null;
       try{
         const c = await postJSON('/api/comments', { url: s.embed?.url || url, meta: s.meta||{} });
-        $('#commentsBody').innerHTML = c.count ? commentsHTML(c.comments_analysis, c.count)
-          : '<div style="color:var(--muted);font-size:13px">수집된 댓글이 없습니다.</div>';
+        commentsRec = { analysis: c.comments_analysis, count: c.count };
+        fillComments(c.comments_analysis, c.count);
       }catch(e){
         $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
       }
+      try{
+        await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec });
+        loadHistory();
+      }catch(e){ /* save is best-effort */ }
     })();
 
   }catch(err){
@@ -350,6 +418,8 @@ async function run(){
     $('#go').disabled = false;
   }
 }
+
+loadHistory();
 </script>
 </body>
 </html>
