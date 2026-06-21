@@ -175,12 +175,14 @@ function parseRange(t){
   const parts = String(t).split(/[~\-–—]/);
   return { start: toSec(parts[0]), end: parts[1]!==undefined ? toSec(parts[1]) : null };
 }
-function renderPlayer(videoUrl){
+function renderPlayer(videoUrl, embed){
   $('#videoWrap').innerHTML = `<video id="player" src="${esc(videoUrl)}" controls playsinline preload="metadata"
       style="width:100%;max-width:340px;border-radius:10px;background:#000;display:block"></video>`;
   PLAYER = document.getElementById('player');
   LAST_ACTIVE = -1;
   PLAYER.addEventListener('timeupdate', onTime);
+  // If the stored video expired (auto-deleted) or fails, fall back to the embed.
+  PLAYER.addEventListener('error', ()=>{ PLAYER=null; renderTikTok(embed?.videoId, embed?.url); });
 }
 function seekTo(sec){ if(PLAYER && sec!=null){ PLAYER.currentTime = Math.max(0, sec); PLAYER.play().catch(()=>{}); } }
 function onTime(){
@@ -424,7 +426,7 @@ async function openSaved(id){
   try{
     const rec = await getJSON('/api/analysis?id='+encodeURIComponent(id));
     renderMeta(rec.meta||{});
-    if(rec.video){ renderPlayer(rec.video); $('#layout').style.display='grid'; }
+    if(rec.video){ renderPlayer(rec.video, rec.embed); $('#layout').style.display='grid'; }
     else showVideo(rec.embed, rec.meta);   // fallback for older entries
     fillRight(rec.report||{});
     const c = rec.comments||{};
@@ -453,7 +455,7 @@ async function run(){
     const data = await reportWithRetry(s.media||{}, s.meta||{});
     const rep = data.report||{};
     // Swap the embed for our native player so timestamps are clickable & synced.
-    if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video); }
+    if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
     fillRight(rep);
 
     // Stage 3 — scrape + analyze comments, then persist the whole thing.

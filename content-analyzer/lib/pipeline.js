@@ -2,7 +2,7 @@ import { detectPlatform, scrapeContent, scrapeTikTokComments } from './apify.js'
 import { downloadVideo, fetchSubtitles } from './vision.js';
 import { generateReport } from './report.js';
 import { analyzeComments } from './comments.js';
-import { saveVideo } from './videos.js';
+import { saveVideo, pruneOldVideos } from './videos.js';
 
 /** Extract the numeric TikTok video id from a URL (for the embed). */
 export function tiktokVideoId(url) {
@@ -117,6 +117,9 @@ export async function runReport({ videoUrl, subtitleUrl = '', meta = {} }) {
     generateReport({ videoBuffer, transcriptVtt, meta, tries: 1 }),
     saveVideo(videoId, videoBuffer).catch((e) => { console.warn('Video save skipped:', e.message); return null; }),
   ]);
+  // Keep the videos store bounded (delete old/overflow). Best-effort, quick.
+  await pruneOldVideos();
+
   return { report, video };
 }
 
