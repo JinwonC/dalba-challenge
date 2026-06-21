@@ -23,7 +23,7 @@ export async function saveVideo(videoId, buffer, contentType = 'video/mp4') {
   return blob.url;
 }
 
-const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 30);
+const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 7);
 const MAX_VIDEOS = Number(process.env.VIDEO_MAX_COUNT || 40);
 const MAX_TOTAL_BYTES = Number(process.env.VIDEO_MAX_TOTAL_MB || 800) * 1e6; // stay under ~1GB free tier
 
