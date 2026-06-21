@@ -103,13 +103,6 @@
   .copy{border:1px solid var(--line);background:#fff;color:var(--gold);font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
   .copy:hover{background:var(--gold-soft)}
 
-  /* live caption / synced transcript */
-  .cuebox{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:6px}
-  .cue{display:flex;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:#555;line-height:1.45}
-  .cue:hover{background:#faf5ea}
-  .cue .ct{color:var(--gold);font-size:11px;font-weight:700;flex:0 0 auto;padding-top:1px}
-  .cue.cue-active{color:#dc2626;font-weight:700;background:#fff3f3}
-
   /* history */
   .history{max-width:1180px;margin:6px auto 18px;padding:0 20px}
   .history h4{font-size:12px;color:var(--muted);letter-spacing:.5px;margin:0 0 8px;font-weight:600}
@@ -191,54 +184,19 @@ function renderPlayer(videoUrl, embed){
   // If the stored video expired (auto-deleted) or fails, fall back to the embed.
   PLAYER.addEventListener('error', ()=>{ PLAYER=null; renderTikTok(embed?.videoId, embed?.url); });
 }
-let CUES = [], LAST_CUE = -1;
-function fmtTime(s){ s=Math.floor(s||0); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
-function transcriptHTML(cues){
-  CUES = cues||[];
-  if(!CUES.length) return '';
-  const items = CUES.map((c,i)=>`<div class="cue" data-ci="${i}"><span class="ct">${fmtTime(c.start)}</span><span>${esc(c.text)}</span></div>`).join('');
-  return `<div class="card"><div class="head"><h3>🎬 실시간 자막 <span style="color:var(--muted);font-weight:400;font-size:12px">· 재생 따라 빨갛게 이동 · 클릭 시 점프</span></h3></div>
-    <div class="body"><div class="cuebox" id="cueBox">${items}</div></div></div>`;
-}
-function wireCues(){
-  if(!PLAYER) return;
-  document.querySelectorAll('#cueBox .cue').forEach(el=>{
-    el.addEventListener('click', ()=> seekTo(CUES[Number(el.dataset.ci)]?.start));
-  });
-}
 function seekTo(sec){ if(PLAYER && sec!=null){ PLAYER.currentTime = Math.max(0, sec); PLAYER.play().catch(()=>{}); } }
 function onTime(){
-  if(!PLAYER) return;
-  const t = PLAYER.currentTime;
-  // scene row highlight
-  if(SCENE_TIMES.length){
-    let active = -1;
-    for(let i=0;i<SCENE_TIMES.length;i++){ const s=SCENE_TIMES[i]; if(s.start!=null && t>=s.start && (s.end==null || t<s.end)) active=i; }
-    if(active<0){ for(let i=0;i<SCENE_TIMES.length;i++){ if(SCENE_TIMES[i].start!=null && t>=SCENE_TIMES[i].start) active=i; } }
-    if(active!==LAST_ACTIVE){
-      LAST_ACTIVE = active;
-      document.querySelectorAll('#sceneTable tr[data-idx]').forEach(tr=>{
-        const on = Number(tr.dataset.idx)===active;
-        tr.classList.toggle('active', on);
-        if(on) tr.scrollIntoView({ block:'nearest', behavior:'smooth' });
-      });
-    }
-  }
-  // live caption highlight (red), scrolling within its own box
-  if(CUES.length){
-    let ci = -1;
-    for(let i=0;i<CUES.length;i++){ const c=CUES[i]; if(t>=c.start && (c.end==null || t<c.end)) ci=i; }
-    if(ci<0){ for(let i=0;i<CUES.length;i++){ if(t>=CUES[i].start) ci=i; } }
-    if(ci!==LAST_CUE){
-      LAST_CUE = ci;
-      const box = document.getElementById('cueBox');
-      document.querySelectorAll('#cueBox .cue').forEach(el=>{
-        const on = Number(el.dataset.ci)===ci;
-        el.classList.toggle('cue-active', on);
-        if(on && box){ box.scrollTop = el.offsetTop - box.offsetTop - box.clientHeight/2 + el.clientHeight/2; }
-      });
-    }
-  }
+  if(!PLAYER || !SCENE_TIMES.length) return;
+  const t = PLAYER.currentTime; let active = -1;
+  for(let i=0;i<SCENE_TIMES.length;i++){ const s=SCENE_TIMES[i]; if(s.start!=null && t>=s.start && (s.end==null || t<s.end)) active=i; }
+  if(active<0){ for(let i=0;i<SCENE_TIMES.length;i++){ if(SCENE_TIMES[i].start!=null && t>=SCENE_TIMES[i].start) active=i; } }
+  if(active===LAST_ACTIVE) return;
+  LAST_ACTIVE = active;
+  document.querySelectorAll('#sceneTable tr[data-idx]').forEach(tr=>{
+    const on = Number(tr.dataset.idx)===active;
+    tr.classList.toggle('active', on);
+    if(on) tr.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  });
 }
 function wireSeekRows(){
   if(!PLAYER) return;
@@ -392,14 +350,13 @@ function showVideo(embed, meta){
   renderMeta(meta||{});
   $('#layout').style.display='grid';
 }
-function fillRight(rep, cues){
+function fillRight(rep){
   rep = rep||{};
   $('#right').innerHTML = `
     <div class="card">
       <div class="head"><h3>요약</h3><button class="copy" id="copyBtn">리포트 복사</button></div>
       <div class="body summary">${esc(rep.summary||'')}</div>
     </div>
-    ${transcriptHTML(cues)}
     <div class="card">
       <div class="head"><h3>🎬 오프닝 훅 분석 <span style="color:var(--muted);font-weight:400;font-size:12px">· 첫 3~6초</span></h3></div>
       <div class="body">${hookHTML(rep.hook_breakdown)}</div>
@@ -430,7 +387,6 @@ function fillRight(rep, cues){
     });
   });
   wireSeekRows();
-  wireCues();
 }
 function fillComments(ca, count){
   $('#commentsBody').innerHTML = count
@@ -472,7 +428,7 @@ async function openSaved(id){
     renderMeta(rec.meta||{});
     if(rec.video){ renderPlayer(rec.video, rec.embed); $('#layout').style.display='grid'; }
     else showVideo(rec.embed, rec.meta);   // fallback for older entries
-    fillRight(rec.report||{}, rec.transcript||[]);
+    fillRight(rec.report||{});
     const c = rec.comments||{};
     fillComments(c.analysis, c.count||0);
     $('#status').innerHTML='';
@@ -500,7 +456,7 @@ async function run(){
     const rep = data.report||{};
     // Swap the embed for our native player so timestamps are clickable & synced.
     if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
-    fillRight(rep, data.transcript||[]);
+    fillRight(rep);
 
     // Stage 3 — scrape + analyze comments, then persist the whole thing.
     (async ()=>{
@@ -513,7 +469,7 @@ async function run(){
         $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
       }
       try{
-        await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null, transcript:data.transcript||[] });
+        await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
         // Show it right away (the index is eventually-consistent for a few seconds),
         // then reconcile with the server shortly after.
         prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });

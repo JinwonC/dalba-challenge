@@ -3,7 +3,6 @@ import { downloadVideo, fetchSubtitles } from './vision.js';
 import { generateReport } from './report.js';
 import { analyzeComments } from './comments.js';
 import { saveVideo, pruneOldVideos } from './videos.js';
-import { parseVtt } from './subtitles.js';
 
 /** Extract the numeric TikTok video id from a URL (for the embed). */
 export function tiktokVideoId(url) {
@@ -121,9 +120,7 @@ export async function runReport({ videoUrl, subtitleUrl = '', meta = {} }) {
   // Keep the videos store bounded (delete old/overflow). Best-effort, quick.
   await pruneOldVideos();
 
-  // Time-coded cues power the in-sync "karaoke" transcript on the client.
-  const transcript = parseVtt(transcriptVtt).slice(0, 400);
-  return { report, video, transcript };
+  return { report, video };
 }
 
 /** Combined one-shot (used locally / for tests; too slow for a single serverless call). */
