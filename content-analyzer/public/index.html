@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>d'Alba · Content Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    color: #2A1F00;
+    min-height: 100vh;
+    background: linear-gradient(180deg,
+      #F4D991 0%, #F8E8B0 15%, #FDF6E0 32%,
+      #FFFBF0 48%, #FDF5DC 64%, #F9E8A8 80%, #F4D991 100%);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 56px 24px 80px; }
+  header { text-align: center; margin-bottom: 36px; }
+  .eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.22em;
+    text-transform: uppercase; color: #8B6800; margin-bottom: 14px;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 42px; line-height: 1.1; color: #3A2B00;
+  }
+  h1 em { font-style: italic; color: #B8860B; }
+  .sub { margin-top: 14px; color: #6B5410; font-size: 15px; }
+
+  .card {
+    background: rgba(255, 252, 240, 0.78);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(180, 140, 40, 0.22);
+    border-radius: 18px; padding: 26px;
+    box-shadow: 0 8px 30px rgba(140, 100, 20, 0.08);
+  }
+  .input-row { display: flex; gap: 12px; }
+  input[type=text] {
+    flex: 1; padding: 14px 16px; font-size: 15px; font-family: inherit;
+    border: 1px solid rgba(180, 140, 40, 0.35); border-radius: 12px;
+    background: rgba(255, 255, 255, 0.7); color: #2A1F00;
+  }
+  input[type=text]:focus { outline: none; border-color: #B8860B; }
+  button {
+    padding: 14px 26px; font-size: 15px; font-weight: 600; font-family: inherit;
+    color: #FFFBF0; background: linear-gradient(135deg, #C99700, #9A7100);
+    border: none; border-radius: 12px; cursor: pointer; white-space: nowrap;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+  }
+  button:hover { transform: translateY(-1px); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .hint { margin-top: 12px; font-size: 12px; color: #8B6800; }
+
+  #status { margin-top: 22px; text-align: center; color: #6B5410; font-size: 14px; display: none; }
+  #status.show { display: block; }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px; margin-right: 8px;
+    border: 2px solid rgba(184, 134, 11, 0.3); border-top-color: #B8860B;
+    border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #9B2C2C; }
+
+  #results { margin-top: 28px; display: none; }
+  #results.show { display: block; }
+  .meta {
+    display: flex; gap: 18px; align-items: center; margin-bottom: 22px;
+  }
+  .meta img { width: 120px; height: 68px; object-fit: cover; border-radius: 10px; flex-shrink: 0; background: #eadfb8; }
+  .meta .m-title { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 18px; }
+  .meta .m-sub { font-size: 13px; color: #6B5410; margin-top: 4px; }
+  .badges { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(184, 134, 11, 0.14); color: #7A5C00; font-weight: 500;
+  }
+
+  .section { margin-top: 22px; }
+  .section h2 {
+    font-family: 'Playfair Display', serif; font-size: 20px; color: #3A2B00;
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(180,140,40,0.2);
+  }
+  .field { margin-bottom: 14px; }
+  .field .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #8B6800; margin-bottom: 5px;
+  }
+  .field p { font-size: 14.5px; line-height: 1.6; color: #2A1F00; }
+  ul.clean { list-style: none; }
+  ul.clean li {
+    font-size: 14.5px; line-height: 1.6; padding-left: 20px; position: relative; margin-bottom: 7px;
+  }
+  ul.clean li::before { content: '✦'; position: absolute; left: 0; color: #B8860B; }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag { font-size: 12.5px; padding: 4px 11px; border-radius: 999px; background: rgba(184,134,11,0.12); color: #7A5C00; }
+  footer { text-align: center; margin-top: 40px; font-size: 12px; color: #9a7a2a; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">d'Alba Piedmont</div>
+      <h1>Content <em>Analyzer</em></h1>
+      <p class="sub">Paste a YouTube or TikTok link for a content breakdown and creative insights.</p>
+    </header>
+
+    <div class="card">
+      <div class="input-row">
+        <input type="text" id="url" placeholder="https://www.tiktok.com/@… or https://youtube.com/watch?v=…" autocomplete="off" />
+        <button id="go">Analyze</button>
+      </div>
+      <div class="hint">Powered by Apify scraping + Claude. Analysis can take 30–90 seconds.</div>
+    </div>
+
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <footer>d'Alba GLOW-TO-GOLD · Content Analyzer</footer>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const urlInput = $('url');
+const goBtn = $('go');
+const statusEl = $('status');
+const resultsEl = $('results');
+
+function setStatus(html, isError = false) {
+  statusEl.className = 'show' + (isError ? ' error' : '');
+  statusEl.innerHTML = html;
+}
+function clearStatus() { statusEl.className = ''; statusEl.innerHTML = ''; }
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+function list(items) {
+  if (!items || !items.length) return '<p style="color:#8B6800">—</p>';
+  return '<ul class="clean">' + items.map((i) => `<li>${esc(i)}</li>`).join('') + '</ul>';
+}
+function tags(items) {
+  if (!items || !items.length) return '<p style="color:#8B6800">—</p>';
+  return '<div class="tags">' + items.map((t) => `<span class="tag">#${esc(String(t).replace(/^#/, ''))}</span>`).join('') + '</div>';
+}
+function fmtNum(n) {
+  if (n === undefined || n === null) return null;
+  const x = Number(n);
+  if (Number.isNaN(x)) return String(n);
+  return x.toLocaleString();
+}
+
+function render(data) {
+  const { meta, analysis, platform } = data;
+  const b = analysis.content_breakdown;
+  const ci = analysis.creative_insights;
+
+  const statBadges = Object.entries(meta.stats || {})
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `<span class="badge">${esc(k)}: ${esc(fmtNum(v))}</span>`).join('');
+
+  resultsEl.innerHTML = `
+    <div class="card">
+      <div class="meta">
+        ${meta.thumbnail ? `<img src="${esc(meta.thumbnail)}" alt="" onerror="this.style.display='none'" />` : ''}
+        <div>
+          <div class="m-title">${esc(meta.title || '(untitled)')}</div>
+          <div class="m-sub">${esc(platform.toUpperCase())} · ${esc(meta.author || 'unknown')}${meta.durationSeconds ? ' · ' + esc(meta.durationSeconds) + 's' : ''}</div>
+          <div class="badges">
+            ${statBadges}
+            ${meta.hasTranscript ? '<span class="badge">transcript ✓</span>' : '<span class="badge">no transcript</span>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Summary</h2>
+        <p style="font-size:14.5px;line-height:1.6">${esc(analysis.summary)}</p>
+      </div>
+
+      <div class="section">
+        <h2>The Hook</h2>
+        <div class="field"><div class="label">Opening</div><p>${esc(analysis.hook.text)}</p></div>
+        <div class="field"><div class="label">Analysis</div><p>${esc(analysis.hook.analysis)}</p></div>
+      </div>
+
+      <div class="section">
+        <h2>Content Breakdown</h2>
+        <div class="field"><div class="label">Structure & Pacing</div><p>${esc(b.structure)}</p></div>
+        <div class="field"><div class="label">Tone</div><p>${esc(b.tone)}</p></div>
+        <div class="field"><div class="label">Target Audience</div><p>${esc(b.target_audience)}</p></div>
+        <div class="field"><div class="label">Themes</div>${list(b.themes)}</div>
+        <div class="field"><div class="label">On-screen Text / Keywords</div>${list(b.on_screen_text_or_keywords)}</div>
+        <div class="field"><div class="label">Hashtags</div>${tags(b.hashtags)}</div>
+      </div>
+
+      <div class="section">
+        <h2>Creative Insights</h2>
+        <div class="field"><div class="label">What's Working</div>${list(ci.whats_working)}</div>
+        <div class="field"><div class="label">Improvements</div>${list(ci.improvements)}</div>
+        <div class="field"><div class="label">Recommendations</div>${list(ci.recommendations)}</div>
+      </div>
+    </div>`;
+  resultsEl.className = 'show';
+}
+
+async function analyze() {
+  const url = urlInput.value.trim();
+  if (!url) { setStatus('Please paste a link first.', true); return; }
+  resultsEl.className = '';
+  resultsEl.innerHTML = '';
+  goBtn.disabled = true;
+  setStatus('<span class="spinner"></span> Scraping the video and running analysis… this can take a minute.');
+
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Request failed.');
+    clearStatus();
+    render(data);
+  } catch (err) {
+    setStatus('⚠ ' + esc(err.message), true);
+  } finally {
+    goBtn.disabled = false;
+  }
+}
+
+goBtn.addEventListener('click', analyze);
+urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') analyze(); });
+</script>
+</body>
+</html>
