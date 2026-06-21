@@ -1,4 +1,6 @@
 import { put, get } from '@vercel/blob';
+import { reportToPlainText } from './reportText.js';
+import { pushToDrive, driveEnabled } from './drive.js';
 
 const ACCESS = 'private';
 const token = () => process.env.BLOB_READ_WRITE_TOKEN;
@@ -58,6 +60,12 @@ export async function saveAnalysis(record) {
   };
   idx.items = [summary, ...(idx.items || []).filter((x) => x.id !== id)].slice(0, 300);
   await writeJSON(INDEX, idx);
+
+  // Best-effort: also export to Google Drive (as a Doc) if configured.
+  if (driveEnabled()) {
+    const title = `[분석] ${rec.meta?.author || ''} — ${(rec.meta?.title || id).slice(0, 60)}`;
+    await pushToDrive({ title, text: reportToPlainText(rec) }).catch(() => {});
+  }
   return id;
 }
 
