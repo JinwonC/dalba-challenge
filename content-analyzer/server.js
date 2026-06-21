@@ -3,7 +3,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { runScrape, runReport, runAnalysis, HttpError } from './lib/pipeline.js';
+import { runScrape, runReport, runComments, runAnalysis, HttpError } from './lib/pipeline.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -31,6 +31,13 @@ app.post('/api/report', async (req, res) => {
   try {
     const { videoUrl, subtitleUrl, meta } = req.body || {};
     res.json(await runReport({ videoUrl, subtitleUrl, meta }));
+  } catch (err) { send(res, err); }
+});
+
+app.post('/api/comments', async (req, res) => {
+  try {
+    const { comments, meta } = req.body || {};
+    res.json(await runComments({ comments, meta }));
   } catch (err) { send(res, err); }
 });
 

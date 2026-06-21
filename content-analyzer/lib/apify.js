@@ -4,6 +4,7 @@ const YOUTUBE_ACTOR = process.env.APIFY_YOUTUBE_ACTOR || 'streamers/youtube-scra
 const YOUTUBE_TRANSCRIPT_ACTOR =
   process.env.APIFY_YOUTUBE_TRANSCRIPT_ACTOR || 'pintostudio/youtube-transcript-scraper';
 const TIKTOK_ACTOR = process.env.APIFY_TIKTOK_ACTOR || 'clockworks/tiktok-scraper';
+const TIKTOK_COMMENTS_ACTOR = process.env.APIFY_TIKTOK_COMMENTS_ACTOR || 'clockworks/tiktok-comments-scraper';
 
 let _client = null;
 function client() {
@@ -173,6 +174,31 @@ async function scrapeTikTok(url) {
     thumbnail: pick(v?.videoMeta || v, ['coverUrl', 'cover', 'originalCoverUrl']),
     raw: v,
   };
+}
+
+/** Scrape top TikTok comments for a post. Best-effort: returns [] on failure. */
+export async function scrapeTikTokComments(url, max = 40) {
+  try {
+    const items = await runActor(TIKTOK_COMMENTS_ACTOR, {
+      postURLs: [url],
+      commentsPerPost: max,
+      maxRepliesPerComment: 0,
+    });
+    return items
+      .map((c) => ({
+        text: pick(c, ['text', 'comment']) || '',
+        likes: pick(c, ['diggCount', 'likesCount', 'likes']) ?? 0,
+        author: pick(c, ['uniqueId', 'username', 'nickName']) || '',
+        likedByAuthor: Boolean(c.likedByAuthor),
+        pinned: Boolean(c.pinnedByAuthor || c.pinned),
+        replies: pick(c, ['replyCommentTotal', 'repliesCount']) ?? 0,
+      }))
+      .filter((c) => c.text)
+      .sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  } catch (e) {
+    console.warn('Comment scrape skipped:', e.message);
+    return [];
+  }
 }
 
 /** Scrape a YouTube or TikTok URL into a normalized content object. */

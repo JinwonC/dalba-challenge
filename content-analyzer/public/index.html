@@ -200,6 +200,24 @@ function keywordsHTML(kws){
     <div class="kw"><span class="k">${esc(k.keyword)}</span><span class="n">${esc(k.note)}</span></div>`).join('');
 }
 
+function commentsHTML(ca, count){
+  if(!ca) return '';
+  const li = (a)=> (a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  const themes = (ca.themes||[]).map(t=>`<div class="factor"><div class="fn">${esc(t.theme)}</div><div class="fd">${esc(t.detail)}</div></div>`).join('');
+  const notable = (ca.notable||[]).map(n=>`<div class="hline"><div class="en">“${esc(n.text)}”</div><div class="an">${esc(n.note)}</div></div>`).join('');
+  const block = (title, arr)=> (arr&&arr.length)?`<div class="blk"><h4>${title}</h4><ul>${li(arr)}</ul></div>`:'';
+  return `
+    <div class="struct" style="margin:0 0 14px"><b>🌡️ 전반 감성</b><br>${esc(ca.sentiment)} <span style="color:var(--muted)">(분석 댓글 ${count||0}개)</span></div>
+    ${themes?`<h4 style="margin:0 0 6px;font-size:13.5px">🔁 반복 화제</h4>${themes}`:''}
+    <div class="ins" style="margin-top:14px">
+      ${block('❓ 질문·반론', ca.questions_objections)}
+      ${block('📥 콘텐츠 요청', ca.content_requests)}
+      ${block('🛒 구매 의향 신호', ca.purchase_signals)}
+      ${block("💡 d'Alba 액션", ca.dalba_actions)}
+    </div>
+    ${notable?`<h4 style="margin:16px 0 6px;font-size:13.5px">⭐ 주목할 댓글</h4>${notable}`:''}`;
+}
+
 function insightsHTML(ins, relevance){
   const li = (a)=> (a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
   return `
@@ -301,6 +319,10 @@ async function run(){
       <div class="card">
         <div class="head"><h3>크리에이티브 인사이트</h3></div>
         <div class="body">${insightsHTML(rep.insights||{}, rep.dalba_relevance)}</div>
+      </div>
+      <div class="card" id="commentsCard">
+        <div class="head"><h3>💬 댓글 분석</h3></div>
+        <div class="body" id="commentsBody"><div class="loading"><div class="spinner"></div>댓글 분석 중…</div></div>
       </div>`;
 
     $('#copyBtn').addEventListener('click', ()=>{
@@ -308,6 +330,18 @@ async function run(){
         const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='리포트 복사',1500);
       });
     });
+
+    // Stage 3 — comment analysis (fast, text-only).
+    (async ()=>{
+      try{
+        const comments = s.comments||[];
+        if(!comments.length){ $('#commentsBody').innerHTML='<div style="color:var(--muted);font-size:13px">수집된 댓글이 없습니다.</div>'; return; }
+        const c = await postJSON('/api/comments', { comments, meta: s.meta||{} });
+        $('#commentsBody').innerHTML = commentsHTML(c.comments_analysis, c.count);
+      }catch(e){
+        $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
+      }
+    })();
 
   }catch(err){
     const msg = `<div class="err">${esc(err.message)}</div>`;
