@@ -16,38 +16,47 @@ class HttpError extends Error {
   }
 }
 
+/** Allowlist the hosts the report stage is allowed to fetch (anti-SSRF). */
+function assertAllowedMediaUrl(videoUrl, subtitleUrl) {
+  let vh;
+  try {
+    vh = new URL(videoUrl).hostname;
+  } catch {
+    throw new HttpError(400, 'Invalid videoUrl.');
+  }
+  if (vh !== 'api.apify.com') {
+    throw new HttpError(400, 'videoUrl must be an Apify-hosted record.');
+  }
+  if (subtitleUrl) {
+    let sh;
+    try {
+      sh = new URL(subtitleUrl).hostname;
+    } catch {
+      throw new HttpError(400, 'Invalid subtitleUrl.');
+    }
+    if (!/(^|\.)tiktokcdn(-us)?\.com$/.test(sh) && sh !== 'api.apify.com') {
+      throw new HttpError(400, 'subtitleUrl host not allowed.');
+    }
+  }
+}
+
 /**
- * Full analyze pipeline: scrape (Apify) -> download mp4 + subtitles ->
- * Gemini scene report. Returns the API response object.
- * Throws HttpError(status, message) on failure.
+ * Stage 1 — scrape only (Apify). Fast-ish; returns everything the client needs
+ * to render the video immediately + the media URLs for stage 2.
  */
-export async function runAnalysis({ url, language = 'Korean' }) {
+export async function runScrape({ url }) {
   url = (url || '').trim();
   if (!url) throw new HttpError(400, 'Missing "url" in request body.');
-
-  const platform = detectPlatform(url);
-  if (platform !== 'tiktok') {
-    throw new HttpError(400, 'Provide a TikTok video link.');
-  }
-  if (!process.env.GEMINI_API_KEY) {
-    throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
-  }
-  if (!process.env.APIFY_TOKEN) {
-    throw new HttpError(500, 'APIFY_TOKEN is not set on the server.');
-  }
+  if (detectPlatform(url) !== 'tiktok') throw new HttpError(400, 'Provide a TikTok video link.');
+  if (!process.env.APIFY_TOKEN) throw new HttpError(500, 'APIFY_TOKEN is not set on the server.');
 
   const content = await scrapeContent(url);
   if (!content.videoUrl) {
     throw new HttpError(502, 'Could not resolve a downloadable video URL from the scrape.');
   }
 
-  const [videoBuffer, transcriptVtt] = await Promise.all([
-    downloadVideo(content.videoUrl),
-    fetchSubtitles(content.subtitleUrl),
-  ]);
-
   const meta = {
-    platform,
+    platform: 'tiktok',
     url: content.url,
     title: content.title,
     author: content.author,
@@ -57,14 +66,36 @@ export async function runAnalysis({ url, language = 'Korean' }) {
     hashtags: content.hashtags,
   };
 
-  const report = await generateReport({ videoBuffer, transcriptVtt, meta, language });
-
   return {
-    platform,
-    meta: { ...meta, hasTranscript: Boolean(transcriptVtt) },
+    meta,
     embed: { videoId: tiktokVideoId(url), url: content.url },
-    report,
+    media: { videoUrl: content.videoUrl, subtitleUrl: content.subtitleUrl || '' },
   };
+}
+
+/**
+ * Stage 2 — download media + Gemini report. Single Gemini attempt (the client
+ * retries this endpoint on transient errors) so each call stays under the cap.
+ */
+export async function runReport({ videoUrl, subtitleUrl = '', meta = {} }) {
+  if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
+  if (!videoUrl) throw new HttpError(400, 'Missing "videoUrl".');
+  assertAllowedMediaUrl(videoUrl, subtitleUrl);
+
+  const [videoBuffer, transcriptVtt] = await Promise.all([
+    downloadVideo(videoUrl),
+    fetchSubtitles(subtitleUrl),
+  ]);
+
+  const report = await generateReport({ videoBuffer, transcriptVtt, meta, tries: 1 });
+  return { report };
+}
+
+/** Combined one-shot (used locally / for tests; too slow for a single serverless call). */
+export async function runAnalysis({ url }) {
+  const { meta, embed, media } = await runScrape({ url });
+  const { report } = await runReport({ ...media, meta });
+  return { platform: 'tiktok', meta: { ...meta, hasTranscript: undefined }, embed, report };
 }
 
 export { HttpError };

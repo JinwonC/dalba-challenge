@@ -3,7 +3,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { runAnalysis, HttpError } from './lib/pipeline.js';
+import { runScrape, runReport, runAnalysis, HttpError } from './lib/pipeline.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -12,23 +12,32 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
+const send = (res, err) => {
+  const status = err instanceof HttpError ? err.status : 502;
+  if (status >= 500) console.error('Request failed:', err);
+  res.status(status).json({ error: err.message || 'Request failed.' });
+};
+
 app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    apify: Boolean(process.env.APIFY_TOKEN),
-    gemini: Boolean(process.env.GEMINI_API_KEY),
-  });
+  res.json({ ok: true, apify: Boolean(process.env.APIFY_TOKEN), gemini: Boolean(process.env.GEMINI_API_KEY) });
 });
 
-app.post('/api/analyze', async (req, res) => {
+app.post('/api/scrape', async (req, res) => {
+  try { res.json(await runScrape({ url: req.body?.url })); }
+  catch (err) { send(res, err); }
+});
+
+app.post('/api/report', async (req, res) => {
   try {
-    const result = await runAnalysis({ url: req.body?.url, language: req.body?.language });
-    res.json(result);
-  } catch (err) {
-    const status = err instanceof HttpError ? err.status : 502;
-    if (status >= 500) console.error('Analyze failed:', err);
-    res.status(status).json({ error: err.message || 'Analysis failed.' });
-  }
+    const { videoUrl, subtitleUrl, meta } = req.body || {};
+    res.json(await runReport({ videoUrl, subtitleUrl, meta }));
+  } catch (err) { send(res, err); }
+});
+
+// One-shot (local/testing only; too slow for a single serverless call).
+app.post('/api/analyze', async (req, res) => {
+  try { res.json(await runAnalysis({ url: req.body?.url })); }
+  catch (err) { send(res, err); }
 });
 
 app.listen(PORT, () => {

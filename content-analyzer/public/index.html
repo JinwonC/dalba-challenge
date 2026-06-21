@@ -11,7 +11,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-    color:var(--ink);background:var(--bg);line-height:1.5}
+    color:var(--ink);background:var(--bg);line-height:1.55}
   a{color:var(--gold)}
   header.top{padding:28px 24px 8px;text-align:center}
   header.top h1{margin:0;font-size:26px;letter-spacing:.5px}
@@ -19,12 +19,9 @@
   header.top p{margin:6px 0 0;color:var(--muted);font-size:14px}
 
   .bar{max-width:1180px;margin:18px auto 6px;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
-  .bar input[type=text]{flex:1;min-width:320px;max-width:680px;padding:13px 16px;border:1px solid var(--line);
+  .bar input[type=text]{flex:1;min-width:320px;max-width:760px;padding:13px 16px;border:1px solid var(--line);
     border-radius:10px;font-size:15px;background:#fff}
   .bar input[type=text]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
-  .lang{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
-  .lang button{border:0;background:#fff;padding:13px 14px;font-size:13px;cursor:pointer;color:var(--muted)}
-  .lang button.on{background:var(--gold);color:#fff}
   .go{border:0;background:var(--slate);color:#fff;padding:13px 26px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
   .go:hover{background:#111827}
   .go:disabled{opacity:.5;cursor:default}
@@ -51,24 +48,46 @@
   .tag{font-size:11.5px;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:3px 9px}
 
   .right{min-width:0}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
   .card .head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
   .card .head h3{margin:0;font-size:15px;letter-spacing:.3px}
   .card .body{padding:16px 18px}
   .summary{font-size:14.5px;color:#333}
 
+  /* hook breakdown */
+  .overlay{background:#111827;color:#ffd98a;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-bottom:14px}
+  .overlay .lbl{color:#9aa3b2;font-size:11px;letter-spacing:.5px;display:block;margin-bottom:3px}
+  .overlay .kr{color:#cbd5e1;font-size:12px;margin-top:4px}
+  .hline{border-left:3px solid var(--gold);padding:2px 0 2px 12px;margin:0 0 14px}
+  .hline .en{font-weight:600;font-size:13.5px}
+  .hline .krline{color:var(--muted);font-size:12.5px;margin:2px 0 4px}
+  .hline .an{font-size:13px;color:#333}
+  .hooksum{background:var(--gold-soft);border:1px solid #efe4cd;border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:4px}
+
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead th{background:var(--slate);color:#fff;text-align:left;padding:11px 14px;font-weight:600;font-size:12.5px}
   tbody td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
   tbody tr:nth-child(even) td{background:#fafafa}
-  .scol{width:140px}
+  .scol{width:130px}
   .scene-name{font-weight:700}
   .scene-time{color:var(--gold);font-weight:700;font-size:11.5px;margin-top:3px}
   .shot{color:var(--muted);font-weight:600;font-size:11.5px;margin-bottom:4px}
-  .acol{width:38%}
+  .acol{width:40%}
+  .audio-en{font-size:13px}
+  .audio-kr{font-size:12.5px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}
 
-  .copy{border:1px solid var(--line);background:#fff;color:var(--gold);font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
-  .copy:hover{background:var(--gold-soft)}
+  /* persuasion */
+  .factor{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .factor:first-child{border-top:0}
+  .factor .fn{flex:0 0 120px;font-weight:700;font-size:13px;color:var(--gold)}
+  .factor .fd{font-size:13px}
+  .struct{background:var(--gold-soft);border:1px solid #efe4cd;border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:12px}
+
+  /* keywords */
+  .kw{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
+  .kw:first-child{border-top:0}
+  .kw .k{font-weight:700;font-size:13px;background:#111827;color:#ffd98a;border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .kw .n{font-size:13px;color:#333}
 
   .ins{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:680px){.ins{grid-template-columns:1fr}}
@@ -77,24 +96,22 @@
   .ins li{margin-bottom:7px;font-size:13.5px}
   .ins .rec{grid-column:1/-1;background:var(--gold-soft);border:1px solid #efe4cd;border-radius:10px;padding:12px 14px}
   .relev{font-size:13.5px;background:var(--gold-soft);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0}
+  .copy{border:1px solid var(--line);background:#fff;color:var(--gold);font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
+  .copy:hover{background:var(--gold-soft)}
   .foot{max-width:1180px;margin:0 auto 50px;padding:0 20px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
 <body>
   <header class="top">
     <h1><span class="b">d'Alba</span> · TikTok 콘텐츠 분석기</h1>
-    <p>틱톡 링크를 넣으면 좌측에 영상, 우측에 씬별 리포트 + 인사이트가 뜹니다.</p>
+    <p>틱톡 링크를 넣으면 좌측에 영상, 우측에 씬별 리포트 · 훅 분석 · 설득 요인 · 핵심 키워드가 뜹니다.</p>
   </header>
 
   <div class="bar">
     <input id="url" type="text" placeholder="https://www.tiktok.com/@user/video/..." />
-    <div class="lang" id="lang">
-      <button data-l="Korean" class="on">한국어</button>
-      <button data-l="English">EN</button>
-    </div>
     <button class="go" id="go">분석하기</button>
   </div>
-  <div class="hint">스크랩 + 영상 화면분석에 보통 60~120초 걸립니다.</div>
+  <div class="hint">스크랩 + 영상 화면분석에 보통 60~120초 걸립니다. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기.</div>
 
   <div class="status" id="status"></div>
 
@@ -110,13 +127,6 @@
 
 <script>
 const $ = (s)=>document.querySelector(s);
-let LANG = 'Korean';
-
-$('#lang').addEventListener('click', (e)=>{
-  const b = e.target.closest('button'); if(!b) return;
-  LANG = b.dataset.l;
-  [...$('#lang').children].forEach(x=>x.classList.toggle('on', x===b));
-});
 
 $('#go').addEventListener('click', run);
 $('#url').addEventListener('keydown', (e)=>{ if(e.key==='Enter') run(); });
@@ -128,7 +138,6 @@ function renderTikTok(videoId, url){
   const wrap = $('#videoWrap');
   wrap.innerHTML = `<blockquote class="tiktok-embed" cite="${esc(url)}" data-video-id="${esc(videoId)}"
       style="max-width:340px;min-width:300px;margin:0"><section></section></blockquote>`;
-  // (re)load TikTok's embed script so it renders the blockquote
   const old = document.getElementById('ttscript'); if(old) old.remove();
   const s = document.createElement('script');
   s.id='ttscript'; s.src='https://www.tiktok.com/embed.js'; s.async=true;
@@ -150,14 +159,45 @@ function renderMeta(meta){
     <div style="margin-top:10px"><a href="${esc(meta.url)}" target="_blank" rel="noopener">틱톡에서 열기 ↗</a></div>`;
 }
 
+function hookHTML(h){
+  if(!h) return '';
+  const overlay = (h.text_overlay||h.text_overlay_kr) ? `
+    <div class="overlay"><span class="lbl">📝 텍스트 오버레이</span>${esc(h.text_overlay||'')}
+      ${h.text_overlay_kr?`<div class="kr">${esc(h.text_overlay_kr)}</div>`:''}</div>` : '';
+  const lines = (h.lines||[]).map(l=>`
+    <div class="hline">
+      <div class="en">“${esc(l.line)}”</div>
+      <div class="krline">${esc(l.translation)}</div>
+      <div class="an">${esc(l.analysis)}</div>
+    </div>`).join('');
+  const sum = h.summary?`<div class="hooksum">⚡ ${esc(h.summary)}</div>`:'';
+  return overlay + lines + sum;
+}
+
 function sceneTableHTML(scenes){
   const rows = (scenes||[]).map(s=>`
     <tr>
       <td class="scol"><div class="scene-name">${esc(s.scene)}</div><div class="scene-time">${esc(s.time)}</div></td>
       <td><div class="shot">📷 ${esc(s.shot)}</div>${esc(s.visual)}</td>
-      <td class="acol">${esc(s.audio)}</td>
+      <td class="acol">
+        <div class="audio-en">${esc(s.audio_original)}</div>
+        ${s.audio_kr && s.audio_kr!==s.audio_original?`<div class="audio-kr">🇰🇷 ${esc(s.audio_kr)}</div>`:''}
+      </td>
     </tr>`).join('');
-  return `<table><thead><tr><th>Scene</th><th>Visual Description</th><th>Audio Script</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th>Scene</th><th>Visual Description</th><th>Audio Script (원문 + 한국어)</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function persuasionHTML(p){
+  if(!p) return '';
+  const factors = (p.factors||[]).map(f=>`
+    <div class="factor"><div class="fn">${esc(f.factor)}</div><div class="fd">${esc(f.detail)}</div></div>`).join('');
+  const struct = p.structure?`<div class="struct"><b>🔄 전환 구조</b><br>${esc(p.structure)}</div>`:'';
+  return factors + struct;
+}
+
+function keywordsHTML(kws){
+  return (kws||[]).map(k=>`
+    <div class="kw"><span class="k">${esc(k.keyword)}</span><span class="n">${esc(k.note)}</span></div>`).join('');
 }
 
 function insightsHTML(ins, relevance){
@@ -171,40 +211,92 @@ function insightsHTML(ins, relevance){
     ${relevance?`<div class="relev" style="margin-top:14px"><b>🎯 d'Alba 연관성</b><br>${esc(relevance)}</div>`:''}`;
 }
 
-function tableToText(scenes){
-  return (scenes||[]).map(s=>`[${s.scene} · ${s.time}] (${s.shot})\nVISUAL: ${s.visual}\nAUDIO: ${s.audio}`).join('\n\n');
+function reportToText(rep){
+  let t = `[요약]\n${rep.summary||''}\n\n`;
+  const h = rep.hook_breakdown;
+  if(h){
+    t += `[오프닝 훅]\n`;
+    if(h.text_overlay) t += `오버레이: ${h.text_overlay} / ${h.text_overlay_kr||''}\n`;
+    (h.lines||[]).forEach(l=>{ t += `- "${l.line}" (${l.translation}) → ${l.analysis}\n`; });
+    if(h.summary) t += `⚡ ${h.summary}\n`;
+    t += `\n`;
+  }
+  t += `[씬별 분해]\n`;
+  (rep.scenes||[]).forEach(s=>{ t += `[${s.scene} · ${s.time}] (${s.shot})\nVISUAL: ${s.visual}\nAUDIO: ${s.audio_original}\n( ${s.audio_kr} )\n\n`; });
+  if(rep.persuasion){
+    t += `[설득 전환 요인]\n`;
+    (rep.persuasion.factors||[]).forEach(f=>{ t += `- ${f.factor}: ${f.detail}\n`; });
+    if(rep.persuasion.structure) t += `🔄 ${rep.persuasion.structure}\n`;
+    t += `\n`;
+  }
+  if(rep.keywords){
+    t += `[핵심 키워드]\n`;
+    rep.keywords.forEach(k=>{ t += `- ${k.keyword} ← ${k.note}\n`; });
+  }
+  return t;
 }
+
+async function postJSON(path, body){
+  const r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(data.error||'요청 실패'); e.status=r.status; throw e; }
+  return data;
+}
+
+// Stage 2 can transiently fail (Gemini overload); retry a couple times client-side.
+async function reportWithRetry(media, meta, tries=3){
+  let last;
+  for(let i=0;i<tries;i++){
+    try{ return await postJSON('/api/report', { videoUrl:media.videoUrl, subtitleUrl:media.subtitleUrl, meta }); }
+    catch(e){ last=e; if(i===tries-1) throw e;
+      $('#rightStatus') && ($('#rightStatus').textContent = `리포트 생성 재시도 중… (${i+2}/${tries})`);
+    }
+  }
+  throw last;
+}
+
+const rightLoading = (msg)=>`<div class="card"><div class="body"><div class="loading"><div class="spinner"></div><span id="rightStatus">${msg}</span></div></div></div>`;
 
 async function run(){
   const url = $('#url').value.trim();
   if(!url){ $('#status').innerHTML='<div class="err">틱톡 링크를 입력하세요.</div>'; return; }
   $('#go').disabled = true;
   $('#layout').style.display='none';
-  $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>분석 중… (영상 다운로드 + 화면분석)</div>';
+  $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>1/2 · 영상 가져오는 중…</div>';
 
   try{
-    const r = await fetch('/api/analyze', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ url, language: LANG })
-    });
-    const data = await r.json();
-    if(!r.ok) throw new Error(data.error || '분석 실패');
+    // Stage 1 — scrape (fast): render the video + meta immediately.
+    const s = await postJSON('/api/scrape', { url });
+    renderTikTok(s.embed?.videoId, s.embed?.url || url);
+    renderMeta(s.meta||{});
+    $('#status').innerHTML='';
+    $('#right').innerHTML = rightLoading('2/2 · 영상 화면분석 + 리포트 생성 중… (최대 1분)');
+    $('#layout').style.display='grid';
 
-    // Left
-    renderTikTok(data.embed?.videoId, data.embed?.url || url);
-    renderMeta(data.meta||{});
+    // Stage 2 — download + Gemini report (with retry).
+    const data = await reportWithRetry(s.media||{}, s.meta||{});
 
-    // Right
     const rep = data.report||{};
     $('#right').innerHTML = `
       <div class="card">
-        <div class="head"><h3>요약</h3></div>
+        <div class="head"><h3>요약</h3><button class="copy" id="copyBtn">리포트 복사</button></div>
         <div class="body summary">${esc(rep.summary||'')}</div>
       </div>
       <div class="card">
-        <div class="head"><h3>씬별 분해</h3>
-          <button class="copy" id="copyBtn">표 복사</button></div>
+        <div class="head"><h3>🎬 오프닝 훅 분석 <span style="color:var(--muted);font-weight:400;font-size:12px">· 첫 3~6초</span></h3></div>
+        <div class="body">${hookHTML(rep.hook_breakdown)}</div>
+      </div>
+      <div class="card">
+        <div class="head"><h3>씬별 분해</h3></div>
         <div class="body" style="padding:0">${sceneTableHTML(rep.scenes)}</div>
+      </div>
+      <div class="card">
+        <div class="head"><h3>🧲 설득 전환 요인</h3></div>
+        <div class="body">${persuasionHTML(rep.persuasion)}</div>
+      </div>
+      <div class="card">
+        <div class="head"><h3>🔑 핵심 키워드</h3></div>
+        <div class="body">${keywordsHTML(rep.keywords)}</div>
       </div>
       <div class="card">
         <div class="head"><h3>크리에이티브 인사이트</h3></div>
@@ -212,15 +304,15 @@ async function run(){
       </div>`;
 
     $('#copyBtn').addEventListener('click', ()=>{
-      navigator.clipboard.writeText(tableToText(rep.scenes)).then(()=>{
-        const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='표 복사',1500);
+      navigator.clipboard.writeText(reportToText(rep)).then(()=>{
+        const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='리포트 복사',1500);
       });
     });
 
-    $('#status').innerHTML='';
-    $('#layout').style.display='grid';
   }catch(err){
-    $('#status').innerHTML = `<div class="err">${esc(err.message)}</div>`;
+    const msg = `<div class="err">${esc(err.message)}</div>`;
+    $('#status').innerHTML = msg;
+    if($('#layout').style.display==='grid') $('#right').innerHTML = `<div class="card"><div class="body">${msg}<div style="margin-top:8px;color:var(--muted);font-size:12.5px">잠시 후 다시 시도해 주세요.</div></div></div>`;
   }finally{
     $('#go').disabled = false;
   }
