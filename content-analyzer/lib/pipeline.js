@@ -34,8 +34,11 @@ function assertAllowedMediaUrl(videoUrl, subtitleUrl) {
     } catch {
       throw new HttpError(400, 'Invalid subtitleUrl.');
     }
-    if (!/(^|\.)tiktokcdn(-us)?\.com$/.test(sh) && sh !== 'api.apify.com') {
-      throw new HttpError(400, 'subtitleUrl host not allowed.');
+    // TikTok serves subtitles from various owned CDNs (tiktok.com, tiktokcdn.com,
+    // tiktokcdn-us.com, tiktokv.com, byteoversea.com, …).
+    const TIKTOK_HOST = /(^|\.)(tiktok\.com|tiktokcdn\.com|tiktokcdn-us\.com|tiktokv\.com|byteoversea\.com|ibyteimg\.com)$/;
+    if (!TIKTOK_HOST.test(sh) && sh !== 'api.apify.com') {
+      throw new HttpError(400, `subtitleUrl host not allowed: ${sh}`);
     }
   }
 }
