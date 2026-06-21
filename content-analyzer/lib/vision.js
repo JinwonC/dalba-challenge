@@ -61,16 +61,42 @@ export async function analyzeVideoVisual(videoBuffer, mimeType = 'video/mp4') {
   return response.text;
 }
 
+const BROWSER_HEADERS = {
+  // Some CDNs reject default fetch UAs.
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+  Referer: 'https://www.tiktok.com/',
+};
+
+/** Apify key-value-store records may require the token appended. */
+function withApifyToken(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'api.apify.com' && process.env.APIFY_TOKEN && !u.searchParams.has('token')) {
+      u.searchParams.set('token', process.env.APIFY_TOKEN);
+      return u.toString();
+    }
+  } catch {
+    /* leave url as-is */
+  }
+  return url;
+}
+
 /** Download a video file from a direct URL into a Buffer. */
 export async function downloadVideo(url) {
-  const res = await fetch(url, {
-    headers: {
-      // Some CDNs reject default fetch UAs.
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-      Referer: 'https://www.tiktok.com/',
-    },
-  });
+  const res = await fetch(withApifyToken(url), { headers: BROWSER_HEADERS });
   if (!res.ok) throw new Error(`Video download failed (HTTP ${res.status}).`);
   return Buffer.from(await res.arrayBuffer());
+}
+
+/** Fetch a subtitle/VTT file as text (best-effort). Returns '' on failure. */
+export async function fetchSubtitles(url) {
+  if (!url) return '';
+  try {
+    const res = await fetch(withApifyToken(url), { headers: BROWSER_HEADERS });
+    if (!res.ok) return '';
+    return (await res.text()).trim();
+  } catch {
+    return '';
+  }
 }

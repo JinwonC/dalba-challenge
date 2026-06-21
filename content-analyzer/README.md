@@ -1,19 +1,22 @@
 # d'Alba Content Analyzer
 
-A small web app: paste a **YouTube** or **TikTok** link and get a **content breakdown** and **creative insights**.
+A small web app: paste a **TikTok** link and get a **two-column report** — the **TikTok video on the left**, a **scene-by-scene breakdown** (Scene · Visual Description · Audio Script) plus **creative insights** on the right.
 
-It scrapes the video with [Apify](https://apify.com) (metadata, caption, hashtags, transcript/subtitles, stats), optionally **watches the actual video with Gemini** (on-screen text, the person's actions, the background/setting), and then runs everything through **Claude** (`claude-opus-4-8`) to produce a structured analysis, rendered in a styled page that matches the d'Alba GLOW-TO-GOLD look.
+It scrapes the video with [Apify](https://apify.com) (metadata, caption, hashtags, **time-coded subtitles**, stats, and an mp4), then **Gemini watches the actual video** and — combined with the time-coded transcript — produces a **structured scene report** (summary, scene table, insights, d'Alba relevance) via JSON structured output. The left column embeds the original clip with TikTok's official embed. Styled to match the d'Alba GLOW-TO-GOLD look.
 
 ```
 content-analyzer/
 ├── server.js            Express server + /api/analyze endpoint
 ├── lib/
-│   ├── apify.js         Platform detection + Apify scraping (YouTube + TikTok)
-│   ├── vision.js        Gemini visual analysis (downloads mp4, reads the frames)
-│   └── analyze.js       Claude structured-output analysis
-├── public/index.html    Single-page frontend
+│   ├── apify.js         Platform detection + Apify scraping (mp4 + time-coded subtitles)
+│   ├── vision.js        Video/subtitle download helpers + standalone Gemini visual rundown
+│   ├── report.js        Gemini structured scene-by-scene report (summary, scenes, insights)
+│   └── analyze.js       (optional) Claude structured-output analysis — not used by default
+├── public/index.html    Single-page two-column frontend (left: TikTok embed, right: report)
 └── .env.example         Copy to .env and fill in your keys
 ```
+
+> **Note:** the default pipeline uses **Gemini only** for the report (no Anthropic key required). YouTube support remains in `apify.js`/`analyze.js` but the new scene-report UI is TikTok-focused.
 
 ## Visual analysis (what's on screen)
 
@@ -41,21 +44,24 @@ Open <http://localhost:3000>, paste a link, hit **Analyze**.
 
 | Variable            | Required? | Where to get it                                                       |
 | ------------------- | --------- | -------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY` | yes       | <https://console.anthropic.com/>                                     |
 | `APIFY_TOKEN`       | yes       | <https://console.apify.com/account/integrations>                    |
-| `GEMINI_API_KEY`    | optional  | <https://aistudio.google.com/apikey> (enables visual analysis)      |
+| `GEMINI_API_KEY`    | yes       | <https://aistudio.google.com/apikey> (watches the video + writes the report) |
+| `ANTHROPIC_API_KEY` | optional  | <https://console.anthropic.com/> (only for the legacy Claude analysis path) |
 
 All keys stay server-side — the browser never sees them.
 
 ## How it works
 
-1. **`POST /api/analyze` `{ url }`** — the server detects YouTube vs TikTok.
-2. **Scrape (Apify):** runs the configured actor for the platform and normalizes the result
-   (title, author, caption/description, hashtags, transcript, stats, thumbnail). For YouTube it
-   falls back to a dedicated transcript actor if the main one returns no captions.
-3. **Analyze (Claude):** sends the normalized data to `claude-opus-4-8` with a JSON-schema
-   `output_config.format`, so the response is always a valid, structured analysis object.
-4. **Render:** the frontend displays the summary, hook analysis, content breakdown, and creative insights.
+1. **`POST /api/analyze` `{ url, language }`** — the server validates the TikTok link.
+2. **Scrape (Apify):** runs `clockworks/tiktok-scraper` with video + subtitle download, and
+   normalizes the result (title, author, caption, hashtags, **time-coded VTT subtitle URL**,
+   stats, thumbnail, and an Apify-hosted **mp4 URL**).
+3. **Fetch media:** downloads the mp4 (for Gemini to watch) and the time-coded subtitles in parallel.
+4. **Report (Gemini):** `lib/report.js` uploads the mp4 via the Files API and asks Gemini, with a
+   JSON `responseSchema`, to segment the video into scenes and return
+   `{ summary, scenes[], insights, dalba_relevance }` in the requested language.
+5. **Render:** the frontend shows the **TikTok embed on the left** and the **scene table + insights
+   on the right**.
 
 ## Configuring the Apify actors
 

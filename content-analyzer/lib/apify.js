@@ -122,12 +122,22 @@ async function scrapeYouTube(url) {
   };
 }
 
+/** Pick the best subtitle link (prefer English ASR) from videoMeta.subtitleLinks. */
+function pickSubtitleUrl(videoMeta) {
+  const links = videoMeta?.subtitleLinks;
+  if (!Array.isArray(links) || links.length === 0) return undefined;
+  const isEng = (l) => /^eng/i.test(l?.language || '');
+  const eng = links.find(isEng);
+  const chosen = eng || links[0];
+  return chosen?.downloadLink || chosen?.tiktokLink;
+}
+
 async function scrapeTikTok(url) {
   const items = await runActor(TIKTOK_ACTOR, {
     postURLs: [url],
     resultsPerPage: 1,
     shouldDownloadSubtitles: true,
-    shouldDownloadVideos: false,
+    shouldDownloadVideos: true,
     shouldDownloadCovers: false,
   });
   const v = items[0] || {};
@@ -136,14 +146,17 @@ async function scrapeTikTok(url) {
   const transcript = flattenTranscript(
     pick(v, ['subtitles', 'transcript', 'videoSubtitles'])
   );
+  // mediaUrls (Apify-hosted mp4) is the reliable download source.
   const videoUrl =
     (Array.isArray(v.mediaUrls) && v.mediaUrls[0]) ||
     pick(v?.videoMeta || v, ['downloadAddr', 'playAddr']) ||
     pick(v, ['videoUrl']);
+  const subtitleUrl = pickSubtitleUrl(v?.videoMeta);
 
   return {
     platform: 'tiktok',
     videoUrl,
+    subtitleUrl,
     url,
     title: caption.split('\n')[0] || '',
     author: pick(v?.authorMeta || v, ['name', 'nickName', 'authorName', 'author']) || '',
