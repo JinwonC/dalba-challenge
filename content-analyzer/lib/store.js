@@ -30,6 +30,7 @@ async function writeJSON(pathname, obj) {
     token: token(),
     contentType: 'application/json',
     allowOverwrite: true,
+    cacheControlMaxAge: 0, // index/reports change; avoid stale CDN reads
   });
 }
 

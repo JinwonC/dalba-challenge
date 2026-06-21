@@ -345,18 +345,28 @@ function fillComments(ca, count){
 }
 
 // ---- history ----
+let HISTORY = [];
 function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } }
+function renderHistoryList(){
+  if(!HISTORY.length){ $('#history').innerHTML=''; return; }
+  $('#history').innerHTML = `<h4>📁 분석 기록 (${HISTORY.length}) · 클릭하면 다시 봅니다</h4>` + HISTORY.map(it=>`
+    <div class="hitem" data-id="${esc(it.id)}">
+      ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
+      <div class="hmain"><div class="hcreator">@${esc(it.creator||'unknown')}</div><div class="htitle">${esc(it.title||'')}</div></div>
+      <div class="hdate">${fmtDate(it.savedAt)}</div>
+    </div>`).join('');
+  $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', ()=>openSaved(el.dataset.id)));
+}
+function prependHistory(item){
+  if(!item || !item.id) return;
+  HISTORY = [item, ...HISTORY.filter(x=>x.id!==item.id)];
+  renderHistoryList();
+}
 async function loadHistory(){
   try{
     const { items } = await getJSON('/api/history');
-    if(!items || !items.length){ $('#history').innerHTML=''; return; }
-    $('#history').innerHTML = `<h4>📁 분석 기록 (${items.length}) · 클릭하면 다시 봅니다</h4>` + items.map(it=>`
-      <div class="hitem" data-id="${esc(it.id)}">
-        ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
-        <div class="hmain"><div class="hcreator">@${esc(it.creator||'unknown')}</div><div class="htitle">${esc(it.title||'')}</div></div>
-        <div class="hdate">${fmtDate(it.savedAt)}</div>
-      </div>`).join('');
-    $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', ()=>openSaved(el.dataset.id)));
+    HISTORY = items || [];
+    renderHistoryList();
   }catch(e){ /* history is best-effort */ }
 }
 async function openSaved(id){
@@ -406,7 +416,10 @@ async function run(){
       }
       try{
         await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec });
-        loadHistory();
+        // Show it right away (the index is eventually-consistent for a few seconds),
+        // then reconcile with the server shortly after.
+        prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
+        setTimeout(loadHistory, 5000);
       }catch(e){ /* save is best-effort */ }
     })();
 
