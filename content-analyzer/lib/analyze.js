@@ -41,10 +41,21 @@ const ANALYSIS_SCHEMA = {
         on_screen_text_or_keywords: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Notable phrases, on-screen text, or keywords surfaced in the content.',
+          description: 'On-screen text/captions/graphics, or notable keywords. Use the visual analysis if provided.',
+        },
+        setting_and_background: {
+          type: 'string',
+          description: 'Location, environment, props, lighting and mood. Say "not determinable" if no visual data.',
+        },
+        actions: {
+          type: 'string',
+          description: 'What the person(s) physically do on screen. Say "not determinable" if no visual data.',
         },
       },
-      required: ['structure', 'themes', 'tone', 'target_audience', 'hashtags', 'on_screen_text_or_keywords'],
+      required: [
+        'structure', 'themes', 'tone', 'target_audience', 'hashtags',
+        'on_screen_text_or_keywords', 'setting_and_background', 'actions',
+      ],
     },
     creative_insights: {
       type: 'object',
@@ -70,7 +81,7 @@ Be specific and grounded in the data you are given — do not invent metrics or 
 When transcript or caption data is thin, reason from what is available and say so rather than fabricating detail.
 Your analysis covers two things: (1) a content breakdown, and (2) creative insights with actionable recommendations.`;
 
-function buildUserPrompt(content) {
+function buildUserPrompt(content, visualDescription) {
   const stats = Object.entries(content.stats || {})
     .filter(([, v]) => v !== undefined && v !== null)
     .map(([k, v]) => `${k}: ${v}`)
@@ -94,12 +105,21 @@ Transcript / Subtitles:
 """
 ${(content.transcript || '(none available)').slice(0, 20000)}
 """
-
-Produce a structured content breakdown and creative insights for this video.`;
+${
+  visualDescription
+    ? `\nVISUAL ANALYSIS (what is actually on screen, from a vision model):\n"""\n${visualDescription.slice(0, 20000)}\n"""\n`
+    : '\n(No visual analysis available — base on-screen text / setting / actions on the transcript and caption, and say when something is not determinable.)\n'
+}
+Produce a structured content breakdown and creative insights for this video.
+Use the VISUAL ANALYSIS (when present) to fill on-screen text, setting/background, and actions accurately.`;
 }
 
-/** Run Claude analysis over a normalized content object. Returns parsed JSON. */
-export async function analyzeContent(content) {
+/**
+ * Run Claude analysis over a normalized content object. Returns parsed JSON.
+ * @param {object} content - normalized scrape result
+ * @param {string|null} [visualDescription] - optional Gemini visual rundown
+ */
+export async function analyzeContent(content, visualDescription = null) {
   const response = await client().messages.create({
     model: MODEL,
     max_tokens: 8000,
@@ -108,7 +128,7 @@ export async function analyzeContent(content) {
       format: { type: 'json_schema', schema: ANALYSIS_SCHEMA },
     },
     system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: buildUserPrompt(content) }],
+    messages: [{ role: 'user', content: buildUserPrompt(content, visualDescription) }],
   });
 
   if (response.stop_reason === 'refusal') {

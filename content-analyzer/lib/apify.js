@@ -136,9 +136,14 @@ async function scrapeTikTok(url) {
   const transcript = flattenTranscript(
     pick(v, ['subtitles', 'transcript', 'videoSubtitles'])
   );
+  const videoUrl =
+    (Array.isArray(v.mediaUrls) && v.mediaUrls[0]) ||
+    pick(v?.videoMeta || v, ['downloadAddr', 'playAddr']) ||
+    pick(v, ['videoUrl']);
 
   return {
     platform: 'tiktok',
+    videoUrl,
     url,
     title: caption.split('\n')[0] || '',
     author: pick(v?.authorMeta || v, ['name', 'nickName', 'authorName', 'author']) || '',

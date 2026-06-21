@@ -2,17 +2,27 @@
 
 A small web app: paste a **YouTube** or **TikTok** link and get a **content breakdown** and **creative insights**.
 
-It scrapes the video with [Apify](https://apify.com) (metadata, caption, hashtags, transcript/subtitles, stats) and then runs the data through **Claude** (`claude-opus-4-8`) to produce a structured analysis, rendered in a styled page that matches the d'Alba GLOW-TO-GOLD look.
+It scrapes the video with [Apify](https://apify.com) (metadata, caption, hashtags, transcript/subtitles, stats), optionally **watches the actual video with Gemini** (on-screen text, the person's actions, the background/setting), and then runs everything through **Claude** (`claude-opus-4-8`) to produce a structured analysis, rendered in a styled page that matches the d'Alba GLOW-TO-GOLD look.
 
 ```
 content-analyzer/
 ├── server.js            Express server + /api/analyze endpoint
 ├── lib/
 │   ├── apify.js         Platform detection + Apify scraping (YouTube + TikTok)
+│   ├── vision.js        Gemini visual analysis (downloads mp4, reads the frames)
 │   └── analyze.js       Claude structured-output analysis
 ├── public/index.html    Single-page frontend
 └── .env.example         Copy to .env and fill in your keys
 ```
+
+## Visual analysis (what's on screen)
+
+If you set `GEMINI_API_KEY`, the app downloads the TikTok video and sends it to **Gemini**, which
+watches the frames and reports **on-screen text, what the person is doing, and the background/setting** —
+things a transcript can't capture. That visual rundown is fed into the Claude analysis (so the
+breakdown's *Setting & Background*, *Actions*, and *On-screen Text* fields are grounded in the actual
+video) and also shown verbatim in a "Visual Analysis" section. Without a Gemini key the app still works
+on caption + transcript only.
 
 ## Setup
 
@@ -29,12 +39,13 @@ Open <http://localhost:3000>, paste a link, hit **Analyze**.
 
 ## Keys you need
 
-| Variable            | Where to get it                                                        |
-| ------------------- | --------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY` | <https://console.anthropic.com/>                                       |
-| `APIFY_TOKEN`       | <https://console.apify.com/account/integrations>                      |
+| Variable            | Required? | Where to get it                                                       |
+| ------------------- | --------- | -------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | yes       | <https://console.anthropic.com/>                                     |
+| `APIFY_TOKEN`       | yes       | <https://console.apify.com/account/integrations>                    |
+| `GEMINI_API_KEY`    | optional  | <https://aistudio.google.com/apikey> (enables visual analysis)      |
 
-Both keys stay server-side — the browser never sees them.
+All keys stay server-side — the browser never sees them.
 
 ## How it works
 

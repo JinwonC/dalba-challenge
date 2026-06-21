@@ -111,7 +111,7 @@
         <input type="text" id="url" placeholder="https://www.tiktok.com/@… or https://youtube.com/watch?v=…" autocomplete="off" />
         <button id="go">Analyze</button>
       </div>
-      <div class="hint">Powered by Apify scraping + Claude. Analysis can take 30–90 seconds.</div>
+      <div class="hint">Apify (scrape) + Gemini (reads the video: on-screen text, actions, background) + Claude (insights). 30–120s.</div>
     </div>
 
     <div id="status"></div>
@@ -170,6 +170,7 @@ function render(data) {
           <div class="badges">
             ${statBadges}
             ${meta.hasTranscript ? '<span class="badge">transcript ✓</span>' : '<span class="badge">no transcript</span>'}
+            ${meta.hasVisualAnalysis ? '<span class="badge">visual ✓</span>' : ''}
           </div>
         </div>
       </div>
@@ -190,10 +191,18 @@ function render(data) {
         <div class="field"><div class="label">Structure & Pacing</div><p>${esc(b.structure)}</p></div>
         <div class="field"><div class="label">Tone</div><p>${esc(b.tone)}</p></div>
         <div class="field"><div class="label">Target Audience</div><p>${esc(b.target_audience)}</p></div>
+        <div class="field"><div class="label">Setting & Background</div><p>${esc(b.setting_and_background)}</p></div>
+        <div class="field"><div class="label">Actions (what's happening)</div><p>${esc(b.actions)}</p></div>
         <div class="field"><div class="label">Themes</div>${list(b.themes)}</div>
         <div class="field"><div class="label">On-screen Text / Keywords</div>${list(b.on_screen_text_or_keywords)}</div>
         <div class="field"><div class="label">Hashtags</div>${tags(b.hashtags)}</div>
       </div>
+
+      ${data.visualDescription ? `
+      <div class="section">
+        <h2>Visual Analysis <span style="font-size:12px;color:#8B6800;font-weight:400">(Gemini · from the video frames)</span></h2>
+        <p style="font-size:14px;line-height:1.65;white-space:pre-wrap">${esc(data.visualDescription)}</p>
+      </div>` : ''}
 
       <div class="section">
         <h2>Creative Insights</h2>

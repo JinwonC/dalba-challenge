@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 
 import { detectPlatform, scrapeContent } from './lib/apify.js';
 import { analyzeContent } from './lib/analyze.js';
+import { analyzeVideoVisual, downloadVideo } from './lib/vision.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,6 +19,7 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
     apify: Boolean(process.env.APIFY_TOKEN),
+    gemini: Boolean(process.env.GEMINI_API_KEY),
   });
 });
 
@@ -32,7 +34,19 @@ app.post('/api/analyze', async (req, res) => {
 
   try {
     const content = await scrapeContent(url);
-    const analysis = await analyzeContent(content);
+
+    // Optional visual analysis (Gemini) — best effort, currently TikTok.
+    let visualDescription = null;
+    if (process.env.GEMINI_API_KEY && content.videoUrl) {
+      try {
+        const buf = await downloadVideo(content.videoUrl);
+        visualDescription = await analyzeVideoVisual(buf);
+      } catch (e) {
+        console.warn('Visual analysis skipped:', e.message);
+      }
+    }
+
+    const analysis = await analyzeContent(content, visualDescription);
     res.json({
       platform,
       meta: {
@@ -44,7 +58,9 @@ app.post('/api/analyze', async (req, res) => {
         thumbnail: content.thumbnail,
         hashtags: content.hashtags,
         hasTranscript: Boolean(content.transcript),
+        hasVisualAnalysis: Boolean(visualDescription),
       },
+      visualDescription,
       analysis,
     });
   } catch (err) {
@@ -57,4 +73,5 @@ app.listen(PORT, () => {
   console.log(`d'Alba Content Analyzer running at http://localhost:${PORT}`);
   if (!process.env.ANTHROPIC_API_KEY) console.warn('⚠  ANTHROPIC_API_KEY not set');
   if (!process.env.APIFY_TOKEN) console.warn('⚠  APIFY_TOKEN not set');
+  if (!process.env.GEMINI_API_KEY) console.warn('ℹ  GEMINI_API_KEY not set — visual (on-screen) analysis disabled');
 });
