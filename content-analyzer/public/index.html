@@ -356,11 +356,16 @@ function showVideo(embed, meta){
   renderMeta(meta||{});
   $('#layout').style.display='grid';
 }
-function fillRight(rep){
+function driveSlotHTML(url){
+  return url
+    ? `<a class="copy" href="${esc(url)}" target="_blank" rel="noopener">📄 Drive에서 열기</a>`
+    : `<span class="copy" style="opacity:.55;cursor:default">📄 Drive 저장 중…</span>`;
+}
+function fillRight(rep, driveUrl){
   rep = rep||{};
   $('#right').innerHTML = `
     <div class="card">
-      <div class="head"><h3>요약</h3><button class="copy" id="copyBtn">리포트 복사</button></div>
+      <div class="head"><h3>요약</h3><span id="driveSlot">${driveSlotHTML(driveUrl)}</span></div>
       <div class="body summary">${esc(rep.summary||'')}</div>
     </div>
     <div class="card">
@@ -387,11 +392,6 @@ function fillRight(rep){
       <div class="head"><h3>💬 댓글 분석</h3></div>
       <div class="body" id="commentsBody"><div class="loading"><div class="spinner"></div>댓글 분석 중…</div></div>
     </div>`;
-  $('#copyBtn').addEventListener('click', ()=>{
-    navigator.clipboard.writeText(reportToText(rep)).then(()=>{
-      const b=$('#copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='리포트 복사',1500);
-    });
-  });
   wireSeekRows();
 }
 function fillComments(ca, count){
@@ -449,7 +449,7 @@ async function openSaved(id){
     renderMeta(rec.meta||{});
     if(rec.video){ renderPlayer(rec.video, rec.embed); $('#layout').style.display='grid'; }
     else showVideo(rec.embed, rec.meta);   // fallback for older entries
-    fillRight(rec.report||{});
+    fillRight(rec.report||{}, rec.driveUrl);
     const c = rec.comments||{};
     fillComments(c.analysis, c.count||0);
     $('#status').innerHTML='';
@@ -495,12 +495,13 @@ async function run(){
         $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
       }
       try{
-        await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
-        // Show it right away (the index is eventually-consistent for a few seconds),
-        // then reconcile with the server shortly after.
+        const saved = await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
+        // Update the Drive button now that the Doc exists.
+        if($('#driveSlot')) $('#driveSlot').innerHTML = driveSlotHTML(saved?.driveUrl);
+        // Show it in history right away, then reconcile with the server shortly after.
         prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, manager:s.meta?.manager, product:s.meta?.product, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
         setTimeout(loadHistory, 5000);
-      }catch(e){ /* save is best-effort */ }
+      }catch(e){ if($('#driveSlot')) $('#driveSlot').innerHTML='<span class="copy" style="opacity:.55;cursor:default">Drive 저장 실패</span>'; }
     })();
 
   }catch(err){

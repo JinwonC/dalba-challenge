@@ -7,19 +7,19 @@ export const driveEnabled = () => Boolean(process.env.DRIVE_WEBHOOK_URL);
 export async function pushToDrive({ title, text }) {
   if (!driveEnabled()) return null;
   try {
+    // Apps Script responds via a 302 redirect; capture the Location then GET it
+    // to read the JSON ({id, url}) so we can store a link to the created Doc.
     const res = await fetch(process.env.DRIVE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: process.env.DRIVE_WEBHOOK_SECRET || '',
-        title,
-        text,
-      }),
-      redirect: 'follow',
+      body: JSON.stringify({ secret: process.env.DRIVE_WEBHOOK_SECRET || '', title, text }),
+      redirect: 'manual',
     });
-    if (!res.ok) { console.warn('Drive push failed:', res.status); return null; }
-    const j = await res.json().catch(() => ({}));
-    return j.url || null;
+    const loc = res.headers.get('location');
+    if (!loc) return null;
+    const j = await (await fetch(loc)).json().catch(() => null);
+    if (j && j.id) return `https://docs.google.com/document/d/${j.id}/edit`;
+    return (j && j.url) || null;
   } catch (e) {
     console.warn('Drive push error:', e.message);
     return null;

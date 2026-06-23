@@ -45,8 +45,7 @@ app.post('/api/comments', async (req, res) => {
 app.post('/api/save', async (req, res) => {
   try {
     const { meta, embed, report, comments, video } = req.body || {};
-    const id = await saveAnalysis({ meta, embed, report, comments, video });
-    res.json({ id });
+    res.json(await saveAnalysis({ meta, embed, report, comments, video }));
   } catch (err) { send(res, err); }
 });
 

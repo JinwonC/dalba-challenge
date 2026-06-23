@@ -48,6 +48,15 @@ export async function saveAnalysis(record) {
   if (!validId(id)) throw new Error('Cannot save: missing/invalid video id.');
 
   const rec = { ...record, id, savedAt: Date.now() };
+
+  // Export to Google Drive first so we can store the Doc link with the record.
+  let driveUrl = record.driveUrl || null;
+  if (driveEnabled()) {
+    const title = `[분석] ${rec.meta?.author || ''} — ${(rec.meta?.title || id).slice(0, 60)}`;
+    driveUrl = (await pushToDrive({ title, text: reportToPlainText(rec) }).catch(() => null)) || driveUrl;
+  }
+  rec.driveUrl = driveUrl;
+
   await writeJSON(`reports/${id}.json`, rec);
 
   const idx = (await readJSON(INDEX)) || { items: [] };
@@ -59,17 +68,13 @@ export async function saveAnalysis(record) {
     product: rec.meta?.product || '',
     thumbnail: rec.meta?.thumbnail || '',
     url: rec.meta?.url || rec.embed?.url || '',
+    driveUrl: driveUrl || '',
     savedAt: rec.savedAt,
   };
   idx.items = [summary, ...(idx.items || []).filter((x) => x.id !== id)].slice(0, 300);
   await writeJSON(INDEX, idx);
 
-  // Best-effort: also export to Google Drive (as a Doc) if configured.
-  if (driveEnabled()) {
-    const title = `[분석] ${rec.meta?.author || ''} — ${(rec.meta?.title || id).slice(0, 60)}`;
-    await pushToDrive({ title, text: reportToPlainText(rec) }).catch(() => {});
-  }
-  return id;
+  return { id, driveUrl };
 }
 
 /** List saved analyses (newest first), summary fields only. */
