@@ -23,6 +23,15 @@ export async function saveVideo(videoId, buffer, contentType = 'video/mp4') {
   return blob.url;
 }
 
+/** Delete a stored video by id (best-effort). */
+export async function deleteVideo(id) {
+  if (!videosEnabled() || !id) return;
+  const safe = String(id).replace(/[^\w-]/g, '');
+  if (!safe) return;
+  const { blobs } = await list({ prefix: `videos/${safe}`, token: token() });
+  for (const b of blobs) if (b.pathname === `videos/${safe}.mp4`) await del(b.url, { token: token() });
+}
+
 const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 7);
 const MAX_VIDEOS = Number(process.env.VIDEO_MAX_COUNT || 40);
 const MAX_TOTAL_BYTES = Number(process.env.VIDEO_MAX_TOTAL_MB || 800) * 1e6; // stay under ~1GB free tier

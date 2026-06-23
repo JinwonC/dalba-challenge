@@ -1,6 +1,7 @@
-import { put, get } from '@vercel/blob';
+import { put, get, list, del } from '@vercel/blob';
 import { reportToPlainText } from './reportText.js';
 import { pushToDrive, driveEnabled } from './drive.js';
+import { deleteVideo } from './videos.js';
 
 const ACCESS = 'private';
 const token = () => process.env.BLOB_READ_WRITE_TOKEN;
@@ -54,6 +55,8 @@ export async function saveAnalysis(record) {
     id,
     creator: rec.meta?.author || '',
     title: rec.meta?.title || '',
+    manager: rec.meta?.manager || '',
+    product: rec.meta?.product || '',
     thumbnail: rec.meta?.thumbnail || '',
     url: rec.meta?.url || rec.embed?.url || '',
     savedAt: rec.savedAt,
@@ -80,4 +83,20 @@ export async function listAnalyses() {
 export async function getAnalysis(id) {
   if (!storeEnabled() || !validId(id)) return null;
   return readJSON(`reports/${id}.json`);
+}
+
+/** Delete an analysis: report blob + index entry + stored video (best-effort). */
+export async function deleteAnalysis(id) {
+  if (!storeEnabled() || !validId(id)) return false;
+  try {
+    const { blobs } = await list({ prefix: `reports/${id}`, token: token() });
+    for (const b of blobs) if (b.pathname === `reports/${id}.json`) await del(b.url, { token: token() });
+    const idx = (await readJSON(INDEX)) || { items: [] };
+    idx.items = (idx.items || []).filter((x) => x.id !== id);
+    await writeJSON(INDEX, idx);
+  } catch (e) {
+    console.warn('Delete report failed:', e.message);
+  }
+  await deleteVideo(id).catch(() => {});
+  return true;
 }

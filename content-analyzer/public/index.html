@@ -22,6 +22,7 @@
   .bar input[type=text]{flex:1;min-width:320px;max-width:760px;padding:13px 16px;border:1px solid var(--line);
     border-radius:10px;font-size:15px;background:#fff}
   .bar input[type=text]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
+  .bar input.meta-in{flex:0 1 200px;min-width:150px}
   .go{border:0;background:var(--slate);color:#fff;padding:13px 26px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
   .go:hover{background:#111827}
   .go:disabled{opacity:.5;cursor:default}
@@ -112,8 +113,11 @@
   .hitem img{width:42px;height:54px;object-fit:cover;border-radius:6px;background:#eee;flex:0 0 auto}
   .hitem .hmain{min-width:0;flex:1}
   .hitem .hcreator{font-weight:700;font-size:13.5px}
+  .hitem .hcreator .htag{font-weight:600;font-size:11.5px;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:2px 8px;margin-left:6px}
   .hitem .htitle{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .hitem .hdate{font-size:11px;color:#aaa;flex:0 0 auto}
+  .hitem .hdel{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#b91c1c;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer}
+  .hitem .hdel:hover{background:#fef2f2;border-color:#f3c2c2}
   .foot{max-width:1180px;margin:0 auto 50px;padding:0 20px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
@@ -125,6 +129,8 @@
 
   <div class="bar">
     <input id="url" type="text" placeholder="https://www.tiktok.com/@user/video/..." />
+    <input id="manager" type="text" class="meta-in" placeholder="담당자 (예: 최진원)" />
+    <input id="product" type="text" class="meta-in" placeholder="제품명 (예: 달바 멀티밤)" />
     <button class="go" id="go">분석하기</button>
   </div>
   <div class="hint">스크랩 + 영상 화면분석에 보통 60~120초 걸립니다. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기.</div>
@@ -402,10 +408,25 @@ function renderHistoryList(){
   $('#history').innerHTML = `<h4>📁 분석 기록 (${HISTORY.length}) · 클릭하면 다시 봅니다</h4>` + HISTORY.map(it=>`
     <div class="hitem" data-id="${esc(it.id)}">
       ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
-      <div class="hmain"><div class="hcreator">@${esc(it.creator||'unknown')}</div><div class="htitle">${esc(it.title||'')}</div></div>
+      <div class="hmain">
+        <div class="hcreator">@${esc(it.creator||'unknown')}${it.manager?`<span class="htag">👤 ${esc(it.manager)}</span>`:''}${it.product?`<span class="htag">📦 ${esc(it.product)}</span>`:''}</div>
+        <div class="htitle">${esc(it.title||'')}</div>
+      </div>
       <div class="hdate">${fmtDate(it.savedAt)}</div>
+      <button class="hdel" data-del="${esc(it.id)}" title="삭제">🗑</button>
     </div>`).join('');
-  $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', ()=>openSaved(el.dataset.id)));
+  $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', (e)=>{ if(e.target.closest('.hdel')) return; openSaved(el.dataset.id); }));
+  $('#history').querySelectorAll('.hdel').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); deleteHistory(b.dataset.del); }));
+}
+async function deleteHistory(id){
+  if(!id) return;
+  const it = HISTORY.find(x=>x.id===id);
+  if(!confirm(`이 분석 기록을 삭제할까요?\n\n@${it?.creator||''} ${it?.product?('· '+it.product):''}\n(앱 기록·영상만 삭제 / Drive 문서는 남습니다)`)) return;
+  try{
+    await postJSON('/api/delete', { id });
+    HISTORY = HISTORY.filter(x=>x.id!==id);
+    renderHistoryList();
+  }catch(e){ alert('삭제 실패: '+e.message); }
 }
 function prependHistory(item){
   if(!item || !item.id) return;
@@ -439,7 +460,10 @@ async function openSaved(id){
 
 async function run(){
   const url = $('#url').value.trim();
+  const manager = $('#manager').value.trim();
+  const product = $('#product').value.trim();
   if(!url){ $('#status').innerHTML='<div class="err">틱톡 링크를 입력하세요.</div>'; return; }
+  if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
   $('#go').disabled = true;
   $('#layout').style.display='none';
   $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>1/2 · 영상 가져오는 중…</div>';
@@ -447,6 +471,8 @@ async function run(){
   try{
     // Stage 1 — scrape (fast): render the video + meta immediately.
     const s = await postJSON('/api/scrape', { url });
+    // attach the manually-entered fields to the meta we persist
+    s.meta = { ...(s.meta||{}), manager, product };
     showVideo(s.embed, s.meta);
     $('#status').innerHTML='';
     $('#right').innerHTML = rightLoading('2/2 · 영상 화면분석 + 리포트 생성 중… (최대 1분)');
@@ -472,7 +498,7 @@ async function run(){
         await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
         // Show it right away (the index is eventually-consistent for a few seconds),
         // then reconcile with the server shortly after.
-        prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
+        prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, manager:s.meta?.manager, product:s.meta?.product, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
         setTimeout(loadHistory, 5000);
       }catch(e){ /* save is best-effort */ }
     })();
