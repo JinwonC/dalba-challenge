@@ -43,12 +43,36 @@ jobs:
           echo "yesterday=$YESTERDAY" >> $GITHUB_OUTPUT
 
       - name: Run tiktok_to_sheets.py (최근 60일 업서트)
-        run: python tiktok_to_sheets.py
+        run: |
+          for i in 1 2 3; do
+            python tiktok_to_sheets.py && exit 0
+            echo "::warning::tiktok_to_sheets.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::tiktok_to_sheets.py 3회 모두 실패"
+          exit 1
 
+      # 앞 스텝이 실패해도 광고/SKU 데이터는 반드시 적재되도록 !cancelled() 로 독립 실행
       - name: Run SKU별_성과.py (어제 날짜)
-        run: python TEST/SKU별_성과.py ${{ steps.date.outputs.yesterday }}
+        if: ${{ !cancelled() }}
         working-directory: .
+        run: |
+          for i in 1 2 3; do
+            python TEST/SKU별_성과.py ${{ steps.date.outputs.yesterday }} && exit 0
+            echo "::warning::SKU별_성과.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::SKU별_성과.py 3회 모두 실패"
+          exit 1
 
       - name: Run tiktok_ads.py (어제 날짜)
-        run: python tiktok_ads.py "${{ steps.date.outputs.yesterday }} ~ ${{ steps.date.outputs.yesterday }}"
+        if: ${{ !cancelled() }}
+        run: |
+          for i in 1 2 3; do
+            python tiktok_ads.py "${{ steps.date.outputs.yesterday }} ~ ${{ steps.date.outputs.yesterday }}" && exit 0
+            echo "::warning::tiktok_ads.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::tiktok_ads.py 3회 모두 실패"
+          exit 1
 

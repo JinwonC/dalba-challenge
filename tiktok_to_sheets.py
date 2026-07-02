@@ -141,6 +141,21 @@ def get_sheet():
     return sheet
 
 
+def _write_with_retry(fn, desc: str, max_attempts: int = 8):
+    """Google Sheets 쓰기(batch_update/append_rows)를 재시도로 감싼다.
+    SSL 끊김/타임아웃 등 일시적 네트워크 오류로 쓰기가 실패해도 될 때까지 재시도."""
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return fn()
+        except Exception as e:
+            if attempt == max_attempts:
+                print(f"  {desc} 최종 실패 (시도 {attempt}/{max_attempts}): {e}")
+                raise
+            wait = min(3 * attempt, 30)
+            print(f"  {desc} 실패 (시도 {attempt}/{max_attempts}), {wait}초 후 재시도... ({e})")
+            time.sleep(wait)
+
+
 # ─────────────────────────────────────────
 # 메인 동기화 로직
 # ─────────────────────────────────────────
@@ -259,11 +274,14 @@ def run_sync(from_date: datetime, to_date: datetime):
         print(f"  기존 {update_count}건 업데이트 중...")
         # gspread batch_update
         body = {"valueInputOption": "USER_ENTERED", "data": batch_updates}
-        spreadsheet.values_batch_update(body)
+        _write_with_retry(lambda: spreadsheet.values_batch_update(body), "기존 업데이트")
 
     if append_rows:
         print(f"  신규 {new_count}건 추가 중...")
-        sheet.append_rows(append_rows, value_input_option="USER_ENTERED")
+        _write_with_retry(
+            lambda: sheet.append_rows(append_rows, value_input_option="USER_ENTERED"),
+            "신규 추가",
+        )
 
     print(f"\n✅ 완료! 업데이트 {update_count}건 / 신규 {new_count}건")
 
@@ -406,7 +424,7 @@ def refresh_all_existing():
     print(f"  매칭된 영상 {matched}개 업데이트 중...")
     if batch_updates:
         body = {"valueInputOption": "USER_ENTERED", "data": batch_updates}
-        sheet.spreadsheet.values_batch_update(body)
+        _write_with_retry(lambda: sheet.spreadsheet.values_batch_update(body), "전체 최신화")
 
     print(f"\n✅ 완료! {matched}개 영상 최신화")
 
