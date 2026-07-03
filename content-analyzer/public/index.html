@@ -216,7 +216,7 @@ function renderPlayer(videoUrl, embed){
   LAST_ACTIVE = -1;
   PLAYER.addEventListener('timeupdate', onTime);
   // If the stored video expired (auto-deleted) or fails, fall back.
-  PLAYER.addEventListener('error', ()=>{ PLAYER=null; if(embed?.platform==='instagram') showThumb(embed); else renderTikTok(embed?.videoId, embed?.url); });
+  PLAYER.addEventListener('error', ()=>{ PLAYER=null; if(embed?.platform==='tiktok') renderTikTok(embed?.videoId, embed?.url); else showThumb(embed); });
 }
 function seekTo(sec){ if(PLAYER && sec!=null){ PLAYER.currentTime = Math.max(0, sec); PLAYER.play().catch(()=>{}); } }
 function onTime(){
@@ -386,8 +386,8 @@ function showThumb(embed){
 }
 function showVideo(embed, meta){
   PLAYER = null; // embed can't be controlled
-  if(embed?.platform==='instagram') showThumb(embed);
-  else renderTikTok(embed?.videoId, embed?.url);
+  if(embed?.platform==='tiktok') renderTikTok(embed?.videoId, embed?.url);
+  else showThumb(embed); // instagram / upload
   renderMeta(meta||{});
   $('#layout').style.display='grid';
 }
