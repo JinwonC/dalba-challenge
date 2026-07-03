@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 
 import { runScrape, runReport, runComments, runAnalysis, HttpError } from './lib/pipeline.js';
 import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis } from './lib/store.js';
+import uploadHandler from './api/upload.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -27,6 +28,8 @@ app.post('/api/scrape', async (req, res) => {
   try { res.json(await runScrape({ url: req.body?.url })); }
   catch (err) { send(res, err); }
 });
+
+app.post('/api/upload', (req, res) => uploadHandler(req, res));
 
 app.post('/api/report', async (req, res) => {
   try {

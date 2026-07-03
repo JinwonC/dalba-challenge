@@ -23,6 +23,11 @@
     border-radius:10px;font-size:15px;background:#fff}
   .bar input[type=text]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
   .bar input.meta-in{flex:0 1 200px;min-width:150px}
+  .tabs{max-width:1180px;margin:14px auto 0;padding:0 20px;display:flex;gap:8px;justify-content:center}
+  .tab{border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px 16px;border-radius:999px;font-size:13.5px;cursor:pointer}
+  .tab.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+  .filebtn{display:inline-flex;align-items:center;gap:6px;flex:1;max-width:280px;justify-content:center;padding:13px 16px;border:1px dashed var(--gold);border-radius:10px;font-size:14px;color:var(--gold);background:var(--gold-soft);cursor:pointer}
+  .filename{font-size:13px;color:var(--muted);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .go{border:0;background:var(--slate);color:#fff;padding:13px 26px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
   .go:hover{background:#111827}
   .go:disabled{opacity:.5;cursor:default}
@@ -127,8 +132,14 @@
     <p>틱톡·인스타그램 링크를 넣으면 좌측에 영상, 우측에 씬별 리포트 · 훅 분석 · 설득 요인 · 핵심 키워드가 뜹니다.</p>
   </header>
 
+  <div class="tabs">
+    <button class="tab on" data-mode="link">🔗 링크 (틱톡·인스타)</button>
+    <button class="tab" data-mode="upload">📁 파일 업로드</button>
+  </div>
   <div class="bar">
     <input id="url" type="text" placeholder="틱톡 또는 인스타그램 링크 (예: tiktok.com/... , instagram.com/reel/...)" />
+    <label id="fileLabel" class="filebtn" style="display:none">📁 영상 선택<input id="file" type="file" accept="video/*" hidden /></label>
+    <span id="fileName" class="filename"></span>
     <input id="manager" type="text" class="meta-in" placeholder="담당자 (예: 최진원)" />
     <input id="product" type="text" class="meta-in" placeholder="제품명 (예: 달바 멀티밤)" />
     <button class="go" id="go">분석하기</button>
@@ -149,10 +160,27 @@
 
   <div class="foot">Apify 스크랩(타임코드 자막) + Gemini 영상 화면분석 기반 · d'Alba Piedmont</div>
 
+<script type="module">
+  // Expose the bundled Vercel Blob client uploader for large direct uploads.
+  import { upload } from './blob-client.js';
+  window.blobUpload = upload;
+</script>
 <script>
 const $ = (s)=>document.querySelector(s);
 
-$('#go').addEventListener('click', run);
+let MODE = 'link';
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>{
+  MODE = t.dataset.mode;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===t));
+  const up = MODE==='upload';
+  $('#url').style.display = up ? 'none' : '';
+  $('#fileLabel').style.display = up ? '' : 'none';
+  if(!up){ $('#fileName').textContent=''; }
+}));
+$('#file').addEventListener('change', ()=>{ const f=$('#file').files[0]; $('#fileName').textContent = f ? f.name : ''; });
+
+function go(){ MODE==='upload' ? runUpload() : run(); }
+$('#go').addEventListener('click', go);
 $('#url').addEventListener('keydown', (e)=>{ if(e.key==='Enter') run(); });
 
 const esc = (s)=> String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -465,61 +493,92 @@ async function openSaved(id){
   finally{ $('#go').disabled=false; }
 }
 
+function showErr(err){
+  const msg = `<div class="err">${esc(err.message||'오류')}</div>`;
+  $('#status').innerHTML = msg;
+  if($('#layout').style.display==='grid') $('#right').innerHTML = `<div class="card"><div class="body">${msg}<div style="margin-top:8px;color:var(--muted);font-size:12.5px">잠시 후 다시 시도해 주세요.</div></div></div>`;
+}
+
+// Shared pipeline: given {platform, meta, embed, media, comments}, run report +
+// comments + save and render everything. Used by both link and upload flows.
+async function proceed(s, opts={}){
+  if(opts.previewUrl){ renderMeta(s.meta||{}); renderPlayer(opts.previewUrl, s.embed); $('#layout').style.display='grid'; }
+  else showVideo(s.embed, s.meta);
+  $('#status').innerHTML='';
+  $('#right').innerHTML = rightLoading('영상 화면분석 + 리포트 생성 중… (최대 1분)');
+
+  const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
+  const rep = data.report||{};
+  if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
+  fillRight(rep);
+
+  (async ()=>{
+    let commentsRec = null;
+    if(opts.noComments){
+      $('#commentsBody') && ($('#commentsBody').innerHTML = '<div style="color:var(--muted);font-size:13px">업로드 영상은 댓글이 없습니다.</div>');
+    } else {
+      try{
+        const c = await postJSON('/api/comments', s.comments
+          ? { comments: s.comments, meta: s.meta||{} }
+          : { url: s.embed?.url, meta: s.meta||{} });
+        commentsRec = { analysis: c.comments_analysis, count: c.count };
+        fillComments(c.comments_analysis, c.count);
+      }catch(e){ $('#commentsBody') && ($('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`); }
+    }
+    try{
+      const saved = await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
+      if($('#driveSlot')) $('#driveSlot').innerHTML = driveSlotHTML(saved?.driveUrl);
+      prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, manager:s.meta?.manager, product:s.meta?.product, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
+      setTimeout(loadHistory, 5000);
+    }catch(e){ if($('#driveSlot')) $('#driveSlot').innerHTML='<span class="copy" style="opacity:.55;cursor:default">Drive 저장 실패</span>'; }
+  })();
+}
+
+// LINK flow (TikTok / Instagram)
 async function run(){
   const url = $('#url').value.trim();
   const manager = $('#manager').value.trim();
   const product = $('#product').value.trim();
   if(!url){ $('#status').innerHTML='<div class="err">틱톡 또는 인스타그램 링크를 입력하세요.</div>'; return; }
   if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
-  $('#go').disabled = true;
-  $('#layout').style.display='none';
+  $('#go').disabled = true; $('#layout').style.display='none';
   $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>1/2 · 영상 가져오는 중…</div>';
-
   try{
-    // Stage 1 — scrape (fast): render the video + meta immediately.
     const s = await postJSON('/api/scrape', { url });
-    // attach the manually-entered fields to the meta we persist
     s.meta = { ...(s.meta||{}), manager, product };
-    showVideo(s.embed, s.meta);
-    $('#status').innerHTML='';
-    $('#right').innerHTML = rightLoading('2/2 · 영상 화면분석 + 리포트 생성 중… (최대 1분)');
+    await proceed(s);
+  }catch(err){ showErr(err); }
+  finally{ $('#go').disabled = false; }
+}
 
-    // Stage 2 — download + Gemini report (with retry).
-    const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
-    const rep = data.report||{};
-    // Swap the embed for our native player so timestamps are clickable & synced.
-    if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
-    fillRight(rep);
-
-    // Stage 3 — scrape + analyze comments, then persist the whole thing.
-    (async ()=>{
-      let commentsRec = null;
-      try{
-        const c = await postJSON('/api/comments', s.comments
-          ? { comments: s.comments, meta: s.meta||{} }
-          : { url: s.embed?.url || url, meta: s.meta||{} });
-        commentsRec = { analysis: c.comments_analysis, count: c.count };
-        fillComments(c.comments_analysis, c.count);
-      }catch(e){
-        $('#commentsBody').innerHTML = `<div style="color:var(--muted);font-size:13px">댓글 분석 실패: ${esc(e.message)}</div>`;
-      }
-      try{
-        const saved = await postJSON('/api/save', { meta:s.meta, embed:s.embed, report:rep, comments:commentsRec, video:data.video||null });
-        // Update the Drive button now that the Doc exists.
-        if($('#driveSlot')) $('#driveSlot').innerHTML = driveSlotHTML(saved?.driveUrl);
-        // Show it in history right away, then reconcile with the server shortly after.
-        prependHistory({ id:s.embed?.videoId, creator:s.meta?.author, title:s.meta?.title, manager:s.meta?.manager, product:s.meta?.product, thumbnail:s.meta?.thumbnail, savedAt:Date.now() });
-        setTimeout(loadHistory, 5000);
-      }catch(e){ if($('#driveSlot')) $('#driveSlot').innerHTML='<span class="copy" style="opacity:.55;cursor:default">Drive 저장 실패</span>'; }
-    })();
-
-  }catch(err){
-    const msg = `<div class="err">${esc(err.message)}</div>`;
-    $('#status').innerHTML = msg;
-    if($('#layout').style.display==='grid') $('#right').innerHTML = `<div class="card"><div class="body">${msg}<div style="margin-top:8px;color:var(--muted);font-size:12.5px">잠시 후 다시 시도해 주세요.</div></div></div>`;
-  }finally{
-    $('#go').disabled = false;
-  }
+// UPLOAD flow (video file)
+async function runUpload(){
+  const file = $('#file').files[0];
+  const manager = $('#manager').value.trim();
+  const product = $('#product').value.trim();
+  if(!file){ $('#status').innerHTML='<div class="err">영상 파일을 선택하세요.</div>'; return; }
+  if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
+  if(!/^video\//.test(file.type||'')){ $('#status').innerHTML='<div class="err">영상 파일만 업로드할 수 있어요.</div>'; return; }
+  if(!window.blobUpload){ $('#status').innerHTML='<div class="err">업로드 모듈 로딩 중… 잠시 후 다시 눌러주세요.</div>'; return; }
+  $('#go').disabled = true; $('#layout').style.display='none';
+  $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>업로드 중… 0%</div>';
+  try{
+    const vid = 'up_'+Date.now();
+    const blob = await window.blobUpload(`videos/${vid}.mp4`, file, {
+      access:'public', handleUploadUrl:'/api/upload', contentType: file.type||'video/mp4',
+      onUploadProgress: (p)=>{ const pct=Math.round(p.percentage ?? (p.total? p.loaded/p.total*100 : 0)); $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>업로드 중… ${pct}%</div>`; }
+    });
+    const previewUrl = URL.createObjectURL(file);
+    const s = {
+      platform:'upload',
+      meta:{ platform:'upload', url:'', title:file.name.replace(/\.[^.]+$/,''), author:'(업로드)', stats:{}, hashtags:[], manager, product },
+      embed:{ platform:'upload', videoId:vid, url:'', thumbnail:'' },
+      media:{ videoUrl: blob.url, subtitleUrl:'' },
+      comments:null,
+    };
+    await proceed(s, { noComments:true, previewUrl });
+  }catch(err){ showErr(err); }
+  finally{ $('#go').disabled = false; }
 }
 
 loadHistory();
