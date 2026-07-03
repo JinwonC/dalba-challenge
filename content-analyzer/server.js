@@ -30,15 +30,15 @@ app.post('/api/scrape', async (req, res) => {
 
 app.post('/api/report', async (req, res) => {
   try {
-    const { videoUrl, subtitleUrl, meta } = req.body || {};
-    res.json(await runReport({ videoUrl, subtitleUrl, meta }));
+    const { videoUrl, subtitleUrl, meta, videoId } = req.body || {};
+    res.json(await runReport({ videoUrl, subtitleUrl, meta, videoId }));
   } catch (err) { send(res, err); }
 });
 
 app.post('/api/comments', async (req, res) => {
   try {
-    const { url, meta } = req.body || {};
-    res.json(await runComments({ url, meta }));
+    const { url, meta, comments } = req.body || {};
+    res.json(await runComments({ url, meta, comments }));
   } catch (err) { send(res, err); }
 });
 

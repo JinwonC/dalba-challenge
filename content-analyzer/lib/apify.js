@@ -5,6 +5,7 @@ const YOUTUBE_TRANSCRIPT_ACTOR =
   process.env.APIFY_YOUTUBE_TRANSCRIPT_ACTOR || 'pintostudio/youtube-transcript-scraper';
 const TIKTOK_ACTOR = process.env.APIFY_TIKTOK_ACTOR || 'clockworks/tiktok-scraper';
 const TIKTOK_COMMENTS_ACTOR = process.env.APIFY_TIKTOK_COMMENTS_ACTOR || 'clockworks/tiktok-comments-scraper';
+const INSTAGRAM_ACTOR = process.env.APIFY_INSTAGRAM_ACTOR || 'apify/instagram-scraper';
 
 let _client = null;
 function client() {
@@ -30,6 +31,9 @@ export function detectPlatform(url) {
   }
   if (host.endsWith('tiktok.com')) {
     return 'tiktok';
+  }
+  if (host.endsWith('instagram.com')) {
+    return 'instagram';
   }
   return null;
 }
@@ -201,10 +205,54 @@ export async function scrapeTikTokComments(url, max = 40) {
   }
 }
 
-/** Scrape a YouTube or TikTok URL into a normalized content object. */
+async function scrapeInstagram(url) {
+  const items = await runActor(INSTAGRAM_ACTOR, {
+    directUrls: [url],
+    resultsType: 'posts',
+    resultsLimit: 1,
+    addParentData: false,
+  });
+  const v = items[0] || {};
+  const caption = pick(v, ['caption', 'text']) || '';
+  const videoUrl = pick(v, ['videoUrl']) || (Array.isArray(v.videoUrls) && v.videoUrls[0]) || undefined;
+  // Instagram scraper returns comments inline (no separate actor needed).
+  const comments = (v.latestComments || [])
+    .map((c) => ({
+      text: c.text || '',
+      likes: c.likesCount ?? 0,
+      author: c.ownerUsername || '',
+      pinned: false,
+      replies: c.repliesCount ?? (Array.isArray(c.replies) ? c.replies.length : 0),
+    }))
+    .filter((c) => c.text)
+    .sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
+  return {
+    platform: 'instagram',
+    videoUrl,
+    subtitleUrl: '', // Instagram has no VTT — Gemini transcribes from audio.
+    url: pick(v, ['url']) || url,
+    title: caption.split('\n')[0] || '',
+    author: v.ownerUsername || '',
+    description: caption,
+    hashtags: extractHashtags(caption, v.hashtags),
+    durationSeconds: v.videoDuration ? Math.round(v.videoDuration) : undefined,
+    stats: {
+      views: pick(v, ['videoViewCount', 'videoPlayCount']),
+      likes: pick(v, ['likesCount']),
+      comments: pick(v, ['commentsCount']),
+    },
+    thumbnail: pick(v, ['displayUrl']),
+    comments,
+    raw: v,
+  };
+}
+
+/** Scrape a YouTube, TikTok, or Instagram URL into a normalized content object. */
 export async function scrapeContent(url) {
   const platform = detectPlatform(url);
   if (platform === 'youtube') return scrapeYouTube(url);
   if (platform === 'tiktok') return scrapeTikTok(url);
-  throw new Error('Unsupported URL. Provide a YouTube or TikTok link.');
+  if (platform === 'instagram') return scrapeInstagram(url);
+  throw new Error('Unsupported URL. Provide a TikTok or Instagram link.');
 }

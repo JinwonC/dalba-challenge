@@ -124,11 +124,11 @@
 <body>
   <header class="top">
     <h1><span class="b">d'Alba</span> · TikTok 콘텐츠 분석기</h1>
-    <p>틱톡 링크를 넣으면 좌측에 영상, 우측에 씬별 리포트 · 훅 분석 · 설득 요인 · 핵심 키워드가 뜹니다.</p>
+    <p>틱톡·인스타그램 링크를 넣으면 좌측에 영상, 우측에 씬별 리포트 · 훅 분석 · 설득 요인 · 핵심 키워드가 뜹니다.</p>
   </header>
 
   <div class="bar">
-    <input id="url" type="text" placeholder="https://www.tiktok.com/@user/video/..." />
+    <input id="url" type="text" placeholder="틱톡 또는 인스타그램 링크 (예: tiktok.com/... , instagram.com/reel/...)" />
     <input id="manager" type="text" class="meta-in" placeholder="담당자 (예: 최진원)" />
     <input id="product" type="text" class="meta-in" placeholder="제품명 (예: 달바 멀티밤)" />
     <button class="go" id="go">분석하기</button>
@@ -187,8 +187,8 @@ function renderPlayer(videoUrl, embed){
   PLAYER = document.getElementById('player');
   LAST_ACTIVE = -1;
   PLAYER.addEventListener('timeupdate', onTime);
-  // If the stored video expired (auto-deleted) or fails, fall back to the embed.
-  PLAYER.addEventListener('error', ()=>{ PLAYER=null; renderTikTok(embed?.videoId, embed?.url); });
+  // If the stored video expired (auto-deleted) or fails, fall back.
+  PLAYER.addEventListener('error', ()=>{ PLAYER=null; if(embed?.platform==='instagram') showThumb(embed); else renderTikTok(embed?.videoId, embed?.url); });
 }
 function seekTo(sec){ if(PLAYER && sec!=null){ PLAYER.currentTime = Math.max(0, sec); PLAYER.play().catch(()=>{}); } }
 function onTime(){
@@ -336,10 +336,10 @@ async function getJSON(path){
 }
 
 // Stage 2 can transiently fail (Gemini overload); retry a couple times client-side.
-async function reportWithRetry(media, meta, tries=3){
+async function reportWithRetry(media, meta, videoId, tries=3){
   let last;
   for(let i=0;i<tries;i++){
-    try{ return await postJSON('/api/report', { videoUrl:media.videoUrl, subtitleUrl:media.subtitleUrl, meta }); }
+    try{ return await postJSON('/api/report', { videoUrl:media.videoUrl, subtitleUrl:media.subtitleUrl, meta, videoId }); }
     catch(e){ last=e; if(i===tries-1) throw e;
       $('#rightStatus') && ($('#rightStatus').textContent = `리포트 생성 재시도 중… (${i+2}/${tries})`);
     }
@@ -350,9 +350,16 @@ async function reportWithRetry(media, meta, tries=3){
 const rightLoading = (msg)=>`<div class="card"><div class="body"><div class="loading"><div class="spinner"></div><span id="rightStatus">${msg}</span></div></div></div>`;
 
 // ---- shared renderers (used by fresh analysis AND saved history) ----
+function showThumb(embed){
+  PLAYER = null;
+  $('#videoWrap').innerHTML = embed?.thumbnail
+    ? `<img src="${esc(embed.thumbnail)}" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML='<div style=\\'color:var(--muted);padding:40px;font-size:13px\\'>📷 분석 후 재생</div>'" style="max-width:340px;width:100%;border-radius:10px;display:block" />`
+    : `<div style="color:var(--muted);padding:40px;font-size:13px">📷 분석 후 재생됩니다</div>`;
+}
 function showVideo(embed, meta){
   PLAYER = null; // embed can't be controlled
-  renderTikTok(embed?.videoId, embed?.url);
+  if(embed?.platform==='instagram') showThumb(embed);
+  else renderTikTok(embed?.videoId, embed?.url);
   renderMeta(meta||{});
   $('#layout').style.display='grid';
 }
@@ -462,7 +469,7 @@ async function run(){
   const url = $('#url').value.trim();
   const manager = $('#manager').value.trim();
   const product = $('#product').value.trim();
-  if(!url){ $('#status').innerHTML='<div class="err">틱톡 링크를 입력하세요.</div>'; return; }
+  if(!url){ $('#status').innerHTML='<div class="err">틱톡 또는 인스타그램 링크를 입력하세요.</div>'; return; }
   if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
   $('#go').disabled = true;
   $('#layout').style.display='none';
@@ -478,7 +485,7 @@ async function run(){
     $('#right').innerHTML = rightLoading('2/2 · 영상 화면분석 + 리포트 생성 중… (최대 1분)');
 
     // Stage 2 — download + Gemini report (with retry).
-    const data = await reportWithRetry(s.media||{}, s.meta||{});
+    const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
     const rep = data.report||{};
     // Swap the embed for our native player so timestamps are clickable & synced.
     if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
@@ -488,7 +495,9 @@ async function run(){
     (async ()=>{
       let commentsRec = null;
       try{
-        const c = await postJSON('/api/comments', { url: s.embed?.url || url, meta: s.meta||{} });
+        const c = await postJSON('/api/comments', s.comments
+          ? { comments: s.comments, meta: s.meta||{} }
+          : { url: s.embed?.url || url, meta: s.meta||{} });
         commentsRec = { analysis: c.comments_analysis, count: c.count };
         fillComments(c.comments_analysis, c.count);
       }catch(e){
