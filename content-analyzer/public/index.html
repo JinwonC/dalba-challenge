@@ -39,13 +39,15 @@
   .spinner{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  .layout{max-width:1180px;margin:6px auto 60px;padding:0 20px;display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:26px;align-items:start}
+  .layout{max-width:1220px;margin:6px auto 60px;padding:0 20px;display:grid;grid-template-columns:minmax(460px,540px) 1fr;gap:26px;align-items:start}
   @media(max-width:900px){.layout{grid-template-columns:1fr}}
 
   .left{position:sticky;top:18px}
-  .videoWrap{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:200px;display:flex;justify-content:center}
-  .caption{margin-top:10px;text-align:center;font-size:14.5px;font-weight:600;color:#fff;background:#111827;border-radius:10px;padding:11px 14px;line-height:1.5;min-height:1.5em;transition:opacity .15s}
+  .stage{display:flex;align-items:center;gap:14px}
+  .videoWrap{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:200px;display:flex;justify-content:center}
+  .caption{flex:1 1 0;min-width:0;text-align:center;font-size:15px;font-weight:600;color:#fff;background:#111827;border-radius:12px;padding:16px 16px;line-height:1.55;transition:opacity .15s;align-self:center}
   .caption.empty{color:#9aa3b2;font-weight:400;font-size:12.5px}
+  @media(max-width:900px){.stage{flex-direction:column;align-items:stretch}.caption{order:2;text-align:center}}
   .vmeta{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
   .vmeta h2{margin:0 0 4px;font-size:16px}
   .vmeta .author{color:var(--muted);font-size:13px;margin-bottom:10px}
@@ -154,8 +156,10 @@
 
   <div class="layout" id="layout" style="display:none">
     <div class="left">
-      <div class="videoWrap" id="videoWrap"></div>
-      <div class="caption" id="caption" style="display:none"></div>
+      <div class="stage">
+        <div class="caption" id="caption" style="display:none"></div>
+        <div class="videoWrap" id="videoWrap"></div>
+      </div>
       <div class="vmeta" id="vmeta"></div>
     </div>
     <div class="right" id="right"></div>
@@ -238,7 +242,7 @@ function parseRange(t){
 }
 function renderPlayer(videoUrl, embed){
   $('#videoWrap').innerHTML = `<video id="player" src="${esc(videoUrl)}" controls playsinline preload="metadata"
-      style="width:100%;max-width:340px;border-radius:10px;background:#000;display:block"></video>`;
+      style="width:100%;max-width:300px;border-radius:10px;background:#000;display:block"></video>`;
   PLAYER = document.getElementById('player');
   LAST_ACTIVE = -1; LAST_CAP = -1;
   PLAYER.addEventListener('timeupdate', onTime);
