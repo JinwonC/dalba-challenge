@@ -156,6 +156,20 @@ def _write_with_retry(fn, desc: str, max_attempts: int = 8):
             time.sleep(wait)
 
 
+def _sort_by_post_date(sheet):
+    """B열(포스팅일) 기준 오름차순 정렬 — 위=과거, 아래=최신 순서로 항상 유지.
+    신규 영상은 API가 GMV 순으로 반환해 시트 하단에 GMV 순으로 append 되므로,
+    매 실행 마지막에 포스팅일 기준으로 재정렬해야 시간순이 유지된다.
+    포스팅일은 ISO 8601 문자열이라 텍스트 오름차순 = 시간 오름차순."""
+    last_row = len(sheet.col_values(1))  # A열(Video ID) 기준 마지막 데이터 행 (헤더 포함)
+    if last_row < 3:
+        return  # 정렬할 데이터가 없음 (헤더뿐이거나 1행)
+    col_end = chr(ord("A") + len(HEADERS) - 1)
+    rng = f"A2:{col_end}{last_row}"
+    print(f"  포스팅일(B열) 기준 오름차순 정렬 중... ({rng})")
+    _write_with_retry(lambda: sheet.sort((2, "asc"), range=rng), "포스팅일 정렬")
+
+
 # ─────────────────────────────────────────
 # 메인 동기화 로직
 # ─────────────────────────────────────────
@@ -282,6 +296,9 @@ def run_sync(from_date: datetime, to_date: datetime):
             lambda: sheet.append_rows(append_rows, value_input_option="USER_ENTERED"),
             "신규 추가",
         )
+
+    # 포스팅일 기준 시간순 정렬 (신규가 하단에 GMV 순으로 붙어 순서가 섞이는 것 방지)
+    _sort_by_post_date(sheet)
 
     print(f"\n✅ 완료! 업데이트 {update_count}건 / 신규 {new_count}건")
 
@@ -425,6 +442,9 @@ def refresh_all_existing():
     if batch_updates:
         body = {"valueInputOption": "USER_ENTERED", "data": batch_updates}
         _write_with_retry(lambda: sheet.spreadsheet.values_batch_update(body), "전체 최신화")
+
+    # 포스팅일 기준 시간순 정렬
+    _sort_by_post_date(sheet)
 
     print(f"\n✅ 완료! {matched}개 영상 최신화")
 
