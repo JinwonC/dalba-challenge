@@ -44,6 +44,8 @@
 
   .left{position:sticky;top:18px}
   .videoWrap{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:200px;display:flex;justify-content:center}
+  .caption{margin-top:10px;text-align:center;font-size:14.5px;font-weight:600;color:#fff;background:#111827;border-radius:10px;padding:11px 14px;line-height:1.5;min-height:1.5em;transition:opacity .15s}
+  .caption.empty{color:#9aa3b2;font-weight:400;font-size:12.5px}
   .vmeta{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
   .vmeta h2{margin:0 0 4px;font-size:16px}
   .vmeta .author{color:var(--muted);font-size:13px;margin-bottom:10px}
@@ -153,6 +155,7 @@
   <div class="layout" id="layout" style="display:none">
     <div class="left">
       <div class="videoWrap" id="videoWrap"></div>
+      <div class="caption" id="caption" style="display:none"></div>
       <div class="vmeta" id="vmeta"></div>
     </div>
     <div class="right" id="right"></div>
@@ -197,7 +200,31 @@ function renderTikTok(videoId, url){
 }
 
 // ---- native player + time sync ----
-let PLAYER = null, SCENE_TIMES = [], LAST_ACTIVE = -1;
+let PLAYER = null, SCENE_TIMES = [], LAST_ACTIVE = -1, CAPTIONS = [], LAST_CAP = -1;
+const CAP_HINT = '▶ 재생하면 한국어 자막이 표시됩니다';
+// Derive sentence-level Korean captions from the scene breakdown (no extra cost):
+// split each scene's Korean audio into sentences, spread across the scene's time range.
+function deriveCaptions(scenes){
+  const caps=[];
+  (scenes||[]).forEach(sc=>{
+    const {start,end}=parseRange(sc.time);
+    if(start==null) return;
+    const span=((end!=null && end>start)?end:start+8)-start;
+    const kr=String(sc.audio_kr||'').replace(/\s+/g,' ').trim();
+    if(!kr) return;
+    const sents=kr.split(/(?<=[.!?…。])\s+/).map(x=>x.trim()).filter(Boolean);
+    const list=sents.length?sents:[kr];
+    const step=span/list.length;
+    list.forEach((txt,i)=>caps.push({ t:start+i*step, text:txt }));
+  });
+  return caps.sort((a,b)=>a.t-b.t);
+}
+function setCaptions(scenes){
+  CAPTIONS = deriveCaptions(scenes); LAST_CAP = -1;
+  const el=$('#caption'); if(!el) return;
+  if(CAPTIONS.length){ el.style.display=''; el.className='caption empty'; el.textContent=CAP_HINT; }
+  else el.style.display='none';
+}
 function toSec(tok){
   if(tok==null) return null;
   let s = String(tok).trim().replace(/초|s/gi,'').trim();
@@ -213,7 +240,7 @@ function renderPlayer(videoUrl, embed){
   $('#videoWrap').innerHTML = `<video id="player" src="${esc(videoUrl)}" controls playsinline preload="metadata"
       style="width:100%;max-width:340px;border-radius:10px;background:#000;display:block"></video>`;
   PLAYER = document.getElementById('player');
-  LAST_ACTIVE = -1;
+  LAST_ACTIVE = -1; LAST_CAP = -1;
   PLAYER.addEventListener('timeupdate', onTime);
   // If the stored video expired (auto-deleted) or fails, fall back.
   PLAYER.addEventListener('error', ()=>{ PLAYER=null;
@@ -224,17 +251,31 @@ function renderPlayer(videoUrl, embed){
 }
 function seekTo(sec){ if(PLAYER && sec!=null){ PLAYER.currentTime = Math.max(0, sec); PLAYER.play().catch(()=>{}); } }
 function onTime(){
-  if(!PLAYER || !SCENE_TIMES.length) return;
-  const t = PLAYER.currentTime; let active = -1;
-  for(let i=0;i<SCENE_TIMES.length;i++){ const s=SCENE_TIMES[i]; if(s.start!=null && t>=s.start && (s.end==null || t<s.end)) active=i; }
-  if(active<0){ for(let i=0;i<SCENE_TIMES.length;i++){ if(SCENE_TIMES[i].start!=null && t>=SCENE_TIMES[i].start) active=i; } }
-  if(active===LAST_ACTIVE) return;
-  LAST_ACTIVE = active;
-  document.querySelectorAll('#sceneTable tr[data-idx]').forEach(tr=>{
-    const on = Number(tr.dataset.idx)===active;
-    tr.classList.toggle('active', on);
-    if(on) tr.scrollIntoView({ block:'nearest', behavior:'smooth' });
-  });
+  if(!PLAYER) return;
+  const t = PLAYER.currentTime;
+  // scene-row highlight
+  if(SCENE_TIMES.length){
+    let active = -1;
+    for(let i=0;i<SCENE_TIMES.length;i++){ const s=SCENE_TIMES[i]; if(s.start!=null && t>=s.start && (s.end==null || t<s.end)) active=i; }
+    if(active<0){ for(let i=0;i<SCENE_TIMES.length;i++){ if(SCENE_TIMES[i].start!=null && t>=SCENE_TIMES[i].start) active=i; } }
+    if(active!==LAST_ACTIVE){
+      LAST_ACTIVE = active;
+      document.querySelectorAll('#sceneTable tr[data-idx]').forEach(tr=>{
+        const on = Number(tr.dataset.idx)===active;
+        tr.classList.toggle('active', on);
+        if(on) tr.scrollIntoView({ block:'nearest', behavior:'smooth' });
+      });
+    }
+  }
+  // Korean caption under the video
+  if(CAPTIONS.length){
+    let ci = -1;
+    for(let i=0;i<CAPTIONS.length;i++){ if(t>=CAPTIONS[i].t) ci=i; else break; }
+    if(ci!==LAST_CAP){
+      LAST_CAP = ci; const el=$('#caption');
+      if(el){ if(ci<0){ el.className='caption empty'; el.textContent=CAP_HINT; } else { el.className='caption'; el.textContent=CAPTIONS[ci].text; } }
+    }
+  }
 }
 function wireSeekRows(){
   if(!PLAYER) return;
@@ -440,6 +481,7 @@ function fillRight(rep, driveUrl){
       <div class="body" id="commentsBody"><div class="loading"><div class="spinner"></div>댓글 분석 중…</div></div>
     </div>`;
   wireSeekRows();
+  setCaptions(rep.scenes);
 }
 function fillComments(ca, count){
   $('#commentsBody').innerHTML = count
