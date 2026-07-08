@@ -115,7 +115,15 @@
 
   /* history */
   .history{max-width:1180px;margin:6px auto 18px;padding:0 20px}
-  .history h4{font-size:12px;color:var(--muted);letter-spacing:.5px;margin:0 0 8px;font-weight:600}
+  .history h4{font-size:12px;color:var(--muted);letter-spacing:.5px;margin:0;font-weight:600}
+  .hhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .hhead h4{flex:1;min-width:0}
+  .hctrl{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .hfilter{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 8px;font-size:12.5px;color:var(--slate);cursor:pointer;max-width:200px}
+  .hfilter:focus{outline:none;border-color:var(--gold)}
+  .htoggle{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer}
+  .htoggle:hover{border-color:var(--gold);background:var(--gold-soft)}
+  .hempty{color:var(--muted);font-size:13px;padding:14px 4px}
   .hitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:9px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
   .hitem:hover{border-color:var(--gold);box-shadow:0 1px 8px rgba(184,137,46,.12)}
@@ -495,10 +503,16 @@ function fillComments(ca, count){
 
 // ---- history ----
 let HISTORY = [];
+let HIST_OPEN = (localStorage.getItem('histOpen') ?? '1') === '1';
+let HIST_MGR = localStorage.getItem('histMgr') || '';
 function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } }
-function renderHistoryList(){
-  if(!HISTORY.length){ $('#history').innerHTML=''; return; }
-  $('#history').innerHTML = `<h4>📁 분석 기록 (${HISTORY.length}) · 클릭하면 다시 봅니다</h4>` + HISTORY.map(it=>`
+function managerCounts(){
+  const m = new Map();
+  HISTORY.forEach(it=>{ const g=(it.manager||'').trim(); if(g) m.set(g,(m.get(g)||0)+1); });
+  return [...m.entries()].sort((a,b)=> a[0].localeCompare(b[0],'ko'));
+}
+function filteredHistory(){ return HIST_MGR ? HISTORY.filter(it=>(it.manager||'').trim()===HIST_MGR) : HISTORY; }
+function hitemHTML(it){ return `
     <div class="hitem" data-id="${esc(it.id)}">
       ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
       <div class="hmain">
@@ -507,9 +521,37 @@ function renderHistoryList(){
       </div>
       <div class="hdate">${fmtDate(it.savedAt)}</div>
       <button class="hdel" data-del="${esc(it.id)}" title="삭제">🗑</button>
-    </div>`).join('');
-  $('#history').querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', (e)=>{ if(e.target.closest('.hdel')) return; openSaved(el.dataset.id); }));
-  $('#history').querySelectorAll('.hdel').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); deleteHistory(b.dataset.del); }));
+    </div>`; }
+function renderHistoryList(){
+  const box = $('#history');
+  if(!HISTORY.length){ box.innerHTML=''; return; }
+  // Drop a stale filter if that manager no longer has any records.
+  if(HIST_MGR && !HISTORY.some(it=>(it.manager||'').trim()===HIST_MGR)){ HIST_MGR=''; localStorage.setItem('histMgr',''); }
+  const list = filteredHistory();
+  const opts = managerCounts();
+  const filter = `<select id="histFilter" class="hfilter" title="담당자 필터">
+      <option value="">전체 담당자 (${HISTORY.length})</option>
+      ${opts.map(([m,c])=>`<option value="${esc(m)}" ${m===HIST_MGR?'selected':''}>👤 ${esc(m)} (${c})</option>`).join('')}
+    </select>`;
+  const toggle = `<button id="histToggle" class="htoggle">${HIST_OPEN?'▾ 접기':`▸ 펼치기 (${list.length})`}</button>`;
+  const head = `<div class="hhead">
+      <h4>📁 분석 기록 · ${HIST_MGR?`${esc(HIST_MGR)} ${list.length}건`:`총 ${HISTORY.length}건`} · 클릭하면 다시 봅니다</h4>
+      <div class="hctrl">${filter}${toggle}</div>
+    </div>`;
+  const body = !HIST_OPEN ? '' :
+    (list.length ? `<div class="hlist">${list.map(hitemHTML).join('')}</div>`
+                 : `<div class="hempty">해당 담당자의 기록이 없습니다.</div>`);
+  box.innerHTML = head + body;
+  $('#histToggle').addEventListener('click', ()=>{ HIST_OPEN=!HIST_OPEN; localStorage.setItem('histOpen',HIST_OPEN?'1':'0'); renderHistoryList(); });
+  $('#histFilter').addEventListener('change', (e)=>{
+    HIST_MGR = e.target.value; localStorage.setItem('histMgr', HIST_MGR);
+    if(!HIST_OPEN){ HIST_OPEN=true; localStorage.setItem('histOpen','1'); }
+    renderHistoryList();
+  });
+  if(HIST_OPEN){
+    box.querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', (e)=>{ if(e.target.closest('.hdel')) return; openSaved(el.dataset.id); }));
+    box.querySelectorAll('.hdel').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); deleteHistory(b.dataset.del); }));
+  }
 }
 async function deleteHistory(id){
   if(!id) return;
