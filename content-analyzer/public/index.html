@@ -34,6 +34,19 @@
   .hint{text-align:center;color:var(--muted);font-size:12.5px;margin:4px auto 20px}
 
   .status{max-width:1180px;margin:0 auto;padding:0 20px}
+  .batchbar{max-width:1180px;margin:10px auto 0;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+  .batchbar .bhead{font-size:13px;font-weight:700;color:var(--slate);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .batchbar .bx{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .batchbar .bx:hover{border-color:var(--gold);background:var(--gold-soft)}
+  .batchbar .brow{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:4px 0;border-top:1px solid var(--line)}
+  .batchbar .brow:first-of-type{border-top:0}
+  .batchbar .bic{flex:0 0 auto;width:18px;text-align:center}
+  .batchbar .blabel{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--slate)}
+  .batchbar .bnote{flex:0 0 auto;color:var(--muted);font-size:11.5px;max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .batchbar .brow.running{background:var(--gold-soft);border-radius:6px}
+  .batchbar .brow.running .blabel{font-weight:700;color:var(--gold)}
+  .batchbar .brow.fail .bnote{color:#b91c1c}
+  .batchbar .brow.pending{opacity:.5}
   .err{background:#fdecea;border:1px solid #f5c6c2;color:#8a1c13;padding:12px 16px;border-radius:10px;font-size:14px}
   .loading{display:flex;align-items:center;gap:12px;justify-content:center;color:var(--muted);padding:34px;font-size:15px}
   .spinner{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
@@ -149,16 +162,17 @@
     <button class="tab" data-mode="upload">📁 파일 업로드</button>
   </div>
   <div class="bar">
-    <input id="url" type="text" placeholder="틱톡 또는 인스타그램 링크 (예: tiktok.com/... , instagram.com/reel/...)" />
-    <label id="fileLabel" class="filebtn" style="display:none">📁 영상 선택<input id="file" type="file" accept="video/*" hidden /></label>
+    <input id="url" type="text" placeholder="틱톡·인스타 링크 (여러 개는 쉼표/공백/줄바꿈으로 구분, 최대 5개)" />
+    <label id="fileLabel" class="filebtn" style="display:none">📁 영상 선택<input id="file" type="file" accept="video/*" multiple hidden /></label>
     <span id="fileName" class="filename"></span>
     <input id="manager" type="text" class="meta-in" placeholder="담당자 (예: 최진원)" />
     <input id="product" type="text" class="meta-in" placeholder="제품명 (예: 달바 멀티밤)" />
     <button class="go" id="go">분석하기</button>
   </div>
-  <div class="hint">스크랩 + 영상 화면분석에 보통 60~120초 걸립니다. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기. · 업로드는 <b>mp4(H.264)</b> 권장(브라우저 재생·점프 지원).</div>
+  <div class="hint">한 번에 <b>최대 5개</b>까지 순차 분석돼요. · 스크랩 + 화면분석에 개당 60~120초. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기. · 업로드는 <b>mp4(H.264)</b> 권장(브라우저 재생·점프 지원).</div>
 
   <div class="status" id="status"></div>
+  <div class="batchbar" id="batchbar" style="display:none"></div>
 
   <div class="history" id="history"></div>
 
@@ -192,7 +206,7 @@ document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>{
   $('#fileLabel').style.display = up ? '' : 'none';
   if(!up){ $('#fileName').textContent=''; }
 }));
-$('#file').addEventListener('change', ()=>{ const f=$('#file').files[0]; $('#fileName').textContent = f ? f.name : ''; });
+$('#file').addEventListener('change', ()=>{ const fs=$('#file').files; $('#fileName').textContent = fs.length ? (fs.length===1 ? fs[0].name : `${fs.length}개 파일 선택`) : ''; });
 
 function go(){ MODE==='upload' ? runUpload() : run(); }
 $('#go').addEventListener('click', go);
@@ -612,7 +626,7 @@ async function proceed(s, opts={}){
   if(data.video){ renderMeta(s.meta||{}); renderPlayer(data.video, s.embed); }
   fillRight(rep);
 
-  (async ()=>{
+  const tail = (async ()=>{
     let commentsRec = null;
     if(opts.noComments){
       $('#commentsBody') && ($('#commentsBody').innerHTML = '<div style="color:var(--muted);font-size:13px">업로드 영상은 댓글이 없습니다.</div>');
@@ -632,50 +646,124 @@ async function proceed(s, opts={}){
       setTimeout(loadHistory, 5000);
     }catch(e){ if($('#driveSlot')) $('#driveSlot').innerHTML='<span class="copy" style="opacity:.55;cursor:default">Drive 저장 실패</span>'; }
   })();
+  // In batch mode, wait for comments+save so the next item doesn't overwrite this one's DOM mid-flight.
+  if(opts.sync) await tail;
+  return { author: s.meta?.author };
 }
 
-// LINK flow (TikTok / Instagram)
+const MAX_BATCH = 5;
+
+// --- one-item preparers (shared by single + batch flows) ---
+async function scrapeLink(url, manager, product){
+  const s = await postJSON('/api/scrape', { url });
+  s.meta = { ...(s.meta||{}), manager, product };
+  return s;
+}
+async function uploadFile(file, manager, product, idx=0){
+  if(!/^video\//.test(file.type||'')) throw new Error(`${file.name}: 영상 파일이 아닙니다.`);
+  if(!window.blobUpload) throw new Error('업로드 모듈 로딩 중… 잠시 후 다시 시도하세요.');
+  const vid = 'up_'+Date.now()+'_'+idx;
+  const blob = await window.blobUpload(`videos/${vid}.mp4`, file, {
+    access:'public', handleUploadUrl:'/api/upload', contentType: file.type||'video/mp4',
+    onUploadProgress: (p)=>{ const pct=Math.round(p.percentage ?? (p.total? p.loaded/p.total*100 : 0)); $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>업로드 중… ${pct}%</div>`; }
+  });
+  const previewUrl = URL.createObjectURL(file);
+  const s = {
+    platform:'upload',
+    meta:{ platform:'upload', url:'', title:file.name.replace(/\.[^.]+$/,''), author:'(업로드)', stats:{}, hashtags:[], manager, product },
+    embed:{ platform:'upload', videoId:vid, url:'', thumbnail:'' },
+    media:{ videoUrl: blob.url, subtitleUrl:'' },
+    comments:null,
+  };
+  return { s, previewUrl };
+}
+
+// --- batch progress banner ---
+let BATCH = null;
+function renderBatch(){
+  const el = $('#batchbar'); if(!el) return;
+  if(!BATCH){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='';
+  const ic = { pending:'·', running:'⏳', done:'✅', fail:'⚠️' };
+  const rows = BATCH.items.map((it,i)=>`<div class="brow ${it.status}">
+      <span class="bic">${ic[it.status]||'·'}</span>
+      <span class="blabel">${esc(it.label)}</span>
+      ${it.note?`<span class="bnote">${esc(it.note)}</span>`:''}
+    </div>`).join('');
+  const done = BATCH.items.filter(x=>x.status==='done').length;
+  const fail = BATCH.items.filter(x=>x.status==='fail').length;
+  const head = BATCH.finished
+    ? `일괄 분석 완료 · ${done}개 성공${fail?` · ${fail}개 실패`:''} <button class="bx" id="batchX">닫기 ✕</button>`
+    : `일괄 분석 진행 중… ${Math.min(BATCH.i+1,BATCH.n)}/${BATCH.n}`;
+  el.innerHTML = `<div class="bhead">${head}</div>${rows}`;
+  if(BATCH.finished){ const x=$('#batchX'); x && x.addEventListener('click', ()=>{ BATCH=null; renderBatch(); }); }
+}
+async function runBatch(items, manager, product){
+  BATCH = { n: items.length, i: 0, finished:false,
+            items: items.map(it=>({ label: it.kind==='upload'? it.file.name : it.url, status:'pending', note:'' })) };
+  renderBatch();
+  $('#go').disabled = true;
+  for(let i=0;i<items.length;i++){
+    BATCH.i = i; BATCH.items[i].status='running'; renderBatch();
+    $('#layout').style.display='none';
+    try{
+      const opts = { sync:true, batchIndex:i, batchTotal:items.length };
+      let s;
+      if(items[i].kind==='upload'){
+        const r = await uploadFile(items[i].file, manager, product, i);
+        s = r.s; opts.previewUrl = r.previewUrl; opts.noComments = true;
+      } else {
+        $('#status').innerHTML = `<div class="loading"><div class="spinner"></div>${i+1}/${items.length} · 영상 가져오는 중…</div>`;
+        s = await scrapeLink(items[i].url, manager, product);
+      }
+      const res = await proceed(s, opts);
+      BATCH.items[i].status='done';
+      BATCH.items[i].note = res?.author ? '@'+res.author : '완료';
+    }catch(e){
+      BATCH.items[i].status='fail'; BATCH.items[i].note = e.message || '실패';
+    }
+    renderBatch();
+  }
+  $('#status').innerHTML='';
+  BATCH.finished = true; renderBatch();
+  $('#go').disabled = false;
+}
+
+// LINK flow (TikTok / Instagram) — one link or up to 5.
 async function run(){
-  const url = $('#url').value.trim();
+  const raw = $('#url').value.trim();
   const manager = $('#manager').value.trim();
   const product = $('#product').value.trim();
-  if(!url){ $('#status').innerHTML='<div class="err">틱톡 또는 인스타그램 링크를 입력하세요.</div>'; return; }
+  const urls = [...new Set(raw.split(/[\s,]+/).map(x=>x.trim()).filter(Boolean))];
+  if(!urls.length){ $('#status').innerHTML='<div class="err">틱톡 또는 인스타그램 링크를 입력하세요.</div>'; return; }
   if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
+  if(urls.length > MAX_BATCH){ $('#status').innerHTML=`<div class="err">링크는 최대 ${MAX_BATCH}개까지 한 번에 넣을 수 있어요. (지금 ${urls.length}개)</div>`; return; }
+  if(urls.length > 1){ return runBatch(urls.map(u=>({kind:'link', url:u})), manager, product); }
   $('#go').disabled = true; $('#layout').style.display='none';
   $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>1/2 · 영상 가져오는 중…</div>';
   try{
-    const s = await postJSON('/api/scrape', { url });
-    s.meta = { ...(s.meta||{}), manager, product };
+    const s = await scrapeLink(urls[0], manager, product);
     await proceed(s);
   }catch(err){ showErr(err); }
   finally{ $('#go').disabled = false; }
 }
 
-// UPLOAD flow (video file)
+// UPLOAD flow (video file) — one file or up to 5.
 async function runUpload(){
-  const file = $('#file').files[0];
+  const files = [...$('#file').files];
   const manager = $('#manager').value.trim();
   const product = $('#product').value.trim();
-  if(!file){ $('#status').innerHTML='<div class="err">영상 파일을 선택하세요.</div>'; return; }
+  if(!files.length){ $('#status').innerHTML='<div class="err">영상 파일을 선택하세요.</div>'; return; }
   if(!manager || !product){ $('#status').innerHTML='<div class="err">담당자와 제품명을 입력하세요. (필수)</div>'; return; }
-  if(!/^video\//.test(file.type||'')){ $('#status').innerHTML='<div class="err">영상 파일만 업로드할 수 있어요.</div>'; return; }
+  if(files.length > MAX_BATCH){ $('#status').innerHTML=`<div class="err">영상은 최대 ${MAX_BATCH}개까지 한 번에 올릴 수 있어요. (지금 ${files.length}개)</div>`; return; }
+  const bad = files.find(f=>!/^video\//.test(f.type||''));
+  if(bad){ $('#status').innerHTML=`<div class="err">영상 파일만 업로드할 수 있어요: ${esc(bad.name)}</div>`; return; }
   if(!window.blobUpload){ $('#status').innerHTML='<div class="err">업로드 모듈 로딩 중… 잠시 후 다시 눌러주세요.</div>'; return; }
+  if(files.length > 1){ return runBatch(files.map(f=>({kind:'upload', file:f})), manager, product); }
   $('#go').disabled = true; $('#layout').style.display='none';
   $('#status').innerHTML = '<div class="loading"><div class="spinner"></div>업로드 중… 0%</div>';
   try{
-    const vid = 'up_'+Date.now();
-    const blob = await window.blobUpload(`videos/${vid}.mp4`, file, {
-      access:'public', handleUploadUrl:'/api/upload', contentType: file.type||'video/mp4',
-      onUploadProgress: (p)=>{ const pct=Math.round(p.percentage ?? (p.total? p.loaded/p.total*100 : 0)); $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>업로드 중… ${pct}%</div>`; }
-    });
-    const previewUrl = URL.createObjectURL(file);
-    const s = {
-      platform:'upload',
-      meta:{ platform:'upload', url:'', title:file.name.replace(/\.[^.]+$/,''), author:'(업로드)', stats:{}, hashtags:[], manager, product },
-      embed:{ platform:'upload', videoId:vid, url:'', thumbnail:'' },
-      media:{ videoUrl: blob.url, subtitleUrl:'' },
-      comments:null,
-    };
+    const { s, previewUrl } = await uploadFile(files[0], manager, product, 0);
     await proceed(s, { noComments:true, previewUrl });
   }catch(err){ showErr(err); }
   finally{ $('#go').disabled = false; }
