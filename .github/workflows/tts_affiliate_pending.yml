@@ -1,0 +1,27 @@
+name: TTS Affiliate Pending (authenticated)
+
+# 인증 읽기로 'W가 비어 있는 유효 핸들'만 뽑아 로그에 출력 (PENDING_JSON_START/END 사이).
+# 매일 자동화 세션이 이걸 트리거해 '아직 안 채운 새 핸들'만 CRUVA로 조회한다.
+on:
+  push:
+    branches:
+      - claude/tiktok-shop-affiliate-check-4cmep9
+    paths:
+      - PENDING_TRIGGER
+  workflow_dispatch:
+
+jobs:
+  pending:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/tiktok-shop-affiliate-check-4cmep9
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install gspread google-auth
+      - name: List pending handles
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: python tts_affiliate_sync.py pending
