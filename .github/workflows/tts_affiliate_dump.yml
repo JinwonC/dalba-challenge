@@ -1,0 +1,26 @@
+name: TTS Affiliate Dump (read-only)
+
+# 진단용: 인증 읽기로 시트 E/W/X 현재 상태를 로그에 덤프. 시트에 아무것도 쓰지 않음.
+on:
+  push:
+    branches:
+      - claude/tiktok-shop-affiliate-check-4cmep9
+    paths:
+      - DUMP_TRIGGER
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/tiktok-shop-affiliate-check-4cmep9
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install gspread google-auth
+      - name: Dump sheet E/W/X
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: python tts_affiliate_sync.py dump

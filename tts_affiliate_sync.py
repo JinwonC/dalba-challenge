@@ -121,14 +121,37 @@ def write_results(results):
     print(f"{len(results)}개 행의 {STATUS_COL}/{GMV_COL} 열을 업데이트했습니다.")
 
 
+def dump(max_row=480):
+    """서비스 계정으로 시트를 인증 읽기 하여 E/W/X 현재 상태를 그대로 출력.
+
+    gviz(캐시)와 달리 실시간 정확한 값을 확인하는 진단용.
+    """
+    ws = _gspread_worksheet()
+    values = ws.get(f"A1:X{max_row}")  # A1 표기, 빈 셀은 짧게 반환됨
+    print("row | E(handle)                | W(TTS여부) | X(GMV)")
+    print("-" * 60)
+    for i, rowvals in enumerate(values):
+        rn = i + 1
+
+        def col(idx):
+            return rowvals[idx] if len(rowvals) > idx else ""
+        e, w, x = col(4), col(22), col(23)   # E=idx4, W=idx22, X=idx23
+        if e or w or x:
+            print(f"{rn:>4} | {str(e).strip()[:24]:<24} | {str(w):<9} | {x}")
+
+
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ("read", "write"):
-        print("사용법: python tts_affiliate_sync.py [read | write <results.json>]")
+    if len(sys.argv) < 2 or sys.argv[1] not in ("read", "write", "dump"):
+        print("사용법: python tts_affiliate_sync.py [read | write <results.json> | dump]")
         raise SystemExit(2)
 
     if sys.argv[1] == "read":
         handles = read_handles()
         print(json.dumps(handles, ensure_ascii=False, indent=2))
+        return
+
+    if sys.argv[1] == "dump":
+        dump()
         return
 
     # write
