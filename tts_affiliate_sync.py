@@ -106,19 +106,54 @@ def _gspread_worksheet():
     raise SystemExit(f"gid={GID} 워크시트를 찾지 못했습니다.")
 
 
+def _handle_row_map(ws):
+    """현재 E열을 인증 읽기 하여 {소문자핸들: [행번호,...]} 맵 생성.
+
+    시트가 실시간 편집돼 행이 이동해도, 쓰기 직전에 이 맵으로 각 핸들의
+    '현재' 행을 찾아 기록하므로 절대 행번호 오정렬을 방지한다.
+    """
+    col_e = ws.col_values(5)  # E열 (1-indexed 리스트)
+    m = {}
+    for i, v in enumerate(col_e):
+        h = _clean_handle(v)
+        if h:
+            m.setdefault(h.lower(), []).append(i + 1)
+    return m
+
+
 def write_results(results):
-    """results: [{'row': int, 'w': str, 'x': str}, ...] 를 W/X 열에 기록."""
+    """results: [{'handle': str, 'w': str, 'x': str}, ...] 를 핸들 매칭으로 W/X에 기록.
+
+    절대 행번호가 아니라 '핸들'로 현재 행을 찾아 쓴다 (실시간 편집에 안전).
+    같은 핸들이 여러 행에 있으면 모두 기록(동일 크리에이터 → 동일 등록 상태).
+    """
     ws = _gspread_worksheet()
+    rowmap = _handle_row_map(ws)
     updates = []
+    written, missing = 0, []
     for item in results:
-        row = item["row"]
-        updates.append({"range": f"{STATUS_COL}{row}", "values": [[item.get("w", "")]]})
-        updates.append({"range": f"{GMV_COL}{row}", "values": [[item.get("x", "")]]})
+        # 하위호환: 예전 형식(row 지정)도 허용
+        if "handle" not in item and "row" in item:
+            r = item["row"]
+            updates.append({"range": f"{STATUS_COL}{r}", "values": [[item.get("w", "")]]})
+            updates.append({"range": f"{GMV_COL}{r}", "values": [[item.get("x", "")]]})
+            written += 1
+            continue
+        rows = rowmap.get(str(item["handle"]).strip().lower())
+        if not rows:
+            missing.append(item["handle"])
+            continue
+        for r in rows:
+            updates.append({"range": f"{STATUS_COL}{r}", "values": [[item.get("w", "")]]})
+            updates.append({"range": f"{GMV_COL}{r}", "values": [[item.get("x", "")]]})
+        written += 1
     if not updates:
         print("기록할 항목이 없습니다.")
         return
     ws.batch_update(updates, value_input_option="USER_ENTERED")
-    print(f"{len(results)}개 행의 {STATUS_COL}/{GMV_COL} 열을 업데이트했습니다.")
+    print(f"{written}개 핸들 → {len(updates)//2}개 셀({STATUS_COL}/{GMV_COL}) 기록. 미발견 {len(missing)}건.")
+    if missing:
+        print("미발견 핸들:", ", ".join(map(str, missing[:30])))
 
 
 def dump(max_row=480):
