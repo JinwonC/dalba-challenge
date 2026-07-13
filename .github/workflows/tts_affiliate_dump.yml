@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install gspread google-auth
-      - name: Dump sheet E/W/X
+      - name: Pending handles (W empty), authenticated
         env:
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-        run: python tts_affiliate_sync.py dump
+        run: python tts_affiliate_sync.py pending

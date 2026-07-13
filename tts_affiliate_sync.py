@@ -156,6 +156,33 @@ def write_results(results):
         print("미발견 핸들:", ", ".join(map(str, missing[:30])))
 
 
+def pending():
+    """서비스 계정 인증 읽기로, W(등록여부)가 비어 있는 유효 핸들만 유니크하게 출력.
+
+    gviz(캐시)와 달리 실시간 정확. 매일 이걸로 '아직 안 채운 새 핸들'만 뽑아
+    CRUVA 조회 대상으로 삼는다. 출력은 파싱하기 쉽게 마커로 감싼 JSON 한 줄.
+    """
+    ws = _gspread_worksheet()
+    e_col = ws.col_values(5)    # E열
+    w_col = ws.col_values(23)   # W열
+    seen, out = set(), []
+    for i, e in enumerate(e_col):
+        h = _clean_handle(e)
+        if not h:
+            continue
+        w = w_col[i] if i < len(w_col) else ""
+        if str(w).strip():       # 이미 기입됨 → 건너뜀
+            continue
+        k = h.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(h)
+    print("PENDING_JSON_START")
+    print(json.dumps(out, ensure_ascii=False))
+    print("PENDING_JSON_END")
+
+
 def dump(max_row=480):
     """서비스 계정으로 시트를 인증 읽기 하여 E/W/X 현재 상태를 그대로 출력.
 
@@ -176,8 +203,8 @@ def dump(max_row=480):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ("read", "write", "dump"):
-        print("사용법: python tts_affiliate_sync.py [read | write <results.json> | dump]")
+    if len(sys.argv) < 2 or sys.argv[1] not in ("read", "write", "dump", "pending"):
+        print("사용법: python tts_affiliate_sync.py [read | write <results.json> | dump | pending]")
         raise SystemExit(2)
 
     if sys.argv[1] == "read":
@@ -187,6 +214,10 @@ def main():
 
     if sys.argv[1] == "dump":
         dump()
+        return
+
+    if sys.argv[1] == "pending":
+        pending()
         return
 
     # write
