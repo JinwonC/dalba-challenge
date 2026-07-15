@@ -517,6 +517,7 @@ function fillComments(ca, count){
 
 // ---- history ----
 let HISTORY = [];
+let HIST_ERR = null;
 let HIST_OPEN = (localStorage.getItem('histOpen') ?? '1') === '1';
 let HIST_MGR = localStorage.getItem('histMgr') || '';
 function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } }
@@ -538,7 +539,18 @@ function hitemHTML(it){ return `
     </div>`; }
 function renderHistoryList(){
   const box = $('#history');
-  if(!HISTORY.length){ box.innerHTML=''; return; }
+  // Never let the whole section vanish — always show a header so it's findable.
+  if(HIST_ERR){
+    box.innerHTML = `<div class="hhead"><h4>📁 분석 기록</h4>
+      <div class="hctrl"><button id="histRetry" class="htoggle">다시 불러오기 ↻</button></div></div>
+      <div class="hempty">기록을 불러오지 못했어요: ${esc(HIST_ERR)}</div>`;
+    const r=$('#histRetry'); r && r.addEventListener('click', loadHistory);
+    return;
+  }
+  if(!HISTORY.length){
+    box.innerHTML = `<div class="hhead"><h4>📁 분석 기록 · 아직 없습니다</h4></div>`;
+    return;
+  }
   // Drop a stale filter if that manager no longer has any records.
   if(HIST_MGR && !HISTORY.some(it=>(it.manager||'').trim()===HIST_MGR)){ HIST_MGR=''; localStorage.setItem('histMgr',''); }
   const list = filteredHistory();
@@ -585,9 +597,12 @@ function prependHistory(item){
 async function loadHistory(){
   try{
     const { items } = await getJSON('/api/history');
-    HISTORY = items || [];
+    HISTORY = items || []; HIST_ERR = null;
     renderHistoryList();
-  }catch(e){ /* history is best-effort */ }
+  }catch(e){
+    // Keep any list we already have; only surface the error if we have nothing to show.
+    if(!HISTORY.length){ HIST_ERR = e.message || '불러오기 실패'; renderHistoryList(); }
+  }
 }
 async function openSaved(id){
   $('#go').disabled=true;
