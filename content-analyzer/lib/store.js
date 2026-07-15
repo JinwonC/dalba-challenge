@@ -1,41 +1,30 @@
-import { put, get, list, del } from '@vercel/blob';
+import { Redis } from '@upstash/redis';
+import { get as blobGet, list as blobList, del as blobDel } from '@vercel/blob';
 import { reportToPlainText } from './reportText.js';
 import { pushToDrive, driveEnabled } from './drive.js';
 import { deleteVideo } from './videos.js';
 
-const ACCESS = 'private';
-const token = () => process.env.BLOB_READ_WRITE_TOKEN;
-export const storeEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+// History/reports live in Upstash Redis (tiny JSON, well within the free tier),
+// deliberately separate from Vercel Blob so a video data-transfer limit can never
+// take the history down with it. Videos stay in the public Blob store (videos.js).
+//
+// Keys:
+//   report:<id>   → full analysis record (object)
+//   summary:<id>  → history-list summary (object)
+//   history_z     → sorted set, score = savedAt, member = id (for ordering)
 
-const INDEX = 'index.json';
+let _redis = null;
+function redis() {
+  if (!_redis) _redis = Redis.fromEnv(); // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+  return _redis;
+}
+export const storeEnabled = () =>
+  Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+
+const ZKEY = 'history_z';
+const RKEY = (id) => `report:${id}`;
+const SKEY = (id) => `summary:${id}`;
 const validId = (id) => typeof id === 'string' && /^[\w-]{1,64}$/.test(id);
-
-async function readJSON(pathname) {
-  try {
-    const g = await get(pathname, { token: token(), access: ACCESS });
-    if (g.statusCode !== 200 || !g.stream) return null;
-    const reader = g.stream.getReader();
-    const chunks = [];
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(Buffer.from(value));
-    }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  } catch {
-    return null;
-  }
-}
-
-async function writeJSON(pathname, obj) {
-  await put(pathname, JSON.stringify(obj), {
-    access: ACCESS,
-    token: token(),
-    contentType: 'application/json',
-    allowOverwrite: true,
-    cacheControlMaxAge: 0, // index/reports change; avoid stale CDN reads
-  });
-}
 
 /** Build a history-list summary from a full stored record. */
 function summaryOf(rec) {
@@ -52,32 +41,9 @@ function summaryOf(rec) {
   };
 }
 
-/** List the actual report blobs (source of truth) and their pathnames. */
-async function listReportBlobs() {
-  const { blobs } = await list({ prefix: 'reports/', token: token() });
-  return blobs.filter((b) => /^reports\/[\w-]+\.json$/.test(b.pathname));
-}
-
-/**
- * Rebuild the history index from the report blobs themselves. The index is only
- * a derived cache; the reports/<id>.json blobs are the source of truth. Used to
- * self-heal when the cache is missing or out of sync (e.g. a transient index
- * read returned null, which previously clobbered the whole list).
- */
-async function rebuildIndex() {
-  const items = [];
-  for (const b of await listReportBlobs()) {
-    const rec = await readJSON(b.pathname);
-    if (rec && rec.id) items.push(summaryOf(rec));
-  }
-  items.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
-  return items.slice(0, 300);
-}
-
 /**
  * Save (or overwrite) an analysis, keyed by videoId so re-analyzing the same
- * video updates the same entry. Also maintains a lightweight index for the
- * history list. Returns the id, or null if storage is not configured.
+ * video updates the same entry. Returns { id, driveUrl }, or null if unconfigured.
  */
 export async function saveAnalysis(record) {
   if (!storeEnabled()) return null;
@@ -94,53 +60,109 @@ export async function saveAnalysis(record) {
   }
   rec.driveUrl = driveUrl;
 
-  await writeJSON(`reports/${id}.json`, rec);
-
-  // If the index can't be read (transient/eventual-consistency), rebuild it from
-  // the report blobs instead of starting from empty — otherwise this single save
-  // would overwrite the index and wipe all prior history.
-  let idx = await readJSON(INDEX);
-  if (!idx || !Array.isArray(idx.items)) idx = { items: await rebuildIndex().catch(() => []) };
-  idx.items = [summaryOf(rec), ...idx.items.filter((x) => x.id !== id)].slice(0, 300);
-  await writeJSON(INDEX, idx);
+  // Atomic per-key writes — no read-modify-write index to race/clobber.
+  await Promise.all([
+    redis().set(RKEY(id), rec),
+    redis().set(SKEY(id), summaryOf(rec)),
+    redis().zadd(ZKEY, { score: rec.savedAt, member: id }),
+  ]);
 
   return { id, driveUrl };
 }
 
-/** List saved analyses (newest first), summary fields only. Self-heals a stale index. */
+/** List saved analyses (newest first), summary fields only. */
 export async function listAnalyses() {
   if (!storeEnabled()) return [];
-  const idx = await readJSON(INDEX);
-  let items = idx && Array.isArray(idx.items) ? idx.items : null;
-  try {
-    const count = (await listReportBlobs()).length;
-    // Cache missing, or out of sync with the real reports → rebuild and persist.
-    if (items === null || count !== items.length) {
-      items = await rebuildIndex();
-      await writeJSON(INDEX, { items }).catch(() => {});
-    }
-  } catch { /* best-effort heal; fall back to whatever the index had */ }
-  return items || [];
+  const ids = await redis().zrange(ZKEY, 0, 299, { rev: true });
+  if (!ids || !ids.length) return [];
+  const vals = await redis().mget(...ids.map(SKEY));
+  return (vals || []).filter(Boolean);
 }
 
-/** Fetch one full saved analysis by id. */
+/** Fetch one full saved analysis by id (Upstash, then legacy Blob if present). */
 export async function getAnalysis(id) {
-  if (!storeEnabled() || !validId(id)) return null;
-  return readJSON(`reports/${id}.json`);
+  if (!validId(id)) return null;
+  if (storeEnabled()) {
+    const rec = await redis().get(RKEY(id));
+    if (rec) return rec;
+  }
+  return legacyGet(id);
 }
 
-/** Delete an analysis: report blob + index entry + stored video (best-effort). */
+/** Delete an analysis: Redis entries + stored video (best-effort). */
 export async function deleteAnalysis(id) {
   if (!storeEnabled() || !validId(id)) return false;
   try {
-    const { blobs } = await list({ prefix: `reports/${id}`, token: token() });
-    for (const b of blobs) if (b.pathname === `reports/${id}.json`) await del(b.url, { token: token() });
-    const idx = (await readJSON(INDEX)) || { items: [] };
-    idx.items = (idx.items || []).filter((x) => x.id !== id);
-    await writeJSON(INDEX, idx);
+    await Promise.all([
+      redis().del(RKEY(id), SKEY(id)),
+      redis().zrem(ZKEY, id),
+    ]);
   } catch (e) {
-    console.warn('Delete report failed:', e.message);
+    console.warn('Delete failed:', e.message);
   }
   await deleteVideo(id).catch(() => {});
+  await legacyDelete(id).catch(() => {});
   return true;
+}
+
+// ---- legacy Vercel Blob store (read-only migration path) ----
+// Older history lived in a private Blob store as reports/<id>.json. That store is
+// suspended while the account's Blob usage is over the free tier, but the data is
+// intact and returns after the monthly reset. These helpers let us recover it.
+
+const legacyEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+const legacyToken = () => process.env.BLOB_READ_WRITE_TOKEN;
+
+async function legacyReadJSON(pathname) {
+  try {
+    const g = await blobGet(pathname, { token: legacyToken(), access: 'private' });
+    if (g.statusCode !== 200 || !g.stream) return null;
+    const reader = g.stream.getReader();
+    const chunks = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(Buffer.from(value));
+    }
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+async function legacyGet(id) {
+  if (!legacyEnabled() || !validId(id)) return null;
+  return legacyReadJSON(`reports/${id}.json`);
+}
+
+async function legacyDelete(id) {
+  if (!legacyEnabled() || !validId(id)) return;
+  const { blobs } = await blobList({ prefix: `reports/${id}`, token: legacyToken() });
+  for (const b of blobs) if (b.pathname === `reports/${id}.json`) await blobDel(b.url, { token: legacyToken() });
+}
+
+/**
+ * One-time recovery: import every legacy Blob report into Upstash. Safe to re-run
+ * (skips ids that already exist). Returns { migrated, skipped }. Only works once
+ * the legacy Blob store is readable again (after the monthly usage reset).
+ */
+export async function migrateLegacyToUpstash() {
+  if (!storeEnabled()) throw new Error('Upstash is not configured.');
+  if (!legacyEnabled()) return { migrated: 0, skipped: 0 };
+  const { blobs } = await blobList({ prefix: 'reports/', token: legacyToken() });
+  const reportBlobs = blobs.filter((b) => /^reports\/[\w-]+\.json$/.test(b.pathname));
+  let migrated = 0, skipped = 0;
+  for (const b of reportBlobs) {
+    const rec = await legacyReadJSON(b.pathname);
+    if (!rec || !validId(rec.id)) { skipped += 1; continue; }
+    if (await redis().exists(RKEY(rec.id))) { skipped += 1; continue; }
+    rec.savedAt = rec.savedAt || 0;
+    await Promise.all([
+      redis().set(RKEY(rec.id), rec),
+      redis().set(SKEY(rec.id), summaryOf(rec)),
+      redis().zadd(ZKEY, { score: rec.savedAt, member: rec.id }),
+    ]);
+    migrated += 1;
+  }
+  return { migrated, skipped };
 }

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { runScrape, runReport, runComments, runAnalysis, HttpError } from './lib/pipeline.js';
-import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis } from './lib/store.js';
+import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis, migrateLegacyToUpstash } from './lib/store.js';
 import uploadHandler from './api/upload.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -70,6 +70,11 @@ app.post('/api/delete', async (req, res) => {
     const ok = await deleteAnalysis(String(req.body?.id || ''));
     res.json({ ok });
   } catch (err) { send(res, err); }
+});
+
+app.post('/api/migrate', async (_req, res) => {
+  try { res.json({ ok: true, ...(await migrateLegacyToUpstash()) }); }
+  catch (err) { send(res, err); }
 });
 
 // One-shot (local/testing only; too slow for a single serverless call).
