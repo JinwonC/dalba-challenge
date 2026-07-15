@@ -32,9 +32,9 @@ export async function deleteVideo(id) {
   for (const b of blobs) if (b.pathname === `videos/${safe}.mp4`) await del(b.url, { token: token() });
 }
 
-const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 7);
-const MAX_VIDEOS = Number(process.env.VIDEO_MAX_COUNT || 40);
-const MAX_TOTAL_BYTES = Number(process.env.VIDEO_MAX_TOTAL_MB || 800) * 1e6; // stay under ~1GB free tier
+const MAX_AGE_DAYS = Number(process.env.VIDEO_MAX_AGE_DAYS || 3);
+const MAX_VIDEOS = Number(process.env.VIDEO_MAX_COUNT || 20);
+const MAX_TOTAL_BYTES = Number(process.env.VIDEO_MAX_TOTAL_MB || 250) * 1e6; // keep well under the free-tier cap
 
 /**
  * Prune stored videos so storage stays bounded. Deletes (oldest first):
