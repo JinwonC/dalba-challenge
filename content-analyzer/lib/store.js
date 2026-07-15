@@ -37,6 +37,43 @@ async function writeJSON(pathname, obj) {
   });
 }
 
+/** Build a history-list summary from a full stored record. */
+function summaryOf(rec) {
+  return {
+    id: rec.id,
+    creator: rec.meta?.author || '',
+    title: rec.meta?.title || '',
+    manager: rec.meta?.manager || '',
+    product: rec.meta?.product || '',
+    thumbnail: rec.meta?.thumbnail || '',
+    url: rec.meta?.url || rec.embed?.url || '',
+    driveUrl: rec.driveUrl || '',
+    savedAt: rec.savedAt || 0,
+  };
+}
+
+/** List the actual report blobs (source of truth) and their pathnames. */
+async function listReportBlobs() {
+  const { blobs } = await list({ prefix: 'reports/', token: token() });
+  return blobs.filter((b) => /^reports\/[\w-]+\.json$/.test(b.pathname));
+}
+
+/**
+ * Rebuild the history index from the report blobs themselves. The index is only
+ * a derived cache; the reports/<id>.json blobs are the source of truth. Used to
+ * self-heal when the cache is missing or out of sync (e.g. a transient index
+ * read returned null, which previously clobbered the whole list).
+ */
+async function rebuildIndex() {
+  const items = [];
+  for (const b of await listReportBlobs()) {
+    const rec = await readJSON(b.pathname);
+    if (rec && rec.id) items.push(summaryOf(rec));
+  }
+  items.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+  return items.slice(0, 300);
+}
+
 /**
  * Save (or overwrite) an analysis, keyed by videoId so re-analyzing the same
  * video updates the same entry. Also maintains a lightweight index for the
@@ -59,29 +96,31 @@ export async function saveAnalysis(record) {
 
   await writeJSON(`reports/${id}.json`, rec);
 
-  const idx = (await readJSON(INDEX)) || { items: [] };
-  const summary = {
-    id,
-    creator: rec.meta?.author || '',
-    title: rec.meta?.title || '',
-    manager: rec.meta?.manager || '',
-    product: rec.meta?.product || '',
-    thumbnail: rec.meta?.thumbnail || '',
-    url: rec.meta?.url || rec.embed?.url || '',
-    driveUrl: driveUrl || '',
-    savedAt: rec.savedAt,
-  };
-  idx.items = [summary, ...(idx.items || []).filter((x) => x.id !== id)].slice(0, 300);
+  // If the index can't be read (transient/eventual-consistency), rebuild it from
+  // the report blobs instead of starting from empty — otherwise this single save
+  // would overwrite the index and wipe all prior history.
+  let idx = await readJSON(INDEX);
+  if (!idx || !Array.isArray(idx.items)) idx = { items: await rebuildIndex().catch(() => []) };
+  idx.items = [summaryOf(rec), ...idx.items.filter((x) => x.id !== id)].slice(0, 300);
   await writeJSON(INDEX, idx);
 
   return { id, driveUrl };
 }
 
-/** List saved analyses (newest first), summary fields only. */
+/** List saved analyses (newest first), summary fields only. Self-heals a stale index. */
 export async function listAnalyses() {
   if (!storeEnabled()) return [];
   const idx = await readJSON(INDEX);
-  return idx?.items || [];
+  let items = idx && Array.isArray(idx.items) ? idx.items : null;
+  try {
+    const count = (await listReportBlobs()).length;
+    // Cache missing, or out of sync with the real reports → rebuild and persist.
+    if (items === null || count !== items.length) {
+      items = await rebuildIndex();
+      await writeJSON(INDEX, { items }).catch(() => {});
+    }
+  } catch { /* best-effort heal; fall back to whatever the index had */ }
+  return items || [];
 }
 
 /** Fetch one full saved analysis by id. */
