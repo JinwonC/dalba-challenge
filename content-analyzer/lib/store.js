@@ -21,9 +21,15 @@ function redis() {
 export const storeEnabled = () =>
   Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
-const ZKEY = 'history_z';
-const RKEY = (id) => `report:${id}`;
-const SKEY = (id) => `summary:${id}`;
+// Optional per-team key prefix, so several deployments can share one Upstash DB
+// while keeping completely separate histories. Unset = the original keys.
+const ns = () => {
+  const n = (process.env.STORE_NAMESPACE || '').trim();
+  return n ? `${n}:` : '';
+};
+const ZKEY = () => `${ns()}history_z`;
+const RKEY = (id) => `${ns()}report:${id}`;
+const SKEY = (id) => `${ns()}summary:${id}`;
 const validId = (id) => typeof id === 'string' && /^[\w-]{1,64}$/.test(id);
 
 /** Build a history-list summary from a full stored record. */
@@ -64,7 +70,7 @@ export async function saveAnalysis(record) {
   await Promise.all([
     redis().set(RKEY(id), rec),
     redis().set(SKEY(id), summaryOf(rec)),
-    redis().zadd(ZKEY, { score: rec.savedAt, member: id }),
+    redis().zadd(ZKEY(), { score: rec.savedAt, member: id }),
   ]);
 
   return { id, driveUrl };
@@ -73,7 +79,7 @@ export async function saveAnalysis(record) {
 /** List saved analyses (newest first), summary fields only. */
 export async function listAnalyses() {
   if (!storeEnabled()) return [];
-  const ids = await redis().zrange(ZKEY, 0, 299, { rev: true });
+  const ids = await redis().zrange(ZKEY(), 0, 299, { rev: true });
   if (!ids || !ids.length) return [];
   const vals = await redis().mget(...ids.map(SKEY));
   return (vals || []).filter(Boolean);
@@ -95,7 +101,7 @@ export async function deleteAnalysis(id) {
   try {
     await Promise.all([
       redis().del(RKEY(id), SKEY(id)),
-      redis().zrem(ZKEY, id),
+      redis().zrem(ZKEY(), id),
     ]);
   } catch (e) {
     console.warn('Delete failed:', e.message);
@@ -160,7 +166,7 @@ export async function migrateLegacyToUpstash() {
     await Promise.all([
       redis().set(RKEY(rec.id), rec),
       redis().set(SKEY(rec.id), summaryOf(rec)),
-      redis().zadd(ZKEY, { score: rec.savedAt, member: rec.id }),
+      redis().zadd(ZKEY(), { score: rec.savedAt, member: rec.id }),
     ]);
     migrated += 1;
   }
