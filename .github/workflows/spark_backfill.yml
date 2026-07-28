@@ -1,0 +1,52 @@
+name: Spark Ads Backfill
+
+# 스파크애즈(Consideration) 광고만 단독 실행 — 특정 날짜 수동 백필/시험용
+on:
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '적재할 날짜 (YYYY-MM-DD). 비워두면 LA 기준 어제'
+        required: false
+        default: ''
+
+jobs:
+  spark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.ADS_TOKENS_JSON }}' > ads_tokens.json
+
+      - name: Compute date (LA time)
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            D="${{ github.event.inputs.report_date }}"
+          else
+            D=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+          fi
+          echo "d=$D" >> $GITHUB_OUTPUT
+
+      - name: Run tiktok_spark_ads.py
+        run: |
+          for i in 1 2 3; do
+            python tiktok_spark_ads.py "${{ steps.date.outputs.d }} ~ ${{ steps.date.outputs.d }}" && exit 0
+            echo "::warning::tiktok_spark_ads.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::tiktok_spark_ads.py 3회 모두 실패"
+          exit 1
