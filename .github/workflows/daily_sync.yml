@@ -76,3 +76,14 @@ jobs:
           echo "::error::tiktok_ads.py 3회 모두 실패"
           exit 1
 
+      - name: Run tiktok_spark_ads.py (스파크애즈, 어제 날짜)
+        if: ${{ !cancelled() }}
+        run: |
+          for i in 1 2 3; do
+            python tiktok_spark_ads.py "${{ steps.date.outputs.yesterday }} ~ ${{ steps.date.outputs.yesterday }}" && exit 0
+            echo "::warning::tiktok_spark_ads.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::tiktok_spark_ads.py 3회 모두 실패"
+          exit 1
+
