@@ -1,21 +1,26 @@
 name: Order Finance Tabs
 
-# 새 스프레드시트(1fVWfi...) 3개 탭:
-#  - Get Transactions by Order / Get Price Detail  (기본 2026-01-01~)
-#  - Get Order Detail                              (기본 2026-07-01~, 양 많음)
+# 새 스프레드시트(1fVWfi...) 탭들:
+#  - Get Transactions by Order / Get Price Detail  (주문당 호출 — 무거움)
+#  - Get Order Detail                              (50건 배치 — 가벼움)
+#  - Get Coupon / Get Activity                     (프로모션 성과)
 on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'finance | detail | both'
+        description: 'finance | detail | promo | both(=detail+finance) | all'
         required: false
-        default: 'both'
+        default: 'detail'
       finance_range:
-        description: '거래/가격 기간 (예: 2026-01-01 ~ 2026-08-07)'
+        description: '거래/가격 기간 (예: 2026-07-01 ~ 2026-08-07)'
         required: false
-        default: '2026-01-01 ~ 2026-08-07'
+        default: '2026-07-01 ~ 2026-08-07'
       detail_range:
         description: '주문상세 기간 (예: 2026-07-01 ~ 2026-08-07)'
+        required: false
+        default: '2026-07-01 ~ 2026-08-07'
+      promo_range:
+        description: '쿠폰/프로모션 기간 (예: 2026-07-01 ~ 2026-08-07)'
         required: false
         default: '2026-07-01 ~ 2026-08-07'
 
@@ -43,9 +48,17 @@ jobs:
           echo '${{ secrets.TOKENS_JSON }}' > tokens.json
 
       - name: Run order_detail.py (Get Order Detail 탭)
-        if: ${{ github.event.inputs.target != 'finance' }}
+        if: ${{ contains(fromJSON('["detail","both","all"]'), github.event.inputs.target) }}
         run: python order_detail.py "${{ github.event.inputs.detail_range }}"
 
+      - name: Run coupons.py (Get Coupon 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["promo","all"]'), github.event.inputs.target) }}
+        run: python coupons.py "${{ github.event.inputs.promo_range }}"
+
+      - name: Run activities.py (Get Activity 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["promo","all"]'), github.event.inputs.target) }}
+        run: python activities.py "${{ github.event.inputs.promo_range }}"
+
       - name: Run finance_transactions.py (Transactions + Price Detail 탭)
-        if: ${{ !cancelled() && github.event.inputs.target != 'detail' }}
+        if: ${{ !cancelled() && contains(fromJSON('["finance","both","all"]'), github.event.inputs.target) }}
         run: python finance_transactions.py "${{ github.event.inputs.finance_range }}"
