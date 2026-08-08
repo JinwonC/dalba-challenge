@@ -200,11 +200,41 @@ def main():
         targets = targets[:MAX_VIDEOS]
     targets.sort(key=lambda v: str(v.get("video_post_time", "")))
 
+    # 시트를 먼저 준비하고, 진행하면서 배치 append (중간에 끊겨도 데이터 보존)
+    creds = Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE,
+        scopes=["https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"])
+    ss = gspread.authorize(creds).open_by_key(SPREADSHEET_ID)
+    try:
+        sheet = ss.worksheet(SHEET_NAME)
+        sheet.clear()
+    except gspread.WorksheetNotFound:
+        sheet = ss.add_worksheet(title=SHEET_NAME, rows="2000", cols=str(len(HEADERS_ROW)))
+    sheet.resize(rows=2000, cols=len(HEADERS_ROW))
+    sheet.update([HEADERS_ROW], value_input_option="USER_ENTERED")
+    sheet.freeze(rows=1)
+
+    def flush(buf):
+        if not buf:
+            return
+        for attempt in range(1, 9):
+            try:
+                sheet.append_rows(buf, value_input_option="USER_ENTERED")
+                return
+            except Exception as e:
+                if attempt == 8:
+                    raise
+                wait = min(3 * attempt, 30)
+                print(f"    시트 쓰기 실패 (시도 {attempt}/8), {wait}초 후 재시도... ({e})")
+                time.sleep(wait)
+
     rows = []
+    saved = 0
     for i, v in enumerate(targets, 1):
         vid = str(v.get("id", ""))
-        if i % 50 == 0 or i == 1:
-            print(f"  [상세] {i}/{len(targets)} 조회 중...")
+        if i % 200 == 0 or i == 1:
+            print(f"  [상세] {i}/{len(targets)} 조회 중 (저장 {saved}행)...")
         det = fetch_detail_sum(vid, max(str(v.get("video_post_time", ""))[:10], start), end, 30)
         rows.append([
             "'" + vid, v.get("title", ""), v.get("username", ""),
@@ -215,36 +245,14 @@ def main():
             det["gender"], det["age"], det["country"],
         ])
 
-    print(f"  상세 수집 완료: {len(rows)}행")
-    if not rows:
-        print("  데이터 없음 - 종료")
-        return
+        if len(rows) >= 500:          # 중간 저장 — 끊겨도 여기까지는 보존
+            flush(rows)
+            saved += len(rows)
+            rows = []
 
-    creds = Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
-        scopes=["https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"])
-    ss = gspread.authorize(creds).open_by_key(SPREADSHEET_ID)
-    try:
-        sheet = ss.worksheet(SHEET_NAME)
-        sheet.clear()
-    except gspread.WorksheetNotFound:
-        sheet = ss.add_worksheet(title=SHEET_NAME, rows="1000", cols=str(len(HEADERS_ROW)))
-    sheet.resize(rows=len(rows) + 10, cols=len(HEADERS_ROW))
-
-    data = [HEADERS_ROW] + rows
-    for attempt in range(1, 9):
-        try:
-            sheet.update(data, value_input_option="USER_ENTERED")
-            sheet.freeze(rows=1)
-            print(f"  ✅ '{SHEET_NAME}' 탭에 {len(rows)}행 저장 완료")
-            return
-        except Exception as e:
-            if attempt == 8:
-                raise
-            wait = min(3 * attempt, 30)
-            print(f"  시트 쓰기 실패 (시도 {attempt}/8), {wait}초 후 재시도... ({e})")
-            time.sleep(wait)
+    flush(rows)
+    saved += len(rows)
+    print(f"  ✅ '{SHEET_NAME}' 탭에 총 {saved}행 저장 완료")
 
 
 if __name__ == "__main__":
