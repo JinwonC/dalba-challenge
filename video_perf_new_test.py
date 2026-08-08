@@ -122,11 +122,12 @@ def main():
             break
         token = nt
         time.sleep(0.3)
-        if page >= 5:  # 테스트이므로 최대 5페이지(500행)만
-            print("  (테스트: 5페이지에서 중단)")
-            break
 
-    print(f"  총 {len(videos_flat)}개 영상, 필드 {len(all_keys)}개")
+    # 포스팅일이 시작일 이후인 영상만, 포스팅일 오름차순(과거→최신) 정렬
+    videos_flat = [v for v in videos_flat if str(v.get("video_post_time", ""))[:10] >= start]
+    videos_flat.sort(key=lambda v: str(v.get("video_post_time", "")))
+
+    print(f"  총 {len(videos_flat)}개 영상 (포스팅일 {start} 이후), 필드 {len(all_keys)}개")
     print(f"  필드 목록: {all_keys}")
 
     if not videos_flat:
@@ -143,6 +144,8 @@ def main():
         sheet.clear()  # 테스트 탭은 매번 초기화 후 새로 씀
     except gspread.WorksheetNotFound:
         sheet = ss.add_worksheet(title=TEST_SHEET_NAME, rows="1000", cols=str(max(len(all_keys), 10)))
+    # 데이터 크기에 맞게 그리드 확장
+    sheet.resize(rows=len(videos_flat) + 10, cols=max(len(all_keys), 10))
 
     rows = [all_keys]
     for f in videos_flat:
