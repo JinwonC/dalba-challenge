@@ -125,11 +125,20 @@ def fetch_details(ids: list[str]) -> list[dict]:
                 if nt:
                     headers["x-tts-access-token"] = nt
                     continue
-            print(f"    [상세] code={d.get('code')} msg={str(d.get('message'))[:70]}")
-            return []
+            # 36009003(Internal error) 등 일시적 오류는 재시도
+            print(f"    [상세] code={d.get('code')} msg={str(d.get('message'))[:70]} (시도 {attempt}/3)")
+            time.sleep(2 * attempt)
         except Exception as e:
             print(f"    [상세] 오류 {e} (시도 {attempt}/3)")
             time.sleep(1.5 * attempt)
+    # 3회 실패 시 배치를 쪼개 개별 조회로 최대한 건짐
+    if len(ids) > 1:
+        print(f"    → 배치 {len(ids)}건 실패, 개별 조회로 분할")
+        out = []
+        for one in ids:
+            out.extend(fetch_details([one]))
+            time.sleep(0.1)
+        return out
     return []
 
 
