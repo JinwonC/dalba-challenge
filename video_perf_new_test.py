@@ -92,7 +92,30 @@ def flatten(obj, prefix="") -> dict:
     return out
 
 
+# 청크 조회 후 영상별 합산 시 단순 합산 가능한(가산적) 필드
+ADDITIVE = {"gmv.amount", "views", "sku_orders", "items_sold"}
+
+
+def fetch_range(start: str, end: str) -> list[dict] | None:
+    """한 기간을 전체 페이지네이션으로 조회. 기간 오류(28001022 등)면 None."""
+    out = []
+    token = None
+    page = 0
+    while True:
+        page += 1
+        d = fetch_page(start, end, token)
+        if not d:
+            return None if page == 1 else out
+        out.extend(d.get("data", {}).get("videos") or [])
+        nt = d.get("data", {}).get("next_page_token") or None
+        if not nt or nt == token:
+            return out
+        token = nt
+        time.sleep(0.3)
+
+
 def main():
+    from datetime import datetime, timedelta
     raw = sys.argv[1] if len(sys.argv) > 1 else "2026-07-20 ~ 2026-07-27"
     import re
     nums = re.findall(r"\d{4}-\d{1,2}-\d{1,2}", raw)
@@ -100,34 +123,49 @@ def main():
     end = nums[1] if len(nums) > 1 else nums[0]
     print(f"\n=== Shop Video Performance 202605 테스트 [{start} ~ {end}] ===")
 
-    videos_flat = []
+    # 신규 API는 조회 기간 제한이 있어 30일 청크로 분할, 실패 시 7일로 축소
+    merged: dict[str, dict] = {}
     all_keys: list[str] = []
-    token = None
-    page = 0
-    while True:
-        page += 1
-        print(f"  페이지 {page} 요청 중...")
-        d = fetch_page(start, end, token)
-        if not d:
-            break
-        vids = d.get("data", {}).get("videos") or []
-        for v in vids:
+    s_dt = datetime.strptime(start, "%Y-%m-%d")
+    e_dt = datetime.strptime(end, "%Y-%m-%d")
+    chunk_days = 30
+    cur = s_dt
+    while cur <= e_dt:
+        c_end = min(cur + timedelta(days=chunk_days - 1), e_dt)
+        cs, ce = cur.strftime("%Y-%m-%d"), c_end.strftime("%Y-%m-%d")
+        print(f"  청크 조회: {cs} ~ {ce}")
+        vids = fetch_range(cs, ce)
+        if vids is None and chunk_days > 7:
+            print(f"    → 실패, 청크를 7일로 축소해 재시도")
+            chunk_days = 7
+            continue
+        for v in (vids or []):
             f = flatten(v)
-            videos_flat.append(f)
+            vid = str(f.get("id", ""))
             for k in f:
                 if k not in all_keys:
                     all_keys.append(k)
-        nt = d.get("data", {}).get("next_page_token") or None
-        if not nt or nt == token:
-            break
-        token = nt
-        time.sleep(0.3)
+            if vid in merged:
+                m = merged[vid]
+                for k in ADDITIVE:  # 가산 필드는 청크 간 합산
+                    try:
+                        m[k] = float(m.get(k) or 0) + float(f.get(k) or 0)
+                    except (TypeError, ValueError):
+                        pass
+                # 그 외 필드는 최신 청크 값으로 갱신
+                for k, val in f.items():
+                    if k not in ADDITIVE:
+                        m[k] = val
+            else:
+                merged[vid] = f
+        cur = c_end + timedelta(days=1)
 
+    videos_flat = list(merged.values())
     # 포스팅일이 시작일 이후인 영상만, 포스팅일 오름차순(과거→최신) 정렬
     videos_flat = [v for v in videos_flat if str(v.get("video_post_time", ""))[:10] >= start]
     videos_flat.sort(key=lambda v: str(v.get("video_post_time", "")))
 
-    print(f"  총 {len(videos_flat)}개 영상 (포스팅일 {start} 이후), 필드 {len(all_keys)}개")
+    print(f"  총 {len(videos_flat)}개 영상 (포스팅일 {start} 이후, 중복제거·합산), 필드 {len(all_keys)}개")
     print(f"  필드 목록: {all_keys}")
 
     if not videos_flat:
