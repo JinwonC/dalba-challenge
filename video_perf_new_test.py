@@ -78,7 +78,8 @@ def fetch_page(start: str, end: str, page_token: str | None):
 
 
 def flatten(obj, prefix="") -> dict:
-    """중첩 dict/list를 점표기 1-depth로 평탄화 (list는 JSON 문자열)."""
+    """중첩 dict/list를 점표기 1-depth로 평탄화.
+    products는 상품ID만 콤마로 나열, 그 외 list는 JSON 문자열."""
     out = {}
     if isinstance(obj, dict):
         for k, v in obj.items():
@@ -86,7 +87,11 @@ def flatten(obj, prefix="") -> dict:
             if isinstance(v, dict):
                 out.update(flatten(v, key))
             elif isinstance(v, list):
-                out[key] = json.dumps(v, ensure_ascii=False)[:1000]
+                if k == "products":
+                    out[key] = ", ".join(
+                        str(p.get("id", "")) for p in v if isinstance(p, dict))
+                else:
+                    out[key] = json.dumps(v, ensure_ascii=False)[:1000]
             else:
                 out[key] = v
     return out

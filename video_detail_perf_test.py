@@ -33,7 +33,7 @@ SERVICE_ACCOUNT_FILE = "service_account.json"
 
 BASE = "https://open-api.tiktokglobalshop.com"
 LIST_PATH = "/analytics/202605/shop_videos/performance"
-MAX_VIDEOS = 2000  # 영상별 상세 호출 상한 (초과 시 GMV 상위 우선)
+MAX_VIDEOS = 30000  # 영상별 상세 호출 상한 (초과 시 GMV 상위 우선)
 
 HEADERS_ROW = [
     "영상ID", "제목", "크리에이터", "포스팅일",
@@ -129,30 +129,20 @@ def list_videos(start: str, end: str) -> list[dict]:
     return list(merged.values())
 
 
-def fetch_detail_sum(video_id: str, start: str, end: str, chunk_days: int) -> dict | None:
-    """영상 상세를 청크 조회해 가산 지표 합산, ctr/gpm 재계산, 분포는 마지막 값."""
+def fetch_detail_sum(video_id: str, start: str, end: str, chunk_days: int) -> dict:
+    """영상 상세를 조회해 가산 지표 합산, ctr/gpm 재계산, 분포는 대표값.
+    호출 수를 줄이기 위해 전체 기간 1회 시도 → 기간 오류일 때만 청크 분할."""
     path = f"/analytics/202509/shop_videos/{video_id}/performance"
     agg = {"gmv": 0.0, "customers": 0, "items_sold": 0,
            "product_impressions": 0, "product_clicks": 0,
            "views": 0, "new_followers": 0, "shares": 0, "comments": 0, "likes": 0}
     profile = {"gender": "", "age": "", "country": ""}
-    got_any = False
-    s_dt = datetime.strptime(start, "%Y-%m-%d")
-    e_dt = datetime.strptime(end, "%Y-%m-%d")
-    cur = s_dt
-    while cur <= e_dt:
-        c_end = min(cur + timedelta(days=chunk_days - 1), e_dt)
-        d = api_get(path, {
-            "start_date_ge": cur.strftime("%Y-%m-%d"),
-            "end_date_lt": c_end.strftime("%Y-%m-%d"),
-            "granularity": "ALL",
-        })
-        cur = c_end + timedelta(days=1)
+
+    def absorb(d) -> bool:
         if not d or d.get("__range_error__"):
-            continue
+            return False
         perf = d.get("data", {}).get("performance") or {}
         for iv in perf.get("intervals") or []:
-            got_any = True
             o = (iv.get("sales") or {}).get("overall") or {}
             t = iv.get("traffic") or {}
             agg["gmv"] += float((o.get("gmv") or {}).get("amount") or 0)
@@ -165,9 +155,26 @@ def fetch_detail_sum(video_id: str, start: str, end: str, chunk_days: int) -> di
                 profile["gender"] = json.dumps(vp.get("gender_distribution") or [], ensure_ascii=False)
                 profile["age"] = json.dumps(vp.get("age_distribution") or [], ensure_ascii=False)
                 profile["country"] = json.dumps(vp.get("country_distribution") or [], ensure_ascii=False)
-        time.sleep(0.15)
-    if not got_any:
-        return None
+        return True
+
+    # 1회 전체 기간 시도
+    whole = api_get(path, {"start_date_ge": start, "end_date_lt": end, "granularity": "ALL"})
+    if not (whole and whole.get("__range_error__")):
+        absorb(whole)
+    else:
+        s_dt = datetime.strptime(start, "%Y-%m-%d")
+        e_dt = datetime.strptime(end, "%Y-%m-%d")
+        cur = s_dt
+        while cur <= e_dt:
+            c_end = min(cur + timedelta(days=chunk_days - 1), e_dt)
+            absorb(api_get(path, {
+                "start_date_ge": cur.strftime("%Y-%m-%d"),
+                "end_date_lt": c_end.strftime("%Y-%m-%d"),
+                "granularity": "ALL",
+            }))
+            cur = c_end + timedelta(days=1)
+            time.sleep(0.1)
+
     ctr = agg["product_clicks"] / agg["product_impressions"] if agg["product_impressions"] else 0
     gpm = agg["gmv"] / agg["views"] * 1000 if agg["views"] else 0
     return {**agg, "ctr": round(ctr, 4), "gpm": round(gpm, 2), **profile}
@@ -183,11 +190,10 @@ def main():
     videos = list_videos(start, end)
     print(f"  목록 수집: 총 {len(videos)}개")
 
-    # 포스팅일 필터 + GMV>0 필터 (영상별 호출이므로 전량 불가)
+    # 포스팅일 필터만 적용 — 매출 없는 영상도 전부 포함
     targets = [v for v in videos
-               if str(v.get("video_post_time", ""))[:10] >= start
-               and v.get("_gmv", 0) > 0]
-    print(f"  대상 (포스팅일 {start} 이후 & GMV>0): {len(targets)}개")
+               if str(v.get("video_post_time", ""))[:10] >= start]
+    print(f"  대상 (포스팅일 {start} 이후, 매출 무관 전체): {len(targets)}개")
     if len(targets) > MAX_VIDEOS:
         targets.sort(key=lambda v: -v.get("_gmv", 0))
         print(f"  ⚠️ 상한 {MAX_VIDEOS}개 초과 → GMV 상위 {MAX_VIDEOS}개만 (제외 {len(targets)-MAX_VIDEOS}개)")
@@ -200,8 +206,6 @@ def main():
         if i % 50 == 0 or i == 1:
             print(f"  [상세] {i}/{len(targets)} 조회 중...")
         det = fetch_detail_sum(vid, max(str(v.get("video_post_time", ""))[:10], start), end, 30)
-        if det is None:
-            continue
         rows.append([
             "'" + vid, v.get("title", ""), v.get("username", ""),
             v.get("video_post_time", ""),
