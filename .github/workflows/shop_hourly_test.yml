@@ -1,0 +1,30 @@
+name: Shop Hourly Perf Test
+
+# Get Shop Performance Per Hour → US매출/지표 시트 (최근 30일, API 제약)
+on:
+  workflow_dispatch:
+
+jobs:
+  hourly:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+
+      - name: Run shop_hourly_perf_test.py
+        run: python shop_hourly_perf_test.py
