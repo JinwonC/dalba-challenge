@@ -1,0 +1,56 @@
+name: Shop Detail Perf Test
+
+# 영상 상세(SHOP VIDEO PERFORMANCE) / 상품 상세(Get Shop Product Performance Detail) 탭 적재 (수동)
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'video | product | both'
+        required: false
+        default: 'both'
+      report_date:
+        description: '기간 (예: 2026-01-01 ~ 2026-08-07). 비워두면 최근 7일'
+        required: false
+        default: ''
+
+jobs:
+  detail:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+
+      - name: Compute range
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            R="${{ github.event.inputs.report_date }}"
+          else
+            S=$(TZ='America/Los_Angeles' date -d '7 days ago' '+%Y-%m-%d')
+            E=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+            R="$S ~ $E"
+          fi
+          echo "r=$R" >> $GITHUB_OUTPUT
+
+      - name: Run video_detail_perf_test.py (SHOP VIDEO PERFORMANCE 탭)
+        if: ${{ github.event.inputs.target != 'product' }}
+        run: python video_detail_perf_test.py "${{ steps.date.outputs.r }}"
+
+      - name: Run product_detail_perf_test.py (Get Shop Product Performance Detail 탭)
+        if: ${{ !cancelled() && github.event.inputs.target != 'video' }}
+        run: python product_detail_perf_test.py "${{ steps.date.outputs.r }}"
