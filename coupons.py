@@ -33,16 +33,10 @@ SERVICE_ACCOUNT_FILE = "service_account.json"
 BASE = "https://open-api.tiktokglobalshop.com"
 LA_TZ = ZoneInfo("America/Los_Angeles")
 
-SEARCH_PATHS = [
-    "/promotion/202406/coupons/search",
-    "/promotion/202309/coupons/search",
-    "/promotion/202501/coupons/search",
-]
-DETAIL_TEMPLATES = [
-    "/promotion/202406/coupons/{cid}",
-    "/promotion/202309/coupons/{cid}",
-    "/promotion/202501/coupons/{cid}",
-]
+_VERS = ["202405", "202406", "202407", "202409", "202410", "202411",
+         "202412", "202501", "202502", "202505", "202309"]
+SEARCH_PATHS = [f"/promotion/{v}/coupons/search" for v in _VERS]
+DETAIL_TEMPLATES = [f"/promotion/{v}/coupons/{{cid}}" for v in _VERS]
 
 HEADERS_ROW = [
     "쿠폰ID", "제목", "상태", "표시유형", "생성일시(LA)", "수정일시(LA)",
@@ -91,15 +85,24 @@ def call(path: str, method: str = "GET", body_obj: dict | None = None, extra: di
     return None
 
 
+def search_page(path: str, page_size: int = 50, page_token: str | None = None):
+    """page_size는 정수로 body에 담아야 함 (query string이면 타입 오류)."""
+    body = {"page_size": page_size}
+    if page_token:
+        body["page_token"] = page_token
+    return call(path, "POST", body)
+
+
 def probe_search() -> tuple[str, str] | tuple[None, None]:
     for path in SEARCH_PATHS:
-        for method, body in (("POST", {}), ("GET", None)):
-            d = call(path, method, body, {"page_size": "20"})
-            code = d.get("code") if d else None
-            print(f"  probe {method} {path} → code={code} msg={str(d.get('message'))[:60] if d else '-'}")
-            if code == 0:
-                return path, method
-            time.sleep(0.2)
+        d = search_page(path, 20)
+        code = d.get("code") if d else None
+        msg = str(d.get("message"))[:60] if d else "-"
+        if code != 36009004 or "version" not in msg:
+            print(f"  probe POST {path} → code={code} msg={msg}")
+        if code == 0:
+            return path, "POST"
+        time.sleep(0.15)
     return None, None
 
 
@@ -171,12 +174,9 @@ def main():
     coupons_raw: list[dict] = []
     page_token = None
     while True:
-        extra = {"page_size": "50"}
-        if page_token:
-            extra["page_token"] = page_token
-        d = call(spath, smethod, {} if smethod == "POST" else None, extra)
+        d = search_page(spath, 50, page_token)
         if not d or d.get("code") != 0:
-            print(f"    중단: code={d.get('code') if d else '-'}")
+            print(f"    중단: code={d.get('code') if d else '-'} msg={str(d.get('message'))[:60] if d else '-'}")
             break
         data = d.get("data", {})
         items = data.get("coupons") or data.get("items") or []

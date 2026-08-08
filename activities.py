@@ -91,15 +91,22 @@ def call(path: str, method: str = "GET", body_obj: dict | None = None, extra: di
     return None
 
 
+def search_page(path: str, page_size: int = 50, page_token: str | None = None):
+    """page_size는 정수로 body에 담아야 함 (query string이면 타입 오류)."""
+    body = {"page_size": page_size}
+    if page_token:
+        body["page_token"] = page_token
+    return call(path, "POST", body)
+
+
 def probe_search():
     for path in SEARCH_PATHS:
-        for method, body in (("POST", {}), ("GET", None)):
-            d = call(path, method, body, {"page_size": "20"})
-            code = d.get("code") if d else None
-            print(f"  probe {method} {path} → code={code} msg={str(d.get('message'))[:60] if d else '-'}")
-            if code == 0:
-                return path, method
-            time.sleep(0.2)
+        d = search_page(path, 20)
+        code = d.get("code") if d else None
+        print(f"  probe POST {path} → code={code} msg={str(d.get('message'))[:70] if d else '-'}")
+        if code == 0:
+            return path, "POST"
+        time.sleep(0.2)
     return None, None
 
 
@@ -179,12 +186,9 @@ def main():
     items: list[dict] = []
     page_token = None
     while True:
-        extra = {"page_size": "50"}
-        if page_token:
-            extra["page_token"] = page_token
-        d = call(spath, smethod, {} if smethod == "POST" else None, extra)
+        d = search_page(spath, 50, page_token)
         if not d or d.get("code") != 0:
-            print(f"    중단: code={d.get('code') if d else '-'}")
+            print(f"    중단: code={d.get('code') if d else '-'} msg={str(d.get('message'))[:60] if d else '-'}")
             break
         data = d.get("data", {})
         items.extend(data.get("activities") or data.get("items") or [])
