@@ -4,11 +4,12 @@ name: Order Finance Tabs
 #  - Get Transactions by Order / Get Price Detail  (주문당 호출 — 무거움)
 #  - Get Order Detail                              (50건 배치 — 가벼움)
 #  - Get Coupon / Get Activity                     (프로모션 성과)
+#  - Get Product SKPP Detail                       (상품 진단 스냅샷)
 on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'finance | detail | promo | both(=detail+finance) | all'
+        description: 'finance | detail | promo | skpp | both | all'
         required: false
         default: 'detail'
       finance_range:
@@ -58,6 +59,10 @@ jobs:
       - name: Run activities.py (Get Activity 탭)
         if: ${{ !cancelled() && contains(fromJSON('["promo","all"]'), github.event.inputs.target) }}
         run: python activities.py "${{ github.event.inputs.promo_range }}"
+
+      - name: Run product_skpp.py (Get Product SKPP Detail 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["skpp","all"]'), github.event.inputs.target) }}
+        run: python product_skpp.py
 
       - name: Run finance_transactions.py (Transactions + Price Detail 탭)
         if: ${{ !cancelled() && contains(fromJSON('["finance","both","all"]'), github.event.inputs.target) }}
