@@ -120,6 +120,22 @@ def collect_products() -> list[str]:
     return []
 
 
+def product_ids_from_sku_sheet() -> list[str]:
+    """상품 목록 API 권한이 없을 때: US매출/지표 시트의 SKU Order 탭에서 상품ID 확보."""
+    creds = Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE,
+        scopes=["https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"])
+    ss = gspread.authorize(creds).open_by_key("15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o")
+    vals = ss.worksheet("(중요, 자동) SKU Order").col_values(2)[1:]
+    ids: list[str] = []
+    for v in vals:
+        v = str(v).strip().lstrip("'")
+        if v and v not in ids:
+            ids.append(v)
+    return ids
+
+
 def probe_skpp(pid: str):
     for tpl in SKPP_TEMPLATES:
         d = call(tpl.format(pid=pid), "GET")
@@ -166,7 +182,11 @@ def main():
     print("  [1/3] 상품 목록 수집...")
     pids = collect_products()
     if not pids:
-        print("  ❌ 상품 목록을 가져오지 못함 — 경로/권한 확인 필요")
+        print("  상품 목록 API 사용 불가 → SKU Order 탭에서 상품ID 확보 시도")
+        pids = product_ids_from_sku_sheet()
+        print(f"    시트에서 상품 {len(pids)}개 확보")
+    if not pids:
+        print("  ❌ 상품ID를 확보하지 못함")
         sys.exit(1)
 
     print("  [2/3] SKPP 엔드포인트 탐색...")
