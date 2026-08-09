@@ -93,7 +93,7 @@ def list_videos(start: str, end: str) -> list[dict]:
     while cur <= e_dt:
         c_end = min(cur + timedelta(days=chunk_days - 1), e_dt)
         cs, ce = cur.strftime("%Y-%m-%d"), c_end.strftime("%Y-%m-%d")
-        print(f"  [목록] 청크 {cs} ~ {ce}")
+        print(f"  [목록] 청크 {cs} ~ {ce}", flush=True)
         token = None
         ok = True
         while True:
@@ -188,12 +188,12 @@ def main():
     print(f"\n=== Shop Video Performance Details 202509 [{start} ~ {end}] ===")
 
     videos = list_videos(start, end)
-    print(f"  목록 수집: 총 {len(videos)}개")
+    print(f"  목록 수집: 총 {len(videos)}개", flush=True)
 
     # 포스팅일 필터만 적용 — 매출 없는 영상도 전부 포함
     targets = [v for v in videos
                if str(v.get("video_post_time", ""))[:10] >= start]
-    print(f"  대상 (포스팅일 {start} 이후, 매출 무관 전체): {len(targets)}개")
+    print(f"  대상 (포스팅일 {start} 이후, 매출 무관 전체): {len(targets)}개", flush=True)
     if len(targets) > MAX_VIDEOS:
         targets.sort(key=lambda v: -v.get("_gmv", 0))
         print(f"  ⚠️ 상한 {MAX_VIDEOS}개 초과 → GMV 상위 {MAX_VIDEOS}개만 (제외 {len(targets)-MAX_VIDEOS}개)")
@@ -229,30 +229,39 @@ def main():
                 print(f"    시트 쓰기 실패 (시도 {attempt}/8), {wait}초 후 재시도... ({e})")
                 time.sleep(wait)
 
-    rows = []
-    saved = 0
-    for i, v in enumerate(targets, 1):
+    # 영상당 1회 호출이라 건수가 많음 → 스레드 8개로 병렬 처리
+    from concurrent.futures import ThreadPoolExecutor
+
+    def work(v):
         vid = str(v.get("id", ""))
-        if i % 200 == 0 or i == 1:
-            print(f"  [상세] {i}/{len(targets)} 조회 중 (저장 {saved}행)...")
         det = fetch_detail_sum(vid, max(str(v.get("video_post_time", ""))[:10], start), end, 30)
-        rows.append([
+        return [
             "'" + vid, v.get("title", ""), v.get("username", ""),
             v.get("video_post_time", ""),
             round(det["gmv"], 2), det["gpm"], det["customers"], det["items_sold"],
             det["product_impressions"], det["product_clicks"], det["ctr"],
             det["views"], det["new_followers"], det["shares"], det["comments"], det["likes"],
             det["gender"], det["age"], det["country"],
-        ])
+        ]
 
-        if len(rows) >= 500:          # 중간 저장 — 끊겨도 여기까지는 보존
-            flush(rows)
-            saved += len(rows)
-            rows = []
+    rows = []
+    saved = 0
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for i, row in enumerate(ex.map(work, targets), 1):
+            rows.append(row)
+            if i % 500 == 0 or i == 50:
+                el = time.time() - t0
+                eta = el / i * (len(targets) - i) / 60
+                print(f"  [상세] {i}/{len(targets)} · 저장 {saved}행 · 경과 {el/60:.0f}분 · 잔여 약 {eta:.0f}분", flush=True)
+            if len(rows) >= 500:      # 중간 저장 — 끊겨도 여기까지는 보존
+                flush(rows)
+                saved += len(rows)
+                rows = []
 
     flush(rows)
     saved += len(rows)
-    print(f"  ✅ '{SHEET_NAME}' 탭에 총 {saved}행 저장 완료")
+    print(f"  ✅ '{SHEET_NAME}' 탭에 총 {saved}행 저장 완료", flush=True)
 
 
 if __name__ == "__main__":
