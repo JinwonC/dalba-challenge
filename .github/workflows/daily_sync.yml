@@ -11,6 +11,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
 
     steps:
       - name: Checkout repo
@@ -87,4 +88,21 @@ jobs:
             sleep 30
           done
           echo "::error::tiktok_spark_ads.py 3회 모두 실패"
+          exit 1
+
+      # 영상성과_신API테스트 탭 UPSERT
+      #  - 평일: 최근 90일만 갱신 (약 5~10분)
+      #  - 토요일(KST): full — 2026-01-01 ~ 오늘 전체 재조회로 정합성 보정
+      - name: Run video_perf_upsert.py (매일 90일 / 토요일 full)
+        if: ${{ !cancelled() }}
+        run: |
+          DOW=$(TZ='Asia/Seoul' date '+%u')   # 1=월 ... 6=토, 7=일
+          if [ "$DOW" = "6" ]; then W="full"; else W="90"; fi
+          echo "::notice::video_perf_upsert window=$W (KST DOW=$DOW)"
+          for i in 1 2 3; do
+            python video_perf_upsert.py "$W" && exit 0
+            echo "::warning::video_perf_upsert.py 실패 (${i}/3회차), 30초 후 재시도..."
+            sleep 30
+          done
+          echo "::error::video_perf_upsert.py 3회 모두 실패"
           exit 1
