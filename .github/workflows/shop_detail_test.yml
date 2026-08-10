@@ -1,13 +1,10 @@
 name: Shop Detail Perf Test
 
-# 영상 상세(SHOP VIDEO PERFORMANCE) / 상품 상세(Get Shop Product Performance Detail) 탭 적재 (수동)
+# 상품 상세(Get Shop Product Performance Detail) 탭 적재 (수동)
+# ※ SHOP VIDEO PERFORMANCE(영상 상세)는 사용하지 않기로 하여 제거됨
 on:
   workflow_dispatch:
     inputs:
-      target:
-        description: 'video | product | both'
-        required: false
-        default: 'both'
       report_date:
         description: '기간 (예: 2026-01-01 ~ 2026-08-07). 비워두면 최근 7일'
         required: false
@@ -47,10 +44,5 @@ jobs:
           fi
           echo "r=$R" >> $GITHUB_OUTPUT
 
-      - name: Run video_detail_perf_test.py (SHOP VIDEO PERFORMANCE 탭)
-        if: ${{ github.event.inputs.target != 'product' }}
-        run: python video_detail_perf_test.py "${{ steps.date.outputs.r }}"
-
       - name: Run product_detail_perf_test.py (Get Shop Product Performance Detail 탭)
-        if: ${{ !cancelled() && github.event.inputs.target != 'video' }}
         run: python product_detail_perf_test.py "${{ steps.date.outputs.r }}"
