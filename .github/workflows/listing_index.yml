@@ -39,7 +39,6 @@ jobs:
       - name: Build index
         env:
           LISTING_PASSCODE: ${{ secrets.LISTING_PASSCODE }}
-          LISTING_SHEET_IDS: ${{ vars.LISTING_SHEET_IDS }}
         run: |
           for i in 1 2 3; do
             python tools/build_listing_index.py && exit 0

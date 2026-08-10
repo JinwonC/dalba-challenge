@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """리스팅 시트들을 읽어 크리에이터 중복체크용 인덱스를 만든다.
 
-소스가 두 개다.
+소스가 세 개다.
   - d'Alba Onboarding      : 지금까지의 리스팅 이력 ("(new) ..." 탭 + 인하우스 로스터)
   - d'Alba_Pickdi_Process  : 현재 쓰는 제품별 탭 (firstsprayserum, multibalm, ... , 07_comfrt)
-담당자들이 구 시트에서 신 시트로 일부만 옮겨 담았기 때문에 둘 다 봐야 중복이 제대로 잡힌다.
+  - 유가 인원 정리          : 유가 협업 현황 (캐스팅 / 담당자 / Flat fee / PAID 성과 / VIP Creator)
+담당자들이 구 시트에서 신 시트로 일부만 옮겨 담았기 때문에 앞의 둘을 같이 봐야 중복이 제대로 잡히고,
+유가 시트를 봐야 "이미 돈 주고 협업 중인 사람에게 또 리치아웃하는" 사고를 막을 수 있다.
 
 레포가 public이므로 크리에이터 핸들은 평문으로 커밋하지 않는다.
 페이로드를 gzip → AES-GCM 암호화해 data/listings.enc.json 으로 저장하고,
@@ -13,9 +15,10 @@
     python tools/build_listing_index.py
     python tools/build_listing_index.py --fixture tools/fixtures/sample.json   # 자격증명 없이 검증
 
+읽을 시트·탭은 아래 SOURCES / PAID_TAB_PATTERNS 에 있다.
+
 환경변수
     SERVICE_ACCOUNT_FILE  기본 service_account.json
-    LISTING_SHEET_IDS     쉼표로 구분한 스프레드시트 ID (비우면 아래 기본값)
     LISTING_PASSCODE      암호화 패스코드 (팀 공용)
 """
 
@@ -33,29 +36,48 @@ from datetime import datetime, timezone
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-# 구 시트 = 리스팅 이력, 신 시트 = 현재 진행중인 제품별 탭
-DEFAULT_SHEET_IDS = [
-    "1Bhi85hXhIOHfWu9419drpeOuCOPXRkfMrW-4l_pJRB0",  # d'Alba Onboarding
-    "1ZtATip5Ul8cahN80-Oj-TyKb_UkLPBB67RKfnFRumr8",  # d'Alba_Pickdi_Process
+# 유가 시트에서 읽을 탭. 이 시트는 26개 탭 중 대부분이 성과·정산·배송용이고,
+# 주소 폼 응답처럼 실명·집주소·전화번호가 든 탭도 있어서 화이트리스트로만 읽는다.
+# 값은 판정 등급 — partner(이미 협업 중) / casting(제안·아웃리치 보냄).
+PAID_TAB_PATTERNS = [
+    (re.compile(r"캐스팅"), "casting"),
+    (re.compile(r"담당자"), "partner"),
+    (re.compile(r"flat\s*fee", re.I), "partner"),
+    (re.compile(r"성과\s*트래킹"), "partner"),
+    (re.compile(r"vip\s*creator", re.I), "partner"),
+]
+
+# mode="auto"  : 핸들 + Listed Date 컬럼이 있는 탭을 전부 리스팅 탭으로 인식 (새 제품 탭 자동 대응)
+# mode="named" : PAID_TAB_PATTERNS에 걸리는 탭만 읽음
+SOURCES = [
+    {"id": "1Bhi85hXhIOHfWu9419drpeOuCOPXRkfMrW-4l_pJRB0", "mode": "auto"},   # d'Alba Onboarding
+    {"id": "1ZtATip5Ul8cahN80-Oj-TyKb_UkLPBB67RKfnFRumr8", "mode": "auto"},   # d'Alba_Pickdi_Process
+    {"id": "1JFq6m2-rvSpiGKQsTpr91Hj-RckHpqFfEl_BLkQI_hs", "mode": "named"},  # 유가 인원 정리
 ]
 OUT_PATH = "data/listings.enc.json"
 PBKDF2_ITERATIONS = 250_000
 
 INHOUSE_TAB_RE = re.compile(r"in\s*-?\s*house", re.I)
 
-# 헤더 이름은 탭마다 순서가 다르고, 신 시트는 "TikTok Handle [VN]" 처럼
-# [VN]/[KR]/[AUTO] 담당 표시가 붙는다. 위치가 아니라 정규화한 이름으로 찾는다.
+# 헤더 이름은 탭마다 순서도 표기도 다르다. 신 시트는 "TikTok Handle [VN]" 처럼
+# [VN]/[KR]/[AUTO] 담당 표시가 붙고, 유가 시트는 탭마다 핸들 컬럼 이름이 제각각이다.
+# 위치가 아니라 정규화한 이름으로 찾고, 앞에 있는 alias가 우선한다.
 FIELD_ALIASES = {
-    "handle": ("tiktok handle", "handle"),
-    "listed_date": ("listed date",),
+    "handle": (
+        "tiktok handle", "handle", "creator username", "크리에이터명",
+        "크리에이터 핸들", "account handle", "크리에이터",
+    ),
+    "listed_date": ("listed date", "날짜"),
     "link": ("tiktok link", "link"),
     "ox": ("o/x", "o/x & reason"),
-    "owner": ("vn owner", "owner", "manager"),
+    "owner": ("vn owner", "owner", "manager", "담당자"),
     "contacted_date": ("1st email sent", "contacted date"),
-    "status": ("status", "reply status"),
-    "note": ("note", "reason"),
+    "status": ("status", "reply status", "협업 상태", "확정 여부", "paid /non-paid", "레벨"),
+    "product": ("제안 제품", "타겟제품", "협업 제품", "제품"),
+    "note": ("note", "reason", "memo", "비고"),
 }
-# 이메일·전화번호는 의도적으로 제외한다 — 중복 판정에 필요 없고 유출 시 피해가 가장 크다.
+# 이메일·전화번호·주소·실명은 의도적으로 제외한다. alias 화이트리스트에 없으므로
+# 구조적으로 인덱스에 들어갈 수 없다 — 중복 판정에 필요 없고 유출 시 피해가 가장 크다.
 
 
 def canon_header(s: str) -> str:
@@ -120,24 +142,34 @@ def cell(row: list[str], idx: int | None) -> str:
     return (row[idx] or "").strip()
 
 
-def parse_listing_tab(rows: list[list[str]], tab_index: int) -> list[dict]:
-    """리스팅 탭 하나를 레코드 리스트로. 헤더를 못 찾거나 Listed Date가 없으면 빈 리스트."""
+SKIP_HANDLE_VALUES = {"handle", "tiktokhandle", "creatorusername", "크리에이터명"}
+
+
+def parse_handle_tab(
+    rows: list[list[str]], tab_index: int, kind: str, require_date: bool
+) -> list[dict]:
+    """핸들 컬럼이 있는 탭 하나를 레코드 리스트로.
+
+    require_date=True면 Listed Date가 있는 탭만 리스팅 탭으로 인정한다.
+    (영상/스파크애즈 탭에도 Handle 컬럼이 있지만 리스팅 기록이 아니다.)
+    유가 시트의 탭들은 이름으로 골라 오므로 날짜를 요구하지 않는다.
+    """
     header_idx = find_header_row(rows)
     if header_idx is None:
         return []
     colmap = build_column_map(rows[header_idx])
-    # 핸들 + 리스팅 날짜가 둘 다 있어야 '리스팅 탭'이다.
-    # (영상/스파크애즈 탭에도 Handle 컬럼이 있지만 리스팅 기록이 아니다.)
-    if "handle" not in colmap or "listed_date" not in colmap:
+    if "handle" not in colmap:
+        return []
+    if require_date and "listed_date" not in colmap:
         return []
 
     records = []
     for row in rows[header_idx + 1 :]:
         raw = cell(row, colmap["handle"])
         norm = normalize_handle(raw)
-        if not norm or norm in ("handle", "tiktokhandle"):
+        if not norm or norm in SKIP_HANDLE_VALUES:
             continue
-        rec = {"h": norm, "d": display_handle(raw), "t": tab_index, "k": "sourcing"}
+        rec = {"h": norm, "d": display_handle(raw), "t": tab_index, "k": kind}
 
         listed = cell(row, colmap.get("listed_date"))
         if listed:
@@ -154,6 +186,9 @@ def parse_listing_tab(rows: list[list[str]], tab_index: int) -> list[dict]:
         status = cell(row, colmap.get("status"))
         if status and status.upper() not in ("TRUE", "FALSE"):
             rec["s"] = status[:48]
+        product = cell(row, colmap.get("product"))
+        if product:
+            rec["p"] = product[:40]
         note = cell(row, colmap.get("note"))
         if note:
             # "Already collaborating" 같은 메모가 판정에 직접 쓰이므로 짧게 남긴다.
@@ -225,13 +260,32 @@ def parse_inhouse_tab(rows: list[list[str]], tab_index: int) -> list[dict]:
     return records
 
 
-def parse_tab(title: str, rows: list[list[str]], tab_index: int) -> tuple[str, list[dict]]:
+def parse_tab(title: str, rows: list[list[str]], tab_index: int, mode: str) -> tuple[str, list[dict]]:
+    if mode == "named":
+        for pattern, kind in PAID_TAB_PATTERNS:
+            if pattern.search(title):
+                return kind, parse_handle_tab(rows, tab_index, kind, require_date=False)
+        return "", []
     if INHOUSE_TAB_RE.search(title):
         return "inhouse", parse_inhouse_tab(rows, tab_index)
-    return "sourcing", parse_listing_tab(rows, tab_index)
+    return "sourcing", parse_handle_tab(rows, tab_index, "sourcing", require_date=True)
 
 
-def collect_from_sheets(sheet_ids: list[str]) -> dict:
+def absorb(tabs: list[dict], records: list[dict], sheet_title: str,
+           tab_title: str, rows: list[list[str]], mode: str) -> None:
+    tab_index = len(tabs)
+    kind, parsed = parse_tab(tab_title, rows, tab_index, mode)
+    if not parsed:
+        # 안내/개요 탭은 여기로 떨어지는 게 정상이다. 다만 빠뜨린 리스팅 탭이
+        # 조용히 사라지면 안 되므로 전부 찍어둔다.
+        print(f"  · (건너뜀) {tab_title}", file=sys.stderr)
+        return
+    tabs.append({"n": tab_title, "s": sheet_title, "k": kind, "c": len(parsed)})
+    records.extend(parsed)
+    print(f"  · {tab_title}: {len(parsed)}건 [{kind}]", file=sys.stderr)
+
+
+def collect_from_sheets(sources: list[dict]) -> dict:
     import gspread
     from google.oauth2.service_account import Credentials
 
@@ -243,21 +297,11 @@ def collect_from_sheets(sheet_ids: list[str]) -> dict:
 
     tabs: list[dict] = []
     records: list[dict] = []
-    for sheet_id in sheet_ids:
-        book = client.open_by_key(sheet_id)
-        print(f"\n[{book.title}]", file=sys.stderr)
+    for src in sources:
+        book = client.open_by_key(src["id"])
+        print(f"\n[{book.title}] mode={src['mode']}", file=sys.stderr)
         for ws in book.worksheets():
-            rows = ws.get_all_values()
-            tab_index = len(tabs)
-            kind, parsed = parse_tab(ws.title, rows, tab_index)
-            if not parsed:
-                # 안내/개요 탭은 여기로 떨어지는 게 정상이다. 다만 빠뜨린 리스팅 탭이
-                # 조용히 사라지면 안 되므로 전부 찍어둔다.
-                print(f"  · (건너뜀) {ws.title}", file=sys.stderr)
-                continue
-            tabs.append({"n": ws.title, "s": book.title, "k": kind, "c": len(parsed)})
-            records.extend(parsed)
-            print(f"  · {ws.title}: {len(parsed)}건", file=sys.stderr)
+            absorb(tabs, records, book.title, ws.title, ws.get_all_values(), src["mode"])
 
     return {"tabs": tabs, "records": records}
 
@@ -265,17 +309,13 @@ def collect_from_sheets(sheet_ids: list[str]) -> dict:
 def collect_from_fixture(path: str) -> dict:
     with open(path, encoding="utf-8") as f:
         fixture = json.load(f)
-    tabs, records = [], []
+    tabs: list[dict] = []
+    records: list[dict] = []
     for sheet in fixture["sheets"]:
+        mode = sheet.get("mode", "auto")
+        print(f"\n[{sheet['title']}] mode={mode}", file=sys.stderr)
         for tab in sheet["tabs"]:
-            tab_index = len(tabs)
-            kind, parsed = parse_tab(tab["name"], tab["rows"], tab_index)
-            if not parsed:
-                print(f"  · (건너뜀) {tab['name']}", file=sys.stderr)
-                continue
-            tabs.append({"n": tab["name"], "s": sheet["title"], "k": kind, "c": len(parsed)})
-            records.extend(parsed)
-            print(f"  · {tab['name']}: {len(parsed)}건", file=sys.stderr)
+            absorb(tabs, records, sheet["title"], tab["name"], tab["rows"], mode)
     return {"tabs": tabs, "records": records}
 
 
@@ -310,20 +350,24 @@ def report(data: dict) -> None:
     """중복 현황을 로그로 남긴다 — 이 수치가 이 도구의 존재 이유다."""
     import collections
 
+    by_kind = collections.Counter(r["k"] for r in data["records"])
+    print(f"\n등급별 레코드: {dict(by_kind)}", file=sys.stderr)
+
     rows = [r for r in data["records"] if r["k"] == "sourcing"]
     counts = collections.Counter(r["h"] for r in rows)
     dup_handles = {h for h, c in counts.items() if c > 1}
     wasted = sum(c - 1 for c in counts.values() if c > 1)
     print(
-        f"\n리스팅 {len(rows)}행 / 고유 {len(counts)} / 중복 핸들 {len(dup_handles)} "
+        f"리스팅 {len(rows)}행 / 고유 {len(counts)} / 중복 핸들 {len(dup_handles)} "
         f"/ 낭비된 행 {wasted} ({wasted / max(len(rows), 1) * 100:.1f}%)",
         file=sys.stderr,
     )
 
-    inhouse = {r["h"] for r in data["records"] if r["k"] == "inhouse"}
-    overlap = inhouse & set(counts)
-    if overlap:
-        print(f"이미 협업 중인데 다시 리스팅된 크리에이터: {len(overlap)}명", file=sys.stderr)
+    # 이미 협업 중이거나 제안을 보낸 사람을 또 리스팅한 경우 — 가장 아까운 낭비다.
+    for kind, label in (("inhouse", "인하우스"), ("partner", "유가 협업 중"), ("casting", "제안 발송")):
+        hits = {r["h"] for r in data["records"] if r["k"] == kind} & set(counts)
+        if hits:
+            print(f"{label}인데 다시 리스팅된 크리에이터: {len(hits)}명", file=sys.stderr)
 
 
 def main() -> int:
@@ -340,8 +384,7 @@ def main() -> int:
     if args.fixture:
         data = collect_from_fixture(args.fixture)
     else:
-        ids = [s.strip() for s in os.environ.get("LISTING_SHEET_IDS", "").split(",") if s.strip()]
-        data = collect_from_sheets(ids or DEFAULT_SHEET_IDS)
+        data = collect_from_sheets(SOURCES)
 
     if not data["records"]:
         print("수집된 핸들이 0건입니다. 인덱스를 덮어쓰지 않고 중단합니다.", file=sys.stderr)

@@ -22,6 +22,10 @@
     --green-bg: #E8F5EC;
     --blue: #1F4E79;
     --blue-bg: #E8F0F8;
+    --purple: #5A2C7C;
+    --purple-bg: #F1E9F7;
+    --orange: #9E4A10;
+    --orange-bg: #FDEDE0;
   }
 
   body {
@@ -88,6 +92,8 @@
   .verdict { border-radius: 3px; padding: 18px 20px; border: 1px solid; margin-top: 16px; }
   .verdict h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
   .verdict p.sub { font-size: 13px; line-height: 1.65; }
+  .v-partner { background: var(--purple-bg); border-color: rgba(90,44,124,0.3); color: var(--purple); }
+  .v-casting { background: var(--orange-bg); border-color: rgba(158,74,16,0.3); color: var(--orange); }
   .v-listed  { background: var(--red-bg);   border-color: rgba(179,38,30,0.3);  color: var(--red); }
   .v-inhouse { background: var(--blue-bg);  border-color: rgba(31,78,121,0.3);  color: var(--blue); }
   .v-similar { background: var(--amber-bg); border-color: rgba(154,100,0,0.35); color: var(--amber); }
@@ -116,6 +122,7 @@
   th { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
   td.status { font-weight: 600; white-space: nowrap; }
   .s-listed { color: var(--red); } .s-inhouse { color: var(--blue); }
+  .s-partner { color: var(--purple); } .s-casting { color: var(--orange); }
   .s-similar { color: var(--amber); } .s-new { color: var(--green); }
   .table-scroll { overflow-x: auto; }
 
@@ -207,6 +214,10 @@ const I18N = {
     runBulk: "확인",
     copyNew: "신규만 복사",
     copied: "복사했습니다",
+    vPartner: "이미 유가 협업 중 — 리치아웃 금지",
+    vPartnerSub: "계약·정산이 진행 중이거나 담당자가 배정된 크리에이터입니다. 절대 신규 리치아웃하지 마세요.",
+    vCasting: "이미 제안을 보냈습니다 — 리치아웃 금지",
+    vCastingSub: "캐스팅 단계에서 이미 제안이 나갔습니다. 중복으로 연락하면 안 됩니다.",
     vListed: "이미 리스팅됨 — 리치아웃 금지",
     vListedSub: "다른 담당자가 이미 이 크리에이터를 리스팅했습니다. 건너뛰세요.",
     vInhouse: "이미 협업 중인 크리에이터",
@@ -222,11 +233,14 @@ const I18N = {
     colResult: "결과",
     colDetail: "상세",
     sListed: "중복",
-    sInhouse: "협업중",
+    sInhouse: "인하우스",
+    sPartner: "협업중",
+    sCasting: "제안발송",
     sSimilar: "유사",
     sNew: "신규",
     sumNew: "신규",
-    sumDup: "중복",
+    sumDup: "이미 리스팅",
+    sumPartner: "협업·접촉 중",
     sumOther: "확인 필요",
     footerNote: "리스팅 전에 반드시 여기서 먼저 확인하세요. 데이터는 구글 시트에서 자동으로 동기화됩니다.",
     fresh: (t, n) => `데이터 기준 ${t} · 리스팅 ${n.toLocaleString()}건`,
@@ -245,6 +259,10 @@ const I18N = {
     runBulk: "Check",
     copyNew: "Copy new only",
     copied: "Copied",
+    vPartner: "Already a paid partner — do not reach out",
+    vPartnerSub: "This creator is under contract, in payout, or already assigned to a manager. Never send new outreach.",
+    vCasting: "An offer was already sent — do not reach out",
+    vCastingSub: "This creator was already approached at the casting stage. Do not contact them again.",
     vListed: "Already listed — do not reach out",
     vListedSub: "Someone else has already listed this creator. Skip it.",
     vInhouse: "Already an active partner",
@@ -260,11 +278,14 @@ const I18N = {
     colResult: "Result",
     colDetail: "Detail",
     sListed: "Duplicate",
-    sInhouse: "Partner",
+    sInhouse: "In-house",
+    sPartner: "Partner",
+    sCasting: "Offer sent",
     sSimilar: "Similar",
     sNew: "New",
     sumNew: "New",
-    sumDup: "Duplicate",
+    sumDup: "Already listed",
+    sumPartner: "Partner / contacted",
     sumOther: "Needs review",
     footerNote: "Always check here before listing. Data syncs automatically from the Google Sheet.",
     fresh: (t, n) => `Data as of ${t} · ${n.toLocaleString()} listings`,
@@ -283,6 +304,10 @@ const I18N = {
     runBulk: "Kiểm tra",
     copyNew: "Chỉ sao chép handle mới",
     copied: "Đã sao chép",
+    vPartner: "Đang hợp tác trả phí — không liên hệ",
+    vPartnerSub: "Creator này đang có hợp đồng, đang thanh toán, hoặc đã có người phụ trách. Tuyệt đối không liên hệ mới.",
+    vCasting: "Đã gửi đề nghị — không liên hệ",
+    vCastingSub: "Creator này đã được tiếp cận ở bước casting. Không liên hệ lại.",
     vListed: "Đã được list — không liên hệ",
     vListedSub: "Người khác đã list creator này rồi. Hãy bỏ qua.",
     vInhouse: "Đang hợp tác",
@@ -298,11 +323,14 @@ const I18N = {
     colResult: "Kết quả",
     colDetail: "Chi tiết",
     sListed: "Trùng",
-    sInhouse: "Đối tác",
+    sInhouse: "In-house",
+    sPartner: "Đối tác",
+    sCasting: "Đã gửi đề nghị",
     sSimilar: "Tương tự",
     sNew: "Mới",
     sumNew: "Mới",
-    sumDup: "Trùng",
+    sumDup: "Đã list",
+    sumPartner: "Đối tác / đã liên hệ",
     sumOther: "Cần xem lại",
     footerNote: "Luôn kiểm tra tại đây trước khi list. Dữ liệu tự động đồng bộ từ Google Sheet.",
     fresh: (t, n) => `Dữ liệu tính đến ${t} · ${n.toLocaleString()} listing`,
@@ -412,23 +440,30 @@ function findSimilar(norm) {
   return [...out];
 }
 
+// 여러 곳에 걸리면 가장 강한 신호를 헤드라인으로 쓴다.
+// 유가 협업 > 인하우스 > 제안 발송 > 단순 리스팅 순으로 "접촉하면 안 되는 정도"가 세다.
+const KIND_ORDER = ["partner", "inhouse", "casting", "sourcing"];
+const KIND_VERDICT = { partner: "partner", inhouse: "inhouse", casting: "casting", sourcing: "listed" };
+const kindRank = (r) => {
+  const i = KIND_ORDER.indexOf(r.k);
+  return i === -1 ? KIND_ORDER.length : i;
+};
+
 function judge(input) {
   const norm = normalizeHandle(input);
   if (!norm) return null;
 
-  const hits = DB.byHandle.get(norm) || [];
-  const sourcing = hits.filter((r) => r.k === "sourcing");
-  const inhouse = hits.filter((r) => r.k === "inhouse");
-
-  if (sourcing.length) return { norm, kind: "listed", hits, sourcing, inhouse, similar: [] };
-  if (inhouse.length) return { norm, kind: "inhouse", hits, sourcing, inhouse, similar: [] };
+  const hits = (DB.byHandle.get(norm) || []).slice().sort((a, b) => kindRank(a) - kindRank(b));
+  if (hits.length) {
+    return { norm, kind: KIND_VERDICT[hits[0].k] || "listed", hits, similar: [] };
+  }
 
   const similar = findSimilar(norm);
   if (similar.length) {
     const simHits = similar.flatMap((h) => DB.byHandle.get(h) || []);
-    return { norm, kind: "similar", hits: simHits, sourcing: [], inhouse: [], similar };
+    return { norm, kind: "similar", hits: simHits, similar };
   }
-  return { norm, kind: "new", hits: [], sourcing: [], inhouse: [], similar: [] };
+  return { norm, kind: "new", hits: [], similar: [] };
 }
 
 /* ---------------- 렌더 ---------------- */
@@ -453,6 +488,7 @@ function renderHit(r) {
   const bits = [];
   const where = whereOf(r);
   if (where) bits.push(esc(where));
+  if (r.p) bits.push(esc(r.p));
   if (r.l) bits.push(`${t("listedOn")} ${esc(r.l)}`);
   if (r.c) bits.push(`${t("contacted")} ${esc(r.c)}`);
   if (r.s) bits.push(`${t("statusLbl")}: ${esc(r.s)}`);
@@ -473,8 +509,10 @@ function renderVerdict(v) {
   const box = document.getElementById("verdict");
   if (!v) { box.innerHTML = ""; return; }
 
-  const titles = { listed: "vListed", inhouse: "vInhouse", similar: "vSimilar", new: "vNew" };
-  const subs = { listed: "vListedSub", inhouse: "vInhouseSub", similar: "vSimilarSub", new: "vNewSub" };
+  const titles = { partner: "vPartner", casting: "vCasting", listed: "vListed",
+                   inhouse: "vInhouse", similar: "vSimilar", new: "vNew" };
+  const subs = { partner: "vPartnerSub", casting: "vCastingSub", listed: "vListedSub",
+                 inhouse: "vInhouseSub", similar: "vSimilarSub", new: "vNewSub" };
 
   let extra = "";
   if (v.kind === "similar") {
@@ -497,11 +535,14 @@ function renderVerdict(v) {
 
 function renderBulk(results) {
   const out = document.getElementById("bulkOut");
-  const labels = { listed: "sListed", inhouse: "sInhouse", similar: "sSimilar", new: "sNew" };
+  const labels = { partner: "sPartner", casting: "sCasting", listed: "sListed",
+                   inhouse: "sInhouse", similar: "sSimilar", new: "sNew" };
 
-  const nNew = results.filter((r) => r.v.kind === "new").length;
-  const nDup = results.filter((r) => r.v.kind === "listed" || r.v.kind === "inhouse").length;
-  const nOther = results.filter((r) => r.v.kind === "similar").length;
+  const countOf = (...kinds) => results.filter((r) => kinds.includes(r.v.kind)).length;
+  const nNew = countOf("new");
+  const nDup = countOf("listed");
+  const nPartner = countOf("partner", "inhouse", "casting");
+  const nOther = countOf("similar");
 
   const rows = results.map(({ raw, v }) => {
     let detail = "";
@@ -521,6 +562,7 @@ function renderBulk(results) {
     <div class="summary">
       <div><b class="s-new">${nNew}</b>${esc(t("sumNew"))}</div>
       <div><b class="s-listed">${nDup}</b>${esc(t("sumDup"))}</div>
+      <div><b class="s-partner">${nPartner}</b>${esc(t("sumPartner"))}</div>
       <div><b class="s-similar">${nOther}</b>${esc(t("sumOther"))}</div>
     </div>
     <div class="table-scroll"><table>
