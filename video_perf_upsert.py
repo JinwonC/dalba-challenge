@@ -201,8 +201,10 @@ def main():
             r = id_to_row[vid]
             updates.append({"range": f"'{SHEET_NAME}'!A{r}:{last_col}{r}",
                             "values": [row_vals]})
-        else:                                      # 신규는 맨 아래 추가
-            appends.append(row_vals)
+        else:
+            # 신규는 맨 아래 추가 — 단, 이 탭의 범위(2026-01-01 이후 포스팅)만 유지
+            if str(f.get("video_post_time", ""))[:10] >= FULL_START:
+                appends.append(row_vals)
 
     print(f"  갱신 {len(updates)}행 / 신규 {len(appends)}행", flush=True)
 
