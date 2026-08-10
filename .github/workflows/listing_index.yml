@@ -1,0 +1,84 @@
+name: Creator Listing Index
+
+# 리스팅 시트 → 암호화된 중복체크 인덱스(data/listings.enc.json) 갱신.
+# 예약 실행은 기본 브랜치(main)에서만 동작하므로, 이 워크플로가 main에 병합되어야
+# 15분 주기 갱신이 시작된다. 그 전에는 Actions 탭에서 수동 실행으로 확인할 수 있다.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: listing-index-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install gspread google-auth cryptography
+
+      - name: Write service account
+        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+
+      - name: Build index
+        env:
+          LISTING_PASSCODE: ${{ secrets.LISTING_PASSCODE }}
+          LISTING_SHEET_IDS: ${{ vars.LISTING_SHEET_IDS }}
+        run: |
+          for i in 1 2 3; do
+            python tools/build_listing_index.py && exit 0
+            echo "::warning::build_listing_index.py 실패 (${i}/3회차), 20초 후 재시도..."
+            sleep 20
+          done
+          echo "::error::build_listing_index.py 3회 모두 실패"
+          exit 1
+
+      - name: Remove secret file
+        if: always()
+        run: rm -f service_account.json
+
+      - name: Commit if changed
+        run: |
+          # 암호화 salt/IV가 매번 달라 파일은 항상 바뀐다. 실제 리스팅 내용이
+          # 그대로면 커밋 히스토리만 지저분해지므로, 복호화한 페이로드를 비교한다.
+          if git diff --quiet -- data/listings.enc.json; then
+            echo "변경 없음"
+            exit 0
+          fi
+          field() { python -c "import json,sys;print(json.load(sys.stdin).get('$1',''))"; }
+          NEW_SHA=$(field content_sha256 < data/listings.enc.json)
+          NEW_COUNT=$(field records < data/listings.enc.json)
+          OLD_SHA=$(git show HEAD:data/listings.enc.json 2>/dev/null | field content_sha256 || true)
+          OLD_COUNT=$(git show HEAD:data/listings.enc.json 2>/dev/null | field records || echo 0)
+          if [ -n "$OLD_SHA" ] && [ "$NEW_SHA" = "$OLD_SHA" ]; then
+            echo "내용 동일($NEW_COUNT건) — 재암호화 결과만 바뀌었으므로 커밋 생략"
+            git checkout -- data/listings.enc.json
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/listings.enc.json
+          git commit -m "리스팅 인덱스 갱신 (${OLD_COUNT} → ${NEW_COUNT}건)"
+          for i in 1 2 3 4; do
+            git push -u origin HEAD && exit 0
+            echo "push 실패 (${i}/4회차), 재시도..."
+            sleep $((2 ** i))
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          done
+          exit 1

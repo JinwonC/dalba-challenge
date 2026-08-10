@@ -1,0 +1,88 @@
+{
+  "_comment": "합성 데이터. 두 시트의 구조적 특징을 재현한다 — 구 시트는 탭마다 컬럼 순서가 다르고 상단에 설명 블록이 있으며 Status/Note 헤더가 중복된다. 신 시트는 헤더에 [VN]/[KR]/[AUTO] 접미사가 붙고 VN Owner 컬럼이 있다. 핸들은 URL·@·대소문자가 섞여 들어온다.",
+  "sheets": [
+    {
+      "title": "d'Alba Onboarding",
+      "tabs": [
+        {
+          "name": "(new) Aria - Spray Serum",
+          "rows": [
+            ["", "* Product : Spray Serum", "", "", "", "", "", "", "", ""],
+            ["Main Target", "GMV Tier: L3,L2  Average views: 500", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", ""],
+            ["No.", "Listed Date", "Handle", "TikTok Link", "30d GMV", "O/X", "Email", "Contacted Date", "Status", "Note"],
+            ["1", "2026-07-27", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa", "$4.8k", "O", "rosa@example.com", "2026-07-29", "Awaiting Rate Approval", ""],
+            ["2", "2026-07-27", "@dailydeals.kim", "https://www.tiktok.com/@dailydeals.kim", "$1k", "X", "", "", "", "Already collaborating"],
+            ["3", "2026-07-28", "https://www.tiktok.com/@mint_skincare", "", "$2.2k", "O", "", "", "", ""],
+            ["4", "2026-07-28", "", "", "", "", "", "", "", ""],
+            ["5", "2026-07-29", "beautyfinds99", "https://www.tiktok.com/@beautyfinds99", "$528k", "O", "", "2026-07-30", "Reply", ""]
+          ]
+        },
+        {
+          "name": "(new) Binh - Toneup Sunscreen",
+          "rows": [
+            ["", "* Product : Toneup Sunscreen", "", "", "", "", "", "", "", "", ""],
+            ["No.", "Listed Date", "Handle", "TikTok Link", "30d GMV", "O/X", "Email", "Note", "Contacted Date", "Reply", "Note"],
+            ["1", "2026-08-03", "GlowByRosa", "https://www.tiktok.com/@GlowByRosa", "$4.9k", "O", "", "", "", "", ""],
+            ["2", "2026-08-03", "sunnydayskin", "https://www.tiktok.com/@sunnydayskin", "$210.4K", "O", "sunny@example.com", "", "2026-08-05", "", ""],
+            ["3", "2026-08-04", "beautyfinds9", "https://www.tiktok.com/@beautyfinds9", "$12k", "X", "", "", "", "", ""]
+          ]
+        },
+        {
+          "name": "영상성과",
+          "_why": "Handle 컬럼은 있지만 Listed Date가 없다 → 리스팅 탭이 아니므로 건너뛰어야 한다.",
+          "rows": [
+            ["No.", "VN Owner [VN]", "Handle [AUTO]", "Video # [VN]", "Post Date [VN]", "Video Link [VN]"],
+            ["1", "Hannie", "glowbyrosa", "1", "2026-08-26", "https://www.tiktok.com/@glowbyrosa/video/1"]
+          ]
+        },
+        {
+          "name": "d'Alba Inhouse Creator",
+          "rows": [
+            ["", "d'Alba Inhouse Creator", "", "Pickdi", ""],
+            ["#REF!", "Aria", "vegan.glow.daily", "Binh", "seoulskinstory"],
+            ["", "Aria", "kbeauty.pick", "Binh", "hanoibeautylab"],
+            ["", "Aria", "sunnydayskin", "Chi", "glassskin.vn"],
+            ["", "Chi", "morningdewskin", "Chi", "dailyglowvn"],
+            ["", "Chi", "citrus.routine", "Chi", "saigonskincare"],
+            ["", "Chi", "peachy.routine", "Binh", "danangbeauty"],
+            ["", "Aria", "honeydew.skin", "Binh", "vn.glowup"],
+            ["", "Aria", "ricewater.daily", "Chi", "hue.skinlab"]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d'Alba_Pickdi_Process",
+      "tabs": [
+        {
+          "name": "Guide",
+          "_why": "핸들 컬럼이 아예 없는 안내 탭 → 건너뛴다.",
+          "rows": [
+            ["d'Alba US x VN Team - Paid Collabo"],
+            ["One VN owner = one copy of this file"]
+          ]
+        },
+        {
+          "name": "firstsprayserum",
+          "rows": [
+            ["", "1. Sourcing", "", "", "", "2. Outreach", "", "3. Quote & Nego"],
+            ["No. [AUTO]", "VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]", "Email [VN]", "O/X [KR]", "Reason [KR]", "1st Email Sent [VN]", "Reply Status [VN]"],
+            ["1", "Linh", "2026-08-08", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa", "rosa@example.com", "O", "", "2026-08-09", "Quote Received"],
+            ["2", "Linh", "2026-08-08", "@newvnfind", "https://www.tiktok.com/@newvnfind", "", "O", "", "", ""],
+            ["3", "Mai", "2026-08-09", "mint_skincare", "https://www.tiktok.com/@mint_skincare", "", "X", "Low fit", "", ""]
+          ]
+        },
+        {
+          "name": "07_comfrt",
+          "rows": [
+            ["", "1. Sourcing", "", "", "", "2. Outreach"],
+            ["No. [AUTO]", "Creator ID [VN]", "VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]", "O/X & Reason  [KR]"],
+            ["1", "VN01-0001", "Mai", "2026-08-10", "comfrt.daily", "https://www.tiktok.com/@comfrt.daily", "O"],
+            ["2", "VN01-0002", "Mai", "2026-08-10", "sunnydayskin", "https://www.tiktok.com/@sunnydayskin", "O"]
+          ]
+        }
+      ]
+    }
+  ]
+}
