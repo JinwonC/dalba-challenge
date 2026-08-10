@@ -346,6 +346,19 @@ def encrypt_payload(payload: dict, passcode: str) -> dict:
     }
 
 
+NEW_TAB_PREFIX_RE = re.compile(r"^\s*\(\s*new\s*\)\s*[-–·]?\s*", re.I)
+
+
+def owner_label(rec: dict, tabs: list[dict]) -> str:
+    """담당자 이름. 구 시트의 "(new) ..." 탭은 담당자별로 나뉘어 있어 탭 이름이 곧 담당자다."""
+    if rec.get("m"):
+        return rec["m"]
+    tab = tabs[rec["t"]] if rec["t"] < len(tabs) else None
+    if not tab:
+        return ""
+    return NEW_TAB_PREFIX_RE.sub("", tab["n"]).strip() or tab["n"]
+
+
 def report(data: dict) -> None:
     """중복 현황을 로그로 남긴다 — 이 수치가 이 도구의 존재 이유다."""
     import collections
@@ -363,11 +376,26 @@ def report(data: dict) -> None:
         file=sys.stderr,
     )
 
-    # 이미 협업 중이거나 제안을 보낸 사람을 또 리스팅한 경우 — 가장 아까운 낭비다.
+    # 이미 협업 중이거나 제안을 보낸 사람을 또 리스팅한 경우.
+    # 단, 본인이 발굴해서 본인이 전환시킨 건 정상적인 퍼널이지 낭비가 아니다.
+    # 낭비는 '다른 담당자'가 이미 잡아둔 사람을 또 리스팅한 경우다.
+    tabs = data["tabs"]
+    sourcing_owners = collections.defaultdict(set)
+    for r in rows:
+        sourcing_owners[r["h"]].add(owner_label(r, tabs))
+
     for kind, label in (("inhouse", "인하우스"), ("partner", "유가 협업 중"), ("casting", "제안 발송")):
-        hits = {r["h"] for r in data["records"] if r["k"] == kind} & set(counts)
-        if hits:
-            print(f"{label}인데 다시 리스팅된 크리에이터: {len(hits)}명", file=sys.stderr)
+        owners_by_handle = collections.defaultdict(set)
+        for r in data["records"]:
+            if r["k"] == kind and r["h"] in sourcing_owners:
+                owners_by_handle[r["h"]].add(owner_label(r, tabs))
+        cross = sum(1 for h, o in owners_by_handle.items() if sourcing_owners[h] - o)
+        same = len(owners_by_handle) - cross
+        if owners_by_handle:
+            print(
+                f"{label}인데 다시 리스팅됨 — 다른 담당자 {cross}명 / 본인 {same}명(정상 퍼널)",
+                file=sys.stderr,
+            )
 
 
 def main() -> int:

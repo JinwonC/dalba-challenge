@@ -469,13 +469,16 @@ function judge(input) {
 /* ---------------- 렌더 ---------------- */
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-/** 누가 잡았는지 — 담당자 컬럼이 있으면 그걸, 없으면 탭 이름을 쓴다. */
+/** 누가 잡았는지 — 담당자 컬럼이 있으면 그걸 쓴다.
+ *  구 시트의 "(new) ..." 탭은 담당자별로 나뉘어 있어 탭 이름이 곧 담당자다. */
 function ownerOf(r) {
   const tab = DB.tabs[r.t];
   if (r.k === "inhouse") return r.m ? `${r.m} (in-house)` : "in-house";
   if (r.m) return r.m;
-  return tab ? tab.n : "";
+  return tab ? tabOwner(tab.n) : "";
 }
+
+const tabOwner = (name) => name.replace(/^\s*\(\s*new\s*\)\s*[-–·]?\s*/i, "").trim() || name;
 
 function whereOf(r) {
   const tab = DB.tabs[r.t];
