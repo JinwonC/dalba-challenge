@@ -233,9 +233,21 @@ def main():
         print(f"    갱신 진행 {min(i+500, len(updates))}/{len(updates)}", flush=True)
 
     if appends:
+        # 추가 자체도 포스팅일 순으로 넣어 하단이 뒤섞이지 않게 함
+        i_post = header.index("video_post_time") if "video_post_time" in header else None
+        if i_post is not None:
+            appends.sort(key=lambda r: str(r[i_post]))
         with_retry(lambda: sheet.append_rows(appends, value_input_option="USER_ENTERED"), "신규 추가")
 
-    print(f"  ✅ 완료 — 갱신 {len(updates)}행, 신규 {len(appends)}행 (행 위치 보존)", flush=True)
+    # 마지막에 포스팅일(S열) 오름차순 재정렬 — 이미 정렬된 상태면 기존 행은 움직이지 않는다
+    if "video_post_time" in header:
+        sort_col = header.index("video_post_time") + 1   # 1-based
+        last_row = len(id_to_row) + len(appends) + 1
+        with_retry(lambda: sheet.sort((sort_col, "asc"),
+                                      range=f"A2:{last_col}{last_row}"), "정렬")
+        print(f"  정렬 완료 (A2:{last_col}{last_row}, {header[sort_col-1]} 오름차순)", flush=True)
+
+    print(f"  ✅ 완료 — 갱신 {len(updates)}행, 신규 {len(appends)}행", flush=True)
 
 
 if __name__ == "__main__":
