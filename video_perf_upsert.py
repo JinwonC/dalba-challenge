@@ -196,12 +196,18 @@ def main():
     updates = []
     appends = []
     for vid, f in fetched.items():
-        row_vals = [f.get(h, "") for h in header]
         if vid in id_to_row:                       # 자리 유지하고 값만 갱신
             r = id_to_row[vid]
+            old = existing[r - 1] if r - 1 < len(existing) else []
+            # API가 주지 않는 열(수동 추가한 메모/수식 등)은 기존 값을 그대로 보존
+            row_vals = [
+                f[h] if h in f else (old[ci] if ci < len(old) else "")
+                for ci, h in enumerate(header)
+            ]
             updates.append({"range": f"'{SHEET_NAME}'!A{r}:{last_col}{r}",
                             "values": [row_vals]})
         else:
+            row_vals = [f.get(h, "") for h in header]
             # 신규는 맨 아래 추가 — 단, 이 탭의 범위(2026-01-01 이후 포스팅)만 유지
             if str(f.get("video_post_time", ""))[:10] >= FULL_START:
                 appends.append(row_vals)
