@@ -47,12 +47,29 @@ PAID_TAB_PATTERNS = [
     (re.compile(r"vip\s*creator", re.I), "partner"),
 ]
 
-# mode="auto"  : 핸들 + Listed Date 컬럼이 있는 탭을 전부 리스팅 탭으로 인식 (새 제품 탭 자동 대응)
-# mode="named" : PAID_TAB_PATTERNS에 걸리는 탭만 읽음
+# duplicate 탭은 제품 탭 7개를 VSTACK으로 쌓아둔 통합 뷰다. 헤더 행이 없고 위치가 고정이라
+# 이름이 아니라 열 번호로 읽는다. 이걸 소스로 쓰면 시트의 조건부서식과 웹 페이지가
+# 정확히 같은 데이터를 보게 된다.
+DUPLICATE_TAB_RE = re.compile(r"^\s*duplicate\s*$", re.I)
+DUP_COLS = {
+    "product_tab": 0,     # A  제품 탭 이름
+    "owner": 1,           # B  VN 담당자
+    "listed_date": 2,     # C  리스팅일
+    "handle": 3,          # D  틱톡 핸들
+    "ox": 11,             # L  O/X
+    "note": 12,           # M  Reason
+    "contacted_date": 13, # N  1st Email Sent
+}
+# S(캐스팅 Handle)·W(유가 paid 탭)에도 핸들이 있지만 유가 시트를 직접 읽어
+# 담당자·제품·상태까지 가져오므로 여기서는 건너뛴다. 중복 집계를 피하기 위함.
+
+# mode="auto"      : 핸들 + Listed Date 컬럼이 있는 탭을 전부 리스팅 탭으로 인식
+# mode="duplicate" : duplicate 탭만 위치 기반으로 읽음
+# mode="named"     : PAID_TAB_PATTERNS에 걸리는 탭만 읽음
 SOURCES = [
-    {"id": "1Bhi85hXhIOHfWu9419drpeOuCOPXRkfMrW-4l_pJRB0", "mode": "auto"},   # d'Alba Onboarding
-    {"id": "1ZtATip5Ul8cahN80-Oj-TyKb_UkLPBB67RKfnFRumr8", "mode": "auto"},   # d'Alba_Pickdi_Process
-    {"id": "1JFq6m2-rvSpiGKQsTpr91Hj-RckHpqFfEl_BLkQI_hs", "mode": "named"},  # 유가 인원 정리
+    {"id": "1Bhi85hXhIOHfWu9419drpeOuCOPXRkfMrW-4l_pJRB0", "mode": "auto"},       # d'Alba Onboarding
+    {"id": "1ZtATip5Ul8cahN80-Oj-TyKb_UkLPBB67RKfnFRumr8", "mode": "duplicate"},  # d'Alba_Pickdi_Process
+    {"id": "1JFq6m2-rvSpiGKQsTpr91Hj-RckHpqFfEl_BLkQI_hs", "mode": "named"},      # 유가 인원 정리
 ]
 OUT_PATH = "data/listings.enc.json"
 PBKDF2_ITERATIONS = 250_000
@@ -260,7 +277,55 @@ def parse_inhouse_tab(rows: list[list[str]], tab_index: int) -> list[dict]:
     return records
 
 
+def parse_duplicate_tab(rows: list[list[str]], tab_index: int) -> list[dict]:
+    """duplicate 탭. 헤더 행이 없어 위치로 읽되, 잘못된 열을 읽고 있으면 조용히 넘어가지 않는다."""
+    records = []
+    for row in rows:
+        product_tab = cell(row, DUP_COLS["product_tab"])
+        raw = cell(row, DUP_COLS["handle"])
+        # A열에 제품 탭 이름이 있고 D열이 핸들처럼 보이는 행만 데이터로 본다.
+        if not product_tab or not looks_like_handle(raw):
+            continue
+        norm = normalize_handle(raw)
+        if not norm:
+            continue
+        rec = {"h": norm, "d": display_handle(raw), "t": tab_index, "k": "sourcing",
+               "p": product_tab[:40]}
+        owner = cell(row, DUP_COLS["owner"])
+        if owner:
+            rec["m"] = owner[:24]
+        listed = cell(row, DUP_COLS["listed_date"])
+        if listed:
+            rec["l"] = listed[:10]
+        ox = cell(row, DUP_COLS["ox"]).upper()
+        if ox in ("O", "X"):
+            rec["o"] = ox
+        contacted = cell(row, DUP_COLS["contacted_date"])
+        if contacted and not contacted.startswith("#"):
+            rec["c"] = contacted[:10]
+        note = cell(row, DUP_COLS["note"])
+        if note and not note.startswith("#"):
+            rec["n"] = note[:80]
+        records.append(rec)
+
+    # 열이 밀리면 담당자 자리에 날짜가 들어오는 식으로 조용히 망가진다.
+    # 담당자가 거의 안 채워지면 위치가 틀어졌다고 보고 알린다.
+    if records:
+        with_owner = sum(1 for r in records if r.get("m"))
+        if with_owner < len(records) * 0.5:
+            print(
+                f"  ⚠ duplicate 탭 담당자(B열)가 {with_owner}/{len(records)}행만 채워짐 — "
+                "열 위치가 바뀌었는지 확인 필요",
+                file=sys.stderr,
+            )
+    return records
+
+
 def parse_tab(title: str, rows: list[list[str]], tab_index: int, mode: str) -> tuple[str, list[dict]]:
+    if mode == "duplicate":
+        if not DUPLICATE_TAB_RE.match(title):
+            return "", []
+        return "sourcing", parse_duplicate_tab(rows, tab_index)
     if mode == "named":
         for pattern, kind in PAID_TAB_PATTERNS:
             if pattern.search(title):

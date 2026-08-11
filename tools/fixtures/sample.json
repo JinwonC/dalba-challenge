@@ -54,32 +54,30 @@
     },
     {
       "title": "d'Alba_Pickdi_Process",
+      "mode": "duplicate",
+      "_comment": "duplicate 탭은 제품 탭 7개를 VSTACK으로 쌓은 통합 뷰. 헤더 행이 없고 위치가 고정이라 열 번호로 읽는다. 제품 탭 원본은 읽지 않는다 — duplicate가 곧 그것들의 합이라 두 번 세게 된다.",
       "tabs": [
         {
-          "name": "Guide",
-          "_why": "핸들 컬럼이 아예 없는 안내 탭 → 건너뛴다.",
+          "name": "01_FirstSpraySerum",
+          "_why": "duplicate 모드에서는 제품 탭 원본을 건너뛴다.",
           "rows": [
-            ["d'Alba US x VN Team - Paid Collabo"],
-            ["One VN owner = one copy of this file"]
+            ["VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]"],
+            ["Linh", "2026-08-08", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa"]
           ]
         },
         {
-          "name": "firstsprayserum",
+          "name": "duplicate",
           "rows": [
-            ["", "1. Sourcing", "", "", "", "2. Outreach", "", "3. Quote & Nego"],
-            ["No. [AUTO]", "VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]", "Email [VN]", "O/X [KR]", "Reason [KR]", "1st Email Sent [VN]", "Reply Status [VN]"],
-            ["1", "Linh", "2026-08-08", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa", "rosa@example.com", "O", "", "2026-08-09", "Quote Received"],
-            ["2", "Linh", "2026-08-08", "@newvnfind", "https://www.tiktok.com/@newvnfind", "", "O", "", "", ""],
-            ["3", "Mai", "2026-08-09", "mint_skincare", "https://www.tiktok.com/@mint_skincare", "", "X", "Low fit", "", ""]
-          ]
-        },
-        {
-          "name": "07_comfrt",
-          "rows": [
-            ["", "1. Sourcing", "", "", "", "2. Outreach"],
-            ["No. [AUTO]", "Creator ID [VN]", "VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]", "O/X & Reason  [KR]"],
-            ["1", "VN01-0001", "Mai", "2026-08-10", "comfrt.daily", "https://www.tiktok.com/@comfrt.daily", "O"],
-            ["2", "VN01-0002", "Mai", "2026-08-10", "sunnydayskin", "https://www.tiktok.com/@sunnydayskin", "O"]
+            ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+            ["pickdi", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+            ["01_FirstSpraySerum", "Linh",  "2026-08-08", "glowbyrosa",    "https://www.tiktok.com/@glowbyrosa", "rosa@example.com", "", "Beauty 40%", "Female 71%", "$4,900", "좋은 훅", "O", "",        "2026-08-09", "#N/A"],
+            ["01_FirstSpraySerum", "Linh",  "2026-08-08", "@newvnfind",    "https://www.tiktok.com/@newvnfind",  "",                 "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
+            ["01_FirstSpraySerum", "Julie", "2026-08-09", "mint_skincare", "https://www.tiktok.com/@mint_skincare", "",              "", "",           "",          "",       "",      "X", "Low fit", "",           "#N/A"],
+            ["03_ToneupSunscreen", "Elwyn", "2026-08-10", "MINT_Skincare", "https://www.tiktok.com/@MINT_Skincare", "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
+            ["03_ToneupSunscreen", "Elwyn", "2026-08-10", "comfrt.daily",  "https://www.tiktok.com/@comfrt.daily",  "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
+            ["07_Comfrt",          "Mai",   "2026-08-11", "sunnydayskin",  "https://www.tiktok.com/@sunnydayskin",  "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
+            ["07_Comfrt",          "Mai",   "2026-08-11", "glowbyrosa",    "https://www.tiktok.com/@glowbyrosa",    "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"]
           ]
         }
       ]
