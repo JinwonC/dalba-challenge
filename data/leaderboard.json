@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-12T19:21:23Z",
+  "updated_at": "2026-08-12T21:20:58Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,28 +24,33 @@
       "limit": 8
     }
   ],
-  "joined_total": 81,
+  "joined_total": 82,
   "videos_total": 56,
   "leaderboard": [
     {
-      "handle": "dan.brea",
-      "gmv": 370.27,
-      "posts": 5
-    },
-    {
       "handle": "jeanienguyen8899",
-      "gmv": 369.14,
+      "gmv": 607.74,
       "posts": 16
     },
     {
+      "handle": "dan.brea",
+      "gmv": 427.31,
+      "posts": 5
+    },
+    {
       "handle": "ristones",
-      "gmv": 50.35,
-      "posts": 3
+      "gmv": 123.34,
+      "posts": 5
     },
     {
       "handle": "bedau18tuoine",
       "gmv": 48.21,
-      "posts": 2
+      "posts": 4
+    },
+    {
+      "handle": "ngocng_8",
+      "gmv": 17.0,
+      "posts": 1
     },
     {
       "handle": "carmentellsastory",
@@ -58,6 +63,11 @@
       "posts": 8
     },
     {
+      "handle": "khadijaraiy",
+      "gmv": 0,
+      "posts": 7
+    },
+    {
       "handle": "sweetmeap",
       "gmv": 0,
       "posts": 6
@@ -65,12 +75,7 @@
     {
       "handle": "vanessagoeslive2.0",
       "gmv": 0,
-      "posts": 3
-    },
-    {
-      "handle": "khadijaraiy",
-      "gmv": 0,
-      "posts": 3
+      "posts": 4
     },
     {
       "handle": "eva.vazquez.munoz",
@@ -123,12 +128,17 @@
       "posts": 1
     },
     {
-      "handle": "ngocng_8",
+      "handle": "oilmaguerrero",
       "gmv": 0,
       "posts": 1
     },
     {
-      "handle": "oilmaguerrero",
+      "handle": "cam_for_dayz",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "siana_far",
       "gmv": 0,
       "posts": 1
     }
