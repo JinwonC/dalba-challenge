@@ -873,8 +873,8 @@ const tabOwner = (name) => name.replace(/^\s*\(\s*new\s*\)\s*[-–·]?\s*/i, "")
 function whereOf(r) {
   const tab = DB.tabs[r.t];
   if (!tab) return "";
-  // duplicate 탭 레코드는 어느 제품 탭에서 왔는지가 탭 이름보다 중요하다.
-  const inner = r.p || (r.m ? tab.n : "");
+  // 제품(어느 제품 탭/제안 제품에서 왔는지)이 있으면 그게 리스팅 위치보다 유용하다.
+  const inner = r.p || tab.n;
   return inner && !/^duplicate$/i.test(inner) ? `${tab.s} · ${inner}` : tab.s;
 }
 

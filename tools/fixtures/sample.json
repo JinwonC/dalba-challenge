@@ -1,150 +1,190 @@
 {
-  "_comment": "합성 데이터. 두 시트의 구조적 특징을 재현한다 — 구 시트는 탭마다 컬럼 순서가 다르고 상단에 설명 블록이 있으며 Status/Note 헤더가 중복된다. 신 시트는 헤더에 [VN]/[KR]/[AUTO] 접미사가 붙고 VN Owner 컬럼이 있다. 핸들은 URL·@·대소문자가 섞여 들어온다.",
-  "sheets": [
+ "sheets": [
+  {
+   "title": "d'Alba_Pickdi_Process",
+   "mode": "duplicate",
+   "tabs": [
     {
-      "title": "d'Alba Onboarding",
-      "tabs": [
-        {
-          "name": "(new) Aria - Spray Serum",
-          "rows": [
-            ["", "* Product : Spray Serum", "", "", "", "", "", "", "", ""],
-            ["Main Target", "GMV Tier: L3,L2  Average views: 500", "", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", "", "", ""],
-            ["No.", "Listed Date", "Handle", "TikTok Link", "30d GMV", "O/X", "Email", "Contacted Date", "Status", "Note"],
-            ["1", "2026-07-27", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa", "$4.8k", "O", "rosa@example.com", "2026-07-29", "Awaiting Rate Approval", ""],
-            ["2", "2026-07-27", "@dailydeals.kim", "https://www.tiktok.com/@dailydeals.kim", "$1k", "X", "", "", "", "Already collaborating"],
-            ["3", "2026-07-28", "https://www.tiktok.com/@mint_skincare", "", "$2.2k", "O", "", "", "", ""],
-            ["4", "2026-07-28", "", "", "", "", "", "", "", ""],
-            ["5", "2026-07-29", "beautyfinds99", "https://www.tiktok.com/@beautyfinds99", "$528k", "O", "", "2026-07-30", "Reply", ""]
-          ]
-        },
-        {
-          "name": "(new) Binh - Toneup Sunscreen",
-          "rows": [
-            ["", "* Product : Toneup Sunscreen", "", "", "", "", "", "", "", "", ""],
-            ["No.", "Listed Date", "Handle", "TikTok Link", "30d GMV", "O/X", "Email", "Note", "Contacted Date", "Reply", "Note"],
-            ["1", "2026-08-03", "GlowByRosa", "https://www.tiktok.com/@GlowByRosa", "$4.9k", "O", "", "", "", "", ""],
-            ["2", "2026-08-03", "sunnydayskin", "https://www.tiktok.com/@sunnydayskin", "$210.4K", "O", "sunny@example.com", "", "2026-08-05", "", ""],
-            ["3", "2026-08-04", "beautyfinds9", "https://www.tiktok.com/@beautyfinds9", "$12k", "X", "", "", "", "", ""]
-          ]
-        },
-        {
-          "name": "영상성과",
-          "_why": "Handle 컬럼은 있지만 Listed Date가 없다 → 리스팅 탭이 아니므로 건너뛰어야 한다.",
-          "rows": [
-            ["No.", "VN Owner [VN]", "Handle [AUTO]", "Video # [VN]", "Post Date [VN]", "Video Link [VN]"],
-            ["1", "Hannie", "glowbyrosa", "1", "2026-08-26", "https://www.tiktok.com/@glowbyrosa/video/1"]
-          ]
-        },
-        {
-          "name": "d'Alba Inhouse Creator",
-          "rows": [
-            ["", "d'Alba Inhouse Creator", "", "Pickdi", ""],
-            ["#REF!", "Aria", "vegan.glow.daily", "Binh", "seoulskinstory"],
-            ["", "Aria", "kbeauty.pick", "Binh", "hanoibeautylab"],
-            ["", "Aria", "sunnydayskin", "Chi", "glassskin.vn"],
-            ["", "Chi", "morningdewskin", "Chi", "dailyglowvn"],
-            ["", "Chi", "citrus.routine", "Chi", "saigonskincare"],
-            ["", "Chi", "peachy.routine", "Binh", "danangbeauty"],
-            ["", "Aria", "honeydew.skin", "Binh", "vn.glowup"],
-            ["", "Aria", "ricewater.daily", "Chi", "hue.skinlab"]
-          ]
-        }
+     "name": "duplicate",
+     "rows": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "날짜",
+       "담당자",
+       "제안 제품",
+       "Handle",
+       "상태",
+       "협업 상태",
+       "",
+       "유가 paid 탭"
+      ],
+      [
+       "01_FirstSpraySerum",
+       "Julie",
+       "2026-07-24",
+       "glow.by.rosa",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "2026/6/9",
+       "김도현",
+       "보르피린 3종",
+       "truegreta",
+       "",
+       "",
+       "",
+       "paidcreator.one"
+      ],
+      [
+       "01_FirstSpraySerum",
+       "Elwyn",
+       "2026-07-29",
+       "aaashleyk",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "2026/6/9",
+       "이지명",
+       "보르피린 3종",
+       "tuti.fit",
+       "",
+       "단가받음",
+       "",
+       "paidcreator.one"
+      ],
+      [
+       "02_MultiBalm",
+       "Hannie",
+       "2026-08-01",
+       "glow.by.rosa",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "03_Mist",
+       "Juan",
+       "2026-08-02",
+       "https://www.tiktok.com/@truegreta",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "03_Mist",
+       "Lily",
+       "2026-08-03",
+       "paidcreator.one",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
       ]
-    },
-    {
-      "title": "d'Alba_Pickdi_Process",
-      "mode": "duplicate",
-      "_comment": "duplicate 탭은 제품 탭 7개를 VSTACK으로 쌓은 통합 뷰. 헤더 행이 없고 위치가 고정이라 열 번호로 읽는다. 제품 탭 원본은 읽지 않는다 — duplicate가 곧 그것들의 합이라 두 번 세게 된다.",
-      "tabs": [
-        {
-          "name": "01_FirstSpraySerum",
-          "_why": "duplicate 모드에서는 제품 탭 원본을 건너뛴다.",
-          "rows": [
-            ["VN Owner [VN]", "Listed Date [VN]", "TikTok Handle [VN]", "TikTok Link [VN]"],
-            ["Linh", "2026-08-08", "glowbyrosa", "https://www.tiktok.com/@glowbyrosa"]
-          ]
-        },
-        {
-          "name": "duplicate",
-          "rows": [
-            ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-            ["pickdi", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-            ["01_FirstSpraySerum", "Linh",  "2026-08-08", "glowbyrosa",    "https://www.tiktok.com/@glowbyrosa", "rosa@example.com", "", "Beauty 40%", "Female 71%", "$4,900", "좋은 훅", "O", "",        "2026-08-09", "#N/A"],
-            ["01_FirstSpraySerum", "Linh",  "2026-08-08", "@newvnfind",    "https://www.tiktok.com/@newvnfind",  "",                 "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
-            ["01_FirstSpraySerum", "Julie", "2026-08-09", "mint_skincare", "https://www.tiktok.com/@mint_skincare", "",              "", "",           "",          "",       "",      "X", "Low fit", "",           "#N/A"],
-            ["03_ToneupSunscreen", "Elwyn", "2026-08-10", "MINT_Skincare", "https://www.tiktok.com/@MINT_Skincare", "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
-            ["03_ToneupSunscreen", "Elwyn", "2026-08-10", "comfrt.daily",  "https://www.tiktok.com/@comfrt.daily",  "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
-            ["07_Comfrt",          "Mai",   "2026-08-11", "sunnydayskin",  "https://www.tiktok.com/@sunnydayskin",  "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"],
-            ["07_Comfrt",          "Mai",   "2026-08-11", "glowbyrosa",    "https://www.tiktok.com/@glowbyrosa",    "",              "", "",           "",          "",       "",      "O", "",        "",           "#N/A"]
-          ]
-        }
-      ]
-    },
-    {
-      "title": "유가 인원 정리",
-      "mode": "named",
-      "_comment": "26개 탭 중 지정된 5개만 읽는다. 나머지(주소 폼 응답, 배송, 정산 등)는 이름이 안 걸려 통째로 제외된다.",
-      "tabs": [
-        {
-          "name": "캐스팅",
-          "_why": "실제 제안·아웃리치 로그. 오른쪽 '자동 업데이트' 참조 컬럼(Handle/Creator username)은 다른 탭에서 끌어온 값이라 중복 집계되면 안 된다 — alias 우선순위상 왼쪽 Handle이 먼저 잡힌다.",
-          "rows": [
-            ["** 핸들 기입 시 자동으로 링크 임베드", "", "", "", "", "", "", "", "", "", "", "자동 업데이트", "", ""],
-            ["** 중복인 경우 빨간색으로 표시됨", "", "", "", "", "", "", "", "", "", "", "담당자 탭", "VIP Creator 탭", ""],
-            ["날짜", "담당자", "제안 제품", "Handle", "상태", "협업 상태", "사용 언어", "Affiliate GMV", "email", "회신 여부", "memo", "Handle", "Creator username", ""],
-            ["2026/6/9", "김도현", "보르피린 3종", "truegreta", "", "제안 발송", "EN", "$102,800", "truegreta@example.com", "FALSE", "", "glowbyrosa", "sunnydayskin", ""],
-            ["2026/6/9", "김도현", "보르피린 3종", "mint_skincare", "", "회신 대기", "EN", "$112,500", "", "FALSE", "", "kbeauty.pick", "vegan.glow.daily", ""]
-          ]
-        },
-        {
-          "name": "담당자",
-          "rows": [
-            ["", "", ""],
-            ["Handle", "담당자", "Main comm"],
-            ["glowbyrosa", "김도현", "왓츠앱"],
-            ["kbeauty.pick", "이나연", ""]
-          ]
-        },
-        {
-          "name": "Flat fee 리스팅",
-          "rows": [
-            ["CHC", "", "25", "10300", ""],
-            ["", "Handle", "레벨", "협업 제품", "영상 개수", "금액", "영상 1개당 금액", "커미션", "계약서 링크 첨부", "최종 계약서", "비고"],
-            ["", "glowbysallye", "L3", "멀티밤", "3", "750", "250", "20% / 10%", "[d'Alba-@glowbysallye]", "", "인플 측 날인중"],
-            ["", "beautyfinds99", "L4", "비타 5종", "10", "2000", "200", "20% / 10%", "", "", ""]
-          ]
-        },
-        {
-          "name": "PAID 성과 트래킹 (GMV)",
-          "rows": [
-            ["", "담당자기입", "", "담당자기입", "자동수식", "제품", "", "담당자기입"],
-            ["", "크리에이터명", "회차", "비용", "PAID /NON-Paid", "담당자", "제품", "업로드 영상 링크", "Video ID", "ad code"],
-            ["", "ceciliajoycoloring", "1", "300", "PAID", "김도현", "비타3종", "https://www.tiktok.com/@ceciliajoycoloring/video/1", "7610461355920903438", "#ul7"],
-            ["", "sunnydayskin", "2", "500", "PAID", "이나연", "퍼스트", "", "", ""]
-          ]
-        },
-        {
-          "name": "VIP Creator 협업 정보",
-          "_why": "핸들 컬럼 이름이 'Creator username'이고, 연락처·email 컬럼이 있어 인덱스에 새면 안 된다.",
-          "rows": [
-            ["**본인 AF 볼 때는 '데이터-필터보기'", ""],
-            ["** 계약서 링크는 작성했던 워드 링크", ""],
-            ["담당자", "타겟제품", "회차", "Creator username", "Affiliate GMV", "LK/WA", "연락처", "확정 여부", "email", "영상 개수"],
-            ["이나연", "멀티밤, 톤업선크림", "2", "get_glam_with_sadaf", "28437.56", "왓츠앱, 라크", "949-836-3936", "확정", "sadaf@example.com", "20"],
-            ["김도현", "비타 5종", "1", "mint_skincare", "12000", "이메일", "010-0000-0000", "협의중", "mint@example.com", "10"]
-          ]
-        },
-        {
-          "name": "주소 응답 (구글폼)",
-          "_why": "실명·집주소·전화번호가 든 탭. 이름이 화이트리스트에 없으므로 통째로 제외돼야 한다.",
-          "rows": [
-            ["타임스탬프", "Full Name", "TikTok Handle", "Street Address", "City", "ZIP/Postal Code", "Email Address", "Phone Number"],
-            ["2026. 5. 4 오후 4:02:58", "clara choi", "clarahyee", "1101 N Main St", "Los Angeles", "90012", "clarahyee@example.com", "213-842-9123"]
-          ]
-        }
-      ]
+     ]
     }
-  ]
+   ]
+  }
+ ]
 }
