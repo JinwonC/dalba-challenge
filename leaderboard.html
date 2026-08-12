@@ -56,9 +56,29 @@
     font-size: clamp(15px, 1.8vw, 20px);
     font-weight: 400; font-style: italic; color: #7A5500;
   }
+  .countdown {
+    display: inline-flex; align-items: baseline; gap: 12px;
+    margin-top: 26px; padding: 14px 26px; border-radius: 16px;
+    background: rgba(255,252,240,0.9);
+    border: 1px solid rgba(180,140,40,0.35);
+    box-shadow: 0 8px 24px rgba(180,140,40,0.12);
+  }
+  .countdown .dday {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px; font-weight: 900; color: #6E5200; line-height: 1;
+  }
+  .countdown .remain {
+    font-size: 14px; font-weight: 600; color: #5A4518;
+    font-variant-numeric: tabular-nums;
+  }
+  .countdown .remain-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: #8B6800;
+  }
+
   .updated {
     display: inline-flex; align-items: center; gap: 8px;
-    margin-top: 22px; padding: 8px 18px; border-radius: 999px;
+    margin-top: 14px; padding: 8px 18px; border-radius: 999px;
     background: rgba(255,252,240,0.85);
     border: 1px solid rgba(180,140,40,0.25);
     font-size: 12px; color: #5A4518; font-weight: 500;
@@ -252,6 +272,11 @@
   <div class="hero-eyebrow">d'Alba Piedmont · TikTok Shop</div>
   <h1 class="hero-title">Spotlight Day Challenge 🏆</h1>
   <p class="hero-subtitle" id="campaign-dates">Aug 4 – Sep 6, 2026</p>
+  <div class="countdown" id="countdown" hidden>
+    <span class="dday" id="dday"></span>
+    <span><span class="remain" id="remain"></span> <span class="remain-label">left</span></span>
+  </div>
+  <br>
   <div class="updated"><span class="dot"></span><span id="updated-text">Loading…</span></div>
 </section>
 
@@ -384,12 +409,39 @@
     document.getElementById('board-note').textContent =
       silent > 0 ? `+ ${silent} more creators have joined and haven't posted yet. Rankings show creators with at least one video.` : '';
 
+    if (data.campaign?.end) startCountdown(data.campaign.end);
     if (data.campaign?.join_link) document.getElementById('join-link').href = data.campaign.join_link;
     if (data.campaign?.start && data.campaign?.end) {
       const f = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       document.getElementById('campaign-dates').textContent =
         `${f(data.campaign.start)} – ${f(data.campaign.end)}, ${data.campaign.end.slice(0, 4)}`;
     }
+  }
+
+  let countdownTimer = null;
+  function startCountdown(endDate) {
+    const end = new Date(endDate + 'T00:00:00Z'); // campaign schedule is UTC
+    const box = document.getElementById('countdown');
+    box.hidden = false;
+    const pad = n => String(n).padStart(2, '0');
+    const tick = () => {
+      const ms = end - Date.now();
+      if (ms <= 0) {
+        document.getElementById('dday').textContent = 'Ended';
+        document.getElementById('remain').textContent = 'Thanks for joining!';
+        document.querySelector('.remain-label').textContent = '';
+        clearInterval(countdownTimer);
+        return;
+      }
+      const days = Math.floor(ms / 86400000);
+      const h = Math.floor(ms % 86400000 / 3600000);
+      const m = Math.floor(ms % 3600000 / 60000);
+      const s = Math.floor(ms % 60000 / 1000);
+      document.getElementById('dday').textContent = 'D-' + Math.ceil(ms / 86400000);
+      document.getElementById('remain').textContent = `${days}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+    };
+    tick();
+    if (!countdownTimer) countdownTimer = setInterval(tick, 1000);
   }
 
   async function load() {
