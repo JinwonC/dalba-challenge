@@ -27,7 +27,7 @@ jobs:
       - name: Check secrets
         id: chk
         run: |
-          if [ -z "${{ secrets.LISTING_PASSCODE }}" ] || [ -z "${{ secrets.SERVICE_ACCOUNT_JSON }}" ]; then
+          if [ -z "${{ secrets.LISTING_PASSCODE || vars.LISTING_PASSCODE }}" ] || [ -z "${{ secrets.SERVICE_ACCOUNT_JSON }}" ]; then
             echo "::warning::LISTING_PASSCODE 또는 SERVICE_ACCOUNT_JSON 시크릿 미등록 — 이번 실행은 건너뜀"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
@@ -53,7 +53,8 @@ jobs:
       - name: Build index
         if: steps.chk.outputs.skip != 'true'
         env:
-          LISTING_PASSCODE: ${{ secrets.LISTING_PASSCODE }}
+          # Secrets 탭이 정석이지만 Variables 탭에 등록해도 동작하게 한다
+          LISTING_PASSCODE: ${{ secrets.LISTING_PASSCODE || vars.LISTING_PASSCODE }}
         run: |
           for i in 1 2 3; do
             python tools/build_listing_index.py && exit 0
