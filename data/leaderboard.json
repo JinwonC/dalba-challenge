@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-12T15:28:37Z",
+  "updated_at": "2026-08-12T17:21:43Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -53,6 +53,11 @@
       "posts": 4
     },
     {
+      "handle": "holycartt",
+      "gmv": 0,
+      "posts": 8
+    },
+    {
       "handle": "sweetmeap",
       "gmv": 0,
       "posts": 6
@@ -63,14 +68,14 @@
       "posts": 3
     },
     {
-      "handle": "holycartt",
+      "handle": "khadijaraiy",
       "gmv": 0,
       "posts": 3
     },
     {
-      "handle": "khadijaraiy",
+      "handle": "eva.vazquez.munoz",
       "gmv": 0,
-      "posts": 3
+      "posts": 2
     },
     {
       "handle": "ratchdrn",
