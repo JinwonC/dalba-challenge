@@ -132,6 +132,25 @@
   }
   .podium-next { font-size: 10.5px; color: #2E7D48; font-weight: 600; margin-top: 7px; }
 
+  /* AVATARS */
+  .av-wrap {
+    position: relative; display: inline-flex; flex: none;
+    width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg, #E8C56A, #D9B24E);
+    border: 1px solid rgba(150,110,20,0.35);
+    vertical-align: middle;
+  }
+  .av-fb {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #6E5200; text-transform: uppercase;
+  }
+  .av { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+  .creator-flex { display: flex; align-items: center; gap: 10px; }
+  .podium-av .av-wrap { width: 54px; height: 54px; }
+  .podium-av .av-fb { font-size: 22px; }
+  .podium-col.first .podium-av .av-wrap { width: 68px; height: 68px; border-width: 2px; }
+  .podium-av { margin-top: 10px; }
+
   /* PODIUM */
   .podium-wrap { max-width: 860px; margin: 40px auto 0; padding: 0 24px; }
   .podium {
@@ -274,6 +293,12 @@
   const fmtUSD = n => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const tiktokUrl = h => 'https://www.tiktok.com/@' + encodeURIComponent(h);
   const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // 아바타: avatars/<handle>.jpg — 파일이 없으면 onerror로 이니셜 폴백 표시.
+  // 아티팩트 빌드에서는 window.AVATARS(data URI 맵)가 주입되어 이를 우선 사용.
+  const avatarSrc = h => (window.AVATARS && window.AVATARS[h]) || 'avatars/' + encodeURIComponent(h) + '.jpg';
+  const initial = h => esc((h.replace(/^[^a-z0-9]+/i, '') || h).charAt(0));
+  const avatarHTML = h =>
+    `<span class="av-wrap"><span class="av-fb">${initial(h)}</span><img class="av" src="${avatarSrc(h)}" alt="" loading="lazy" onerror="this.remove()"></span>`;
 
   function render(data) {
     const rows = [...data.leaderboard].sort((a, b) => b.gmv - a.gmv || b.posts - a.posts);
@@ -330,6 +355,7 @@
       return `<div class="podium-col ${cls}">
         <div class="podium-card">
           <div class="medal">${medals[i]}</div>
+          <div class="podium-av">${avatarHTML(r.handle)}</div>
           <div class="podium-handle"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></div>
           <div class="podium-gmv">${fmtUSD(r.gmv)}</div>
           <div class="podium-posts">${r.posts} video${r.posts === 1 ? '' : 's'}</div>
@@ -347,7 +373,7 @@
         : (r.tier ? '<span class="prog-label">Top tier reached! 🎉</span>' : '');
       return `<tr class="${i < 3 ? 'top3' : ''} ${r.gmv === 0 ? 'zero' : ''}">
         <td class="rank-cell">${i + 1}</td>
-        <td class="handle-cell"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></td>
+        <td class="handle-cell"><span class="creator-flex">${avatarHTML(r.handle)}<a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></span></td>
         <td class="num gmv-cell">${fmtUSD(r.gmv)}</td>
         <td class="num">${r.posts}</td>
         <td>${r.tier ? `<span class="tier-badge">${shortUSD(r.tier.payout)} tier ✓</span> ` : ''}${prog}</td>
