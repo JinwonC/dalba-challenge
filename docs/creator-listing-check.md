@@ -2,7 +2,7 @@
 
 리스팅하기 전에 **핸들을 먼저 검색해서, 이미 누가 리스팅했으면 건너뛰게** 하는 도구다.
 
-- 페이지: `check.html` → https://jinwonc.github.io/dalba-challenge/check.html
+- 페이지: `check.html` → https://jinwonc.github.io/dalba-check/check.html
 - 데이터: `data/listings.enc.json` (암호화된 인덱스, GitHub Actions가 15분마다 갱신)
 - 빌더: `tools/build_listing_index.py`
 
@@ -80,17 +80,17 @@ giniglow/                                  ┘
 ## 팀 공지용 문구
 
 **한국어**
-> 리스팅 전에 반드시 여기서 핸들을 먼저 검색하세요 → https://jinwonc.github.io/dalba-challenge/check.html
+> 리스팅 전에 반드시 여기서 핸들을 먼저 검색하세요 → https://jinwonc.github.io/dalba-check/check.html
 > 빨간색(이미 리스팅됨)이나 파란색(인하우스 협업 중)이 나오면 그 크리에이터는 **건너뛰고** 다음 사람으로 넘어가세요.
 > 패스코드는 팀 리드에게 문의하세요. 한 번 입력하면 저장됩니다.
 
 **English**
-> Before you list anyone, search the handle here first → https://jinwonc.github.io/dalba-challenge/check.html
+> Before you list anyone, search the handle here first → https://jinwonc.github.io/dalba-check/check.html
 > If it comes back red (already listed) or blue (in-house partner), **skip that creator** and move on to the next one.
 > Ask your team lead for the passcode. You only need to enter it once.
 
 **Tiếng Việt**
-> Trước khi list bất kỳ ai, hãy tìm handle tại đây → https://jinwonc.github.io/dalba-challenge/check.html
+> Trước khi list bất kỳ ai, hãy tìm handle tại đây → https://jinwonc.github.io/dalba-check/check.html
 > Nếu kết quả màu đỏ (đã được list) hoặc xanh dương (đối tác in-house), hãy **bỏ qua creator đó** và chuyển sang người tiếp theo.
 > Hỏi trưởng nhóm để lấy mã truy cập. Bạn chỉ cần nhập một lần.
 
