@@ -1,0 +1,27 @@
+name: Video Perf Upsert
+
+# 영상성과_신API테스트 탭 UPSERT (행 위치 보존 + 신규만 하단 추가)
+on:
+  workflow_dispatch:
+    inputs:
+      window:
+        description: '조회 범위: 일수(예: 45) 또는 full(1월~오늘 전체)'
+        required: false
+        default: '45'
+
+jobs:
+  upsert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests gspread google-auth
+      - run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+      - run: python video_perf_upsert.py "${{ github.event.inputs.window }}"

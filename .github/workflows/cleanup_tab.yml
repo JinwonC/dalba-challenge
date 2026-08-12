@@ -1,0 +1,28 @@
+name: Cleanup Tab
+
+# 스프레드시트에서 탭 하나 삭제 (수동)
+on:
+  workflow_dispatch:
+    inputs:
+      spreadsheet_id:
+        description: '스프레드시트 ID'
+        required: true
+        default: '15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o'
+      tab_name:
+        description: '삭제할 탭 이름'
+        required: true
+        default: 'SHOP VIDEO PERFORMANCE'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install gspread google-auth
+      - run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+      - run: python cleanup_tab.py "${{ github.event.inputs.spreadsheet_id }}" "${{ github.event.inputs.tab_name }}"

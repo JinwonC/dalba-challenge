@@ -1,0 +1,47 @@
+name: Live Perf Test
+
+# Shop LIVE Performance(202509) → US매출/지표 시트 '라이브성과' 탭 (수동 실행)
+on:
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '기간 (예: 2026-01-01 ~ 2026-08-07). 비워두면 최근 7일'
+        required: false
+        default: ''
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+
+      - name: Compute range
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            R="${{ github.event.inputs.report_date }}"
+          else
+            S=$(TZ='America/Los_Angeles' date -d '7 days ago' '+%Y-%m-%d')
+            E=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+            R="$S ~ $E"
+          fi
+          echo "r=$R" >> $GITHUB_OUTPUT
+
+      - name: Run live_perf_test.py
+        run: python live_perf_test.py "${{ steps.date.outputs.r }}"

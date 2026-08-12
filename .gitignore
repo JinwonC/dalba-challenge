@@ -1,0 +1,7 @@
+# 구글 서비스 계정 자격증명 — 절대 커밋하지 않는다 (레포가 public)
+service_account.json
+tokens.json
+ads_tokens.json
+
+__pycache__/
+*.pyc

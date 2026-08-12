@@ -1,0 +1,47 @@
+name: Video Perf New API Test
+
+# 신규 202605 Shop Video Performance API 테스트 — '영상성과_신API테스트' 탭에 덤프
+on:
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '기간 (예: 2026-07-20 ~ 2026-07-27). 비워두면 최근 7일'
+        required: false
+        default: ''
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+
+      - name: Compute range
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            R="${{ github.event.inputs.report_date }}"
+          else
+            S=$(TZ='America/Los_Angeles' date -d '7 days ago' '+%Y-%m-%d')
+            E=$(TZ='America/Los_Angeles' date -d 'yesterday' '+%Y-%m-%d')
+            R="$S ~ $E"
+          fi
+          echo "r=$R" >> $GITHUB_OUTPUT
+
+      - name: Run video_perf_new_test.py
+        run: python video_perf_new_test.py "${{ steps.date.outputs.r }}"

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Creator Listing Check · d'Alba</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1C1400;
+    --ink-soft: #6B5020;
+    --line: rgba(140,104,0,0.20);
+    --card: rgba(255,252,240,0.86);
+    --red: #B3261E;
+    --red-bg: #FDECEA;
+    --amber: #9A6400;
+    --amber-bg: #FFF3D6;
+    --green: #1E6B3C;
+    --green-bg: #E8F5EC;
+    --blue: #1F4E79;
+    --blue-bg: #E8F0F8;
+    --purple: #5A2C7C;
+    --purple-bg: #F1E9F7;
+    --orange: #9E4A10;
+    --orange-bg: #FDEDE0;
+  }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    background: linear-gradient(180deg, #F4D991 0%, #FDF6E0 26%, #FFFBF0 55%, #F9E8A8 100%);
+    background-attachment: fixed;
+    padding-bottom: 60px;
+  }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 20px 0 18px; flex-wrap: wrap;
+  }
+  .brand { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 700; }
+  .brand small {
+    display: block; font-family: 'Noto Sans', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px;
+  }
+
+  .langs { display: flex; gap: 4px; }
+  .langs button {
+    font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 6px 11px; border: 1px solid var(--line); background: transparent;
+    color: var(--ink-soft); border-radius: 2px; cursor: pointer;
+  }
+  .langs button[aria-pressed="true"] { background: var(--ink); color: #F4D991; border-color: var(--ink); }
+
+  .me {
+    font: inherit; font-size: 12px; font-weight: 500; padding: 6px 10px;
+    border: 1px solid var(--line); border-radius: 2px; background: #FFFDF6; color: var(--ink);
+    max-width: 200px;
+  }
+
+  .v-self    { background: #F0F0EC;          border-color: rgba(0,0,0,0.14);     color: #4A4638; }
+  .s-self    { color: #4A4638; }
+  .structure {
+    margin-top: 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+    padding: 7px 11px; border-radius: 2px; background: rgba(255,255,255,0.6);
+    display: inline-block; color: var(--ink);
+  }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+    padding: 22px; backdrop-filter: blur(10px); margin-bottom: 16px;
+  }
+
+  label.field { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; }
+
+  input[type="text"], input[type="password"], textarea {
+    width: 100%; font: inherit; font-size: 16px; padding: 13px 15px;
+    border: 1px solid var(--line); border-radius: 2px; background: #FFFDF6; color: var(--ink);
+  }
+  input:focus, textarea:focus { outline: 2px solid rgba(140,104,0,0.35); outline-offset: -1px; }
+  textarea { min-height: 130px; resize: vertical; font-size: 14px; line-height: 1.6; }
+
+  button.primary {
+    font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 12px 22px; border: none; border-radius: 2px;
+    background: var(--ink); color: #F4D991; cursor: pointer;
+  }
+  button.primary:disabled { opacity: 0.45; cursor: default; }
+  button.ghost {
+    font: inherit; font-size: 12px; font-weight: 500; padding: 9px 15px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    border-radius: 2px; cursor: pointer;
+  }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .hint { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .err { font-size: 13px; color: var(--red); margin-top: 10px; }
+
+  /* verdict */
+  .verdict { border-radius: 3px; padding: 18px 20px; border: 1px solid; margin-top: 16px; }
+  .verdict h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .verdict p.sub { font-size: 13px; line-height: 1.65; }
+  .v-partner { background: var(--purple-bg); border-color: rgba(90,44,124,0.3); color: var(--purple); }
+  .v-casting { background: var(--orange-bg); border-color: rgba(158,74,16,0.3); color: var(--orange); }
+  .v-listed  { background: var(--red-bg);   border-color: rgba(179,38,30,0.3);  color: var(--red); }
+  .v-inhouse { background: var(--blue-bg);  border-color: rgba(31,78,121,0.3);  color: var(--blue); }
+  .v-similar { background: var(--amber-bg); border-color: rgba(154,100,0,0.35); color: var(--amber); }
+  .v-new     { background: var(--green-bg); border-color: rgba(30,107,60,0.3);  color: var(--green); }
+
+  .hits { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .hit {
+    background: rgba(255,255,255,0.75); border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 2px; padding: 10px 13px; color: var(--ink); font-size: 13px; line-height: 1.6;
+  }
+  .hit .who { font-weight: 600; }
+  .hit .meta { color: var(--ink-soft); font-size: 12px; }
+  .hit .note { margin-top: 3px; font-size: 12px; color: var(--amber); }
+
+  .tag {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    padding: 2px 6px; border-radius: 2px; margin-left: 6px; vertical-align: 1px;
+  }
+  .tag-o { background: #DCEEE2; color: #1E6B3C; }
+  .tag-x { background: #EFE4E3; color: #8C3A34; }
+  .tag-c { background: #E3E9F2; color: #1F4E79; }
+
+  /* bulk table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  td.status { font-weight: 600; white-space: nowrap; }
+  .s-listed { color: var(--red); } .s-inhouse { color: var(--blue); }
+  .s-partner { color: var(--purple); } .s-casting { color: var(--orange); }
+  .s-similar { color: var(--amber); } .s-new { color: var(--green); }
+  .table-scroll { overflow-x: auto; }
+
+  .summary { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; }
+  .summary b { font-size: 20px; display: block; font-weight: 700; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tabs button {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px;
+    border: 1px solid var(--line); border-bottom: none; background: transparent;
+    color: var(--ink-soft); cursor: pointer; border-radius: 3px 3px 0 0;
+  }
+  .tabs button[aria-pressed="true"] { background: var(--card); color: var(--ink); }
+
+  footer { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 26px; line-height: 1.8; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">Creator Listing Check<small>d'Alba · TikTok Shop Sourcing</small></div>
+    <select id="me" class="me hidden"></select>
+    <div class="langs" id="langs">
+      <button data-lang="ko" aria-pressed="true">한국어</button>
+      <button data-lang="en" aria-pressed="false">English</button>
+      <button data-lang="vi" aria-pressed="false">Tiếng Việt</button>
+    </div>
+  </header>
+
+  <!-- 잠금 화면 -->
+  <section id="lock" class="panel">
+    <label class="field" for="pass" data-i18n="passLabel">팀 패스코드</label>
+    <div class="row">
+      <input type="password" id="pass" style="flex:1 1 240px" autocomplete="current-password">
+      <button class="primary" id="unlock" data-i18n="unlock">열기</button>
+    </div>
+    <p class="hint" style="margin-top:12px" data-i18n="passHint"></p>
+    <p class="err hidden" id="lockErr"></p>
+  </section>
+
+  <!-- 본 화면 -->
+  <main id="app" class="hidden">
+    <div class="tabs">
+      <button data-mode="single" aria-pressed="true" data-i18n="modeSingle">한 명 검색</button>
+      <button data-mode="bulk" aria-pressed="false" data-i18n="modeBulk">여러 명 한번에</button>
+    </div>
+
+    <section id="singlePanel" class="panel">
+      <label class="field" for="q" data-i18n="searchLabel">핸들 또는 틱톡 링크</label>
+      <input type="text" id="q" placeholder="@handle · https://www.tiktok.com/@handle" autocomplete="off" spellcheck="false">
+      <div id="verdict"></div>
+    </section>
+
+    <section id="bulkPanel" class="panel hidden">
+      <label class="field" for="bulk" data-i18n="bulkLabel">핸들 목록 (한 줄에 하나)</label>
+      <textarea id="bulk" spellcheck="false" placeholder="handle1&#10;handle2&#10;https://www.tiktok.com/@handle3"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="runBulk" data-i18n="runBulk">확인</button>
+        <button class="ghost" id="copyNew" data-i18n="copyNew">신규만 복사</button>
+      </div>
+      <div id="bulkOut"></div>
+    </section>
+
+    <footer>
+      <span id="freshness"></span><br>
+      <span data-i18n="footerNote"></span>
+    </footer>
+  </main>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- i18n ---------------- */
+const I18N = {
+  ko: {
+    passLabel: "팀 패스코드",
+    unlock: "열기",
+    passHint: "리스팅 데이터는 암호화되어 있습니다. 패스코드는 팀 리드에게 문의하세요. 한 번 입력하면 이 브라우저에 저장됩니다.",
+    passWrong: "패스코드가 맞지 않습니다.",
+    loadFail: "리스팅 데이터를 불러오지 못했습니다. 아직 첫 동기화가 돌지 않았을 수 있습니다.",
+    modeSingle: "한 명 검색",
+    modeBulk: "여러 명 한번에",
+    searchLabel: "핸들 또는 틱톡 링크",
+    bulkLabel: "핸들 목록 (한 줄에 하나)",
+    runBulk: "확인",
+    copyNew: "신규만 복사",
+    copied: "복사했습니다",
+    mePick: "담당자 선택",
+    noOwner: "담당자 미기재",
+    vSelf: "본인이 이미 리스팅한 크리에이터",
+    vSelfSub: "다른 담당자는 손대지 않았습니다. 본인 기록이니 중복이 아닙니다.",
+    sSelf: "본인",
+    structure: (owners, tabs, first, last) => {
+      const bits = [`담당자 ${owners}명`];
+      if (tabs) bits.push(`제품 탭 ${tabs}곳`);
+      if (first) bits.push(first === last ? first : `${first} → ${last}`);
+      return bits.join(" · ");
+    },
+    vPartner: "이미 유가 협업 중 — 리치아웃 금지",
+    vPartnerSub: "계약·정산이 진행 중이거나 담당자가 배정된 크리에이터입니다. 절대 신규 리치아웃하지 마세요.",
+    vCasting: "이미 제안을 보냈습니다 — 리치아웃 금지",
+    vCastingSub: "캐스팅 단계에서 이미 제안이 나갔습니다. 중복으로 연락하면 안 됩니다.",
+    vListed: "이미 리스팅됨 — 리치아웃 금지",
+    vListedSub: "다른 담당자가 이미 이 크리에이터를 리스팅했습니다. 건너뛰세요.",
+    vInhouse: "이미 협업 중인 크리에이터",
+    vInhouseSub: "인하우스 로스터에 있는 크리에이터입니다. 신규 리치아웃 대상이 아닙니다.",
+    vSimilar: "비슷한 핸들이 이미 있습니다",
+    vSimilarSub: "오타이거나 같은 사람의 다른 계정일 수 있습니다. 아래를 확인한 뒤 진행하세요.",
+    vNew: "신규 — 리스팅 진행 가능",
+    vNewSub: "리스팅 기록에 없는 핸들입니다.",
+    listedOn: "리스팅",
+    contacted: "컨택함",
+    statusLbl: "상태",
+    colHandle: "핸들",
+    colResult: "결과",
+    colDetail: "상세",
+    sListed: "중복",
+    sInhouse: "인하우스",
+    sPartner: "협업중",
+    sCasting: "제안발송",
+    sSimilar: "유사",
+    sNew: "신규",
+    sumNew: "신규",
+    sumDup: "이미 리스팅",
+    sumPartner: "협업·접촉 중",
+    sumOther: "확인 필요",
+    footerNote: "리스팅 전에 반드시 여기서 먼저 확인하세요. 데이터는 구글 시트에서 자동으로 동기화됩니다.",
+    fresh: (t, n) => `데이터 기준 ${t} · 리스팅 ${n.toLocaleString()}건`,
+    emptyBulk: "핸들을 입력해 주세요."
+  },
+  en: {
+    passLabel: "Team passcode",
+    unlock: "Unlock",
+    passHint: "The listing data is encrypted. Ask your team lead for the passcode. It is remembered in this browser once entered.",
+    passWrong: "That passcode is not correct.",
+    loadFail: "Could not load the listing data. The first sync may not have run yet.",
+    modeSingle: "Single check",
+    modeBulk: "Bulk check",
+    searchLabel: "Handle or TikTok link",
+    bulkLabel: "Handles (one per line)",
+    runBulk: "Check",
+    copyNew: "Copy new only",
+    copied: "Copied",
+    mePick: "Your name",
+    noOwner: "no owner",
+    vSelf: "You listed this creator yourself",
+    vSelfSub: "No one else has touched it. This is your own record, not a duplicate.",
+    sSelf: "Yours",
+    structure: (owners, tabs, first, last) => {
+      const bits = [`${owners} owner${owners > 1 ? "s" : ""}`];
+      if (tabs) bits.push(`${tabs} product tab${tabs > 1 ? "s" : ""}`);
+      if (first) bits.push(first === last ? first : `${first} → ${last}`);
+      return bits.join(" · ");
+    },
+    vPartner: "Already a paid partner — do not reach out",
+    vPartnerSub: "This creator is under contract, in payout, or already assigned to a manager. Never send new outreach.",
+    vCasting: "An offer was already sent — do not reach out",
+    vCastingSub: "This creator was already approached at the casting stage. Do not contact them again.",
+    vListed: "Already listed — do not reach out",
+    vListedSub: "Someone else has already listed this creator. Skip it.",
+    vInhouse: "Already an active partner",
+    vInhouseSub: "This creator is on the in-house roster and is not a new outreach target.",
+    vSimilar: "A similar handle already exists",
+    vSimilarSub: "This may be a typo or another account of the same person. Check below before proceeding.",
+    vNew: "New — safe to list",
+    vNewSub: "This handle is not in the listing records.",
+    listedOn: "listed",
+    contacted: "contacted",
+    statusLbl: "status",
+    colHandle: "Handle",
+    colResult: "Result",
+    colDetail: "Detail",
+    sListed: "Duplicate",
+    sInhouse: "In-house",
+    sPartner: "Partner",
+    sCasting: "Offer sent",
+    sSimilar: "Similar",
+    sNew: "New",
+    sumNew: "New",
+    sumDup: "Already listed",
+    sumPartner: "Partner / contacted",
+    sumOther: "Needs review",
+    footerNote: "Always check here before listing. Data syncs automatically from the Google Sheet.",
+    fresh: (t, n) => `Data as of ${t} · ${n.toLocaleString()} listings`,
+    emptyBulk: "Please enter at least one handle."
+  },
+  vi: {
+    passLabel: "Mã truy cập của nhóm",
+    unlock: "Mở",
+    passHint: "Dữ liệu listing được mã hoá. Hãy hỏi trưởng nhóm để lấy mã. Mã sẽ được ghi nhớ trên trình duyệt này.",
+    passWrong: "Mã truy cập không đúng.",
+    loadFail: "Không tải được dữ liệu listing. Có thể lần đồng bộ đầu tiên chưa chạy.",
+    modeSingle: "Kiểm tra một người",
+    modeBulk: "Kiểm tra hàng loạt",
+    searchLabel: "Handle hoặc link TikTok",
+    bulkLabel: "Danh sách handle (mỗi dòng một handle)",
+    runBulk: "Kiểm tra",
+    copyNew: "Chỉ sao chép handle mới",
+    copied: "Đã sao chép",
+    mePick: "Tên của bạn",
+    noOwner: "chưa ghi người phụ trách",
+    vSelf: "Chính bạn đã list creator này",
+    vSelfSub: "Chưa ai khác đụng vào. Đây là bản ghi của bạn, không phải trùng lặp.",
+    sSelf: "Của bạn",
+    structure: (owners, tabs, first, last) => {
+      const bits = [`${owners} người phụ trách`];
+      if (tabs) bits.push(`${tabs} tab sản phẩm`);
+      if (first) bits.push(first === last ? first : `${first} → ${last}`);
+      return bits.join(" · ");
+    },
+    vPartner: "Đang hợp tác trả phí — không liên hệ",
+    vPartnerSub: "Creator này đang có hợp đồng, đang thanh toán, hoặc đã có người phụ trách. Tuyệt đối không liên hệ mới.",
+    vCasting: "Đã gửi đề nghị — không liên hệ",
+    vCastingSub: "Creator này đã được tiếp cận ở bước casting. Không liên hệ lại.",
+    vListed: "Đã được list — không liên hệ",
+    vListedSub: "Người khác đã list creator này rồi. Hãy bỏ qua.",
+    vInhouse: "Đang hợp tác",
+    vInhouseSub: "Creator này nằm trong danh sách in-house, không phải mục tiêu liên hệ mới.",
+    vSimilar: "Đã có handle tương tự",
+    vSimilarSub: "Có thể là lỗi chính tả hoặc tài khoản khác của cùng một người. Hãy kiểm tra bên dưới.",
+    vNew: "Mới — có thể list",
+    vNewSub: "Handle này chưa có trong dữ liệu listing.",
+    listedOn: "đã list",
+    contacted: "đã liên hệ",
+    statusLbl: "trạng thái",
+    colHandle: "Handle",
+    colResult: "Kết quả",
+    colDetail: "Chi tiết",
+    sListed: "Trùng",
+    sInhouse: "In-house",
+    sPartner: "Đối tác",
+    sCasting: "Đã gửi đề nghị",
+    sSimilar: "Tương tự",
+    sNew: "Mới",
+    sumNew: "Mới",
+    sumDup: "Đã list",
+    sumPartner: "Đối tác / đã liên hệ",
+    sumOther: "Cần xem lại",
+    footerNote: "Luôn kiểm tra tại đây trước khi list. Dữ liệu tự động đồng bộ từ Google Sheet.",
+    fresh: (t, n) => `Dữ liệu tính đến ${t} · ${n.toLocaleString()} listing`,
+    emptyBulk: "Vui lòng nhập ít nhất một handle."
+  }
+};
+
+let lang = localStorage.getItem("dalba.lang") || "ko";
+const t = (k) => I18N[lang][k];
+
+/* ---------------- handle 정규화 (빌더의 규칙과 동일해야 한다) ---------------- */
+function normalizeHandle(raw) {
+  let s = (raw || "").trim();
+  if (!s) return "";
+  const m = s.match(/(?:tiktok\.com|instagram\.com)\/+@?([^/?#\s]+)/i);
+  if (m) s = m[1];
+  s = s.split("?")[0].split("#")[0];
+  s = s.trim().replace(/^@+/, "").replace(/\/+$/, "").toLowerCase();
+  return s.replace(/[^a-z0-9._]/g, "");
+}
+const squash = (h) => h.replace(/[._]/g, "");
+
+/* ---------------- 복호화 ---------------- */
+async function decryptIndex(passcode) {
+  const res = await fetch("data/listings.enc.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error("fetch");
+  const env = await res.json();
+
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const baseKey = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(passcode), "PBKDF2", false, ["deriveKey"]
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64(env.kdf.salt), iterations: env.kdf.iterations, hash: env.kdf.hash },
+    baseKey, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+  );
+  // 패스코드가 틀리면 GCM 인증 태그 검증에서 예외가 난다.
+  const packed = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: b64(env.iv) }, key, b64(env.ct)
+  );
+
+  let bytes = new Uint8Array(packed);
+  if (env.compression === "gzip") {
+    const ds = new DecompressionStream("gzip");
+    bytes = new Uint8Array(
+      await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer()
+    );
+  }
+  return { payload: JSON.parse(new TextDecoder().decode(bytes)), meta: env };
+}
+
+/* ---------------- 인덱스 ---------------- */
+const DB = { tabs: [], byHandle: new Map(), bySquash: new Map(), byLen: new Map(),
+             owners: [], meta: null };
+let me = localStorage.getItem("dalba.me") || "";
+
+function buildIndex(payload, meta) {
+  DB.tabs = payload.tabs;
+  DB.meta = meta;
+  for (const r of payload.records) {
+    if (!DB.byHandle.has(r.h)) DB.byHandle.set(r.h, []);
+    DB.byHandle.get(r.h).push(r);
+
+    const sq = squash(r.h);
+    if (!DB.bySquash.has(sq)) DB.bySquash.set(sq, new Set());
+    DB.bySquash.get(sq).add(r.h);
+  }
+  // 오타 탐색은 길이 ±2 범위만 비교하면 충분하다.
+  for (const h of DB.byHandle.keys()) {
+    if (!DB.byLen.has(h.length)) DB.byLen.set(h.length, []);
+    DB.byLen.get(h.length).push(h);
+  }
+
+  const owners = new Set();
+  for (const r of payload.records) {
+    if (r.k === "sourcing") {
+      const o = ownerOf(r);
+      if (o) owners.add(o);
+    }
+  }
+  DB.owners = [...owners].sort((a, b) => a.localeCompare(b));
+}
+
+/** 편집거리가 limit 이하인지만 판정하고 넘으면 즉시 포기한다. */
+function withinDistance(a, b, limit) {
+  if (Math.abs(a.length - b.length) > limit) return false;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > limit) return false;
+    prev = cur;
+  }
+  return prev[b.length] <= limit;
+}
+
+function findSimilar(norm) {
+  const out = new Set();
+
+  // 1) 점·밑줄만 다른 경우 (glow.by.rosa ↔ glowbyrosa)
+  const sq = DB.bySquash.get(squash(norm));
+  if (sq) for (const h of sq) if (h !== norm) out.add(h);
+
+  // 2) 한두 글자 오타
+  const limit = norm.length >= 12 ? 2 : 1;
+  for (let len = norm.length - limit; len <= norm.length + limit; len++) {
+    for (const h of DB.byLen.get(len) || []) {
+      if (h === norm || out.has(h)) continue;
+      if (withinDistance(norm, h, limit)) out.add(h);
+      if (out.size >= 8) return [...out];
+    }
+  }
+  return [...out];
+}
+
+// 여러 곳에 걸리면 가장 강한 신호를 헤드라인으로 쓴다.
+// 유가 협업 > 인하우스 > 제안 발송 > 단순 리스팅 순으로 "접촉하면 안 되는 정도"가 세다.
+const KIND_ORDER = ["partner", "inhouse", "casting", "sourcing"];
+const KIND_VERDICT = { partner: "partner", inhouse: "inhouse", casting: "casting", sourcing: "listed" };
+const kindRank = (r) => {
+  const i = KIND_ORDER.indexOf(r.k);
+  return i === -1 ? KIND_ORDER.length : i;
+};
+
+function judge(input) {
+  const norm = normalizeHandle(input);
+  if (!norm) return null;
+
+  const hits = (DB.byHandle.get(norm) || []).slice().sort((a, b) => kindRank(a) - kindRank(b));
+  if (hits.length) {
+    let kind = KIND_VERDICT[hits[0].k] || "listed";
+    // 본인만 리스팅한 건 중복이 아니다 — 시트 조건부서식과 같은 규칙.
+    if (kind === "listed" && me) {
+      const others = hits.filter((r) => ownerOf(r) !== me);
+      if (!others.length) kind = "self";
+    }
+    return { norm, kind, hits, similar: [] };
+  }
+
+  const similar = findSimilar(norm);
+  if (similar.length) {
+    const simHits = similar.flatMap((h) => DB.byHandle.get(h) || []);
+    return { norm, kind: "similar", hits: simHits, similar };
+  }
+  return { norm, kind: "new", hits: [], similar: [] };
+}
+
+/* ---------------- 렌더 ---------------- */
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/** 누가 잡았는지 — 담당자 컬럼이 있으면 그걸 쓴다.
+ *  구 시트의 "(new) ..." 탭은 담당자별로 나뉘어 있어 탭 이름이 곧 담당자다. */
+function ownerOf(r) {
+  const tab = DB.tabs[r.t];
+  if (r.k === "inhouse") return r.m ? `${r.m} (in-house)` : "in-house";
+  if (r.m) return r.m;
+  // duplicate 탭은 여러 담당자의 행을 모아둔 것이라 탭 이름이 담당자가 아니다.
+  // 담당자 칸이 비어 있으면 이름을 지어내지 않는다.
+  if (!tab || /^duplicate$/i.test(tab.n)) return "";
+  return tabOwner(tab.n);
+}
+
+const tabOwner = (name) => name.replace(/^\s*\(\s*new\s*\)\s*[-–·]?\s*/i, "").trim() || name;
+
+function whereOf(r) {
+  const tab = DB.tabs[r.t];
+  if (!tab) return "";
+  // duplicate 탭 레코드는 어느 제품 탭에서 왔는지가 탭 이름보다 중요하다.
+  const inner = r.p || (r.m ? tab.n : "");
+  return inner && !/^duplicate$/i.test(inner) ? `${tab.s} · ${inner}` : tab.s;
+}
+
+function renderHit(r) {
+  const who = ownerOf(r) || t("noOwner");
+  const bits = [];
+  const where = whereOf(r);
+  if (where) bits.push(esc(where));
+  if (r.l) bits.push(`${t("listedOn")} ${esc(r.l)}`);
+  if (r.c) bits.push(`${t("contacted")} ${esc(r.c)}`);
+  if (r.s) bits.push(`${t("statusLbl")}: ${esc(r.s)}`);
+
+  let tags = "";
+  if (r.o === "O") tags += `<span class="tag tag-o">O</span>`;
+  if (r.o === "X") tags += `<span class="tag tag-x">X</span>`;
+  if (r.c) tags += `<span class="tag tag-c">DM</span>`;
+
+  return `<div class="hit">
+    <div><span class="who">${esc(who)}</span>${tags}</div>
+    ${bits.length ? `<div class="meta">${bits.join(" · ")}</div>` : ""}
+    ${r.n ? `<div class="note">“${esc(r.n)}”</div>` : ""}
+  </div>`;
+}
+
+/** 중복이 어떻게 생겼는지 — 담당자 몇 명이 제품 탭 몇 곳에, 언제부터 언제까지. */
+function structureOf(hits) {
+  const owners = new Set(), tabs = new Set(), dates = [];
+  for (const r of hits) {
+    const o = ownerOf(r);
+    if (o) owners.add(o);
+    if (r.p) tabs.add(r.p);
+    if (r.l) dates.push(r.l);
+  }
+  if (owners.size < 2 && tabs.size < 2) return "";
+  dates.sort();
+  return t("structure")(owners.size, tabs.size, dates[0] || "", dates[dates.length - 1] || "");
+}
+
+function renderVerdict(v) {
+  const box = document.getElementById("verdict");
+  if (!v) { box.innerHTML = ""; return; }
+
+  const titles = { partner: "vPartner", casting: "vCasting", listed: "vListed",
+                   inhouse: "vInhouse", self: "vSelf", similar: "vSimilar", new: "vNew" };
+  const subs = { partner: "vPartnerSub", casting: "vCastingSub", listed: "vListedSub",
+                 inhouse: "vInhouseSub", self: "vSelfSub", similar: "vSimilarSub", new: "vNewSub" };
+
+  let extra = "";
+  if (v.kind === "similar") {
+    extra = `<div class="hits">${v.similar
+      .map((h) => `<div class="hit"><span class="who">@${esc(h)}</span>${
+        (DB.byHandle.get(h) || [])
+          .map((r) => `<div class="meta">${esc([ownerOf(r), whereOf(r)].filter(Boolean).join(" · "))}</div>`)
+          .join("")
+      }</div>`).join("")}</div>`;
+  } else if (v.hits.length) {
+    extra = `<div class="hits">${v.hits.map(renderHit).join("")}</div>`;
+  }
+
+  const struct = v.similar.length ? "" : structureOf(v.hits);
+  box.innerHTML = `<div class="verdict v-${v.kind}">
+    <h2>${esc(t(titles[v.kind]))}</h2>
+    <p class="sub">@${esc(v.norm)} — ${esc(t(subs[v.kind]))}</p>
+    ${struct ? `<div class="structure">${esc(struct)}</div>` : ""}
+    ${extra}
+  </div>`;
+}
+
+function renderBulk(results) {
+  const out = document.getElementById("bulkOut");
+  const labels = { partner: "sPartner", casting: "sCasting", listed: "sListed",
+                   inhouse: "sInhouse", self: "sSelf", similar: "sSimilar", new: "sNew" };
+
+  const countOf = (...kinds) => results.filter((r) => kinds.includes(r.v.kind)).length;
+  const nNew = countOf("new", "self");
+  const nDup = countOf("listed");
+  const nPartner = countOf("partner", "inhouse", "casting");
+  const nOther = countOf("similar");
+
+  const rows = results.map(({ raw, v }) => {
+    let detail = "";
+    if (v.kind === "similar") {
+      detail = v.similar.map((h) => "@" + h).join(", ");
+    } else if (v.hits.length) {
+      detail = v.hits
+        .map((r) => (ownerOf(r) || t("noOwner")) + (r.p ? ` · ${r.p}` : "") + (r.l ? ` · ${r.l}` : ""))
+        .join(" / ");
+    }
+    return `<tr>
+      <td><code>${esc(v.norm || raw)}</code></td>
+      <td class="status s-${v.kind}">${esc(t(labels[v.kind]))}</td>
+      <td>${esc(detail)}</td>
+    </tr>`;
+  }).join("");
+
+  out.innerHTML = `
+    <div class="summary">
+      <div><b class="s-new">${nNew}</b>${esc(t("sumNew"))}</div>
+      <div><b class="s-listed">${nDup}</b>${esc(t("sumDup"))}</div>
+      <div><b class="s-partner">${nPartner}</b>${esc(t("sumPartner"))}</div>
+      <div><b class="s-similar">${nOther}</b>${esc(t("sumOther"))}</div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${esc(t("colHandle"))}</th><th>${esc(t("colResult"))}</th><th>${esc(t("colDetail"))}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+/* ---------------- 화면 배선 ---------------- */
+let lastBulk = [];
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const k = el.getAttribute("data-i18n");
+    if (I18N[lang][k] && typeof I18N[lang][k] === "string") el.textContent = I18N[lang][k];
+  });
+  document.querySelectorAll("#langs button").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+
+  const sel = document.getElementById("me");
+  if (DB.owners.length) {
+    sel.innerHTML = `<option value="">${esc(t("mePick"))}</option>` +
+      DB.owners.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
+    sel.value = DB.owners.includes(me) ? me : "";
+    sel.classList.remove("hidden");
+  }
+  if (DB.meta) {
+    const d = new Date(DB.meta.generated_at);
+    const stamp = isNaN(d) ? DB.meta.generated_at : d.toLocaleString(lang === "ko" ? "ko-KR" : lang === "vi" ? "vi-VN" : "en-US");
+    document.getElementById("freshness").textContent = I18N[lang].fresh(stamp, DB.meta.records);
+  }
+  const q = document.getElementById("q");
+  if (q && q.value.trim()) renderVerdict(judge(q.value));
+  if (lastBulk.length) renderBulk(lastBulk);
+}
+
+document.getElementById("me").addEventListener("change", (e) => {
+  me = e.target.value;
+  localStorage.setItem("dalba.me", me);
+  const q = document.getElementById("q");
+  if (q.value.trim()) renderVerdict(judge(q.value));
+  if (lastBulk.length) {
+    lastBulk = lastBulk.map(({ raw }) => ({ raw, v: judge(raw) })).filter((r) => r.v);
+    renderBulk(lastBulk);
+  }
+});
+
+document.getElementById("langs").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  lang = b.dataset.lang;
+  localStorage.setItem("dalba.lang", lang);
+  applyLang();
+});
+
+async function unlock(passcode, fromStorage) {
+  const err = document.getElementById("lockErr");
+  const btn = document.getElementById("unlock");
+  err.classList.add("hidden");
+  btn.disabled = true;
+  try {
+    const { payload, meta } = await decryptIndex(passcode);
+    buildIndex(payload, meta);
+    localStorage.setItem("dalba.pass", passcode);
+    document.getElementById("lock").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    applyLang();
+    document.getElementById("q").focus();
+  } catch (e) {
+    if (!fromStorage) {
+      err.textContent = e && e.message === "fetch" ? t("loadFail") : t("passWrong");
+      err.classList.remove("hidden");
+    }
+    localStorage.removeItem("dalba.pass");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById("unlock").addEventListener("click", () =>
+  unlock(document.getElementById("pass").value.trim(), false));
+document.getElementById("pass").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("unlock").click();
+});
+
+document.querySelector(".tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const single = b.dataset.mode === "single";
+  document.querySelectorAll(".tabs button").forEach((x) =>
+    x.setAttribute("aria-pressed", String(x === b)));
+  document.getElementById("singlePanel").classList.toggle("hidden", !single);
+  document.getElementById("bulkPanel").classList.toggle("hidden", single);
+});
+
+let debounce;
+document.getElementById("q").addEventListener("input", (e) => {
+  clearTimeout(debounce);
+  const val = e.target.value;
+  debounce = setTimeout(() => renderVerdict(val.trim() ? judge(val) : null), 120);
+});
+
+document.getElementById("runBulk").addEventListener("click", () => {
+  const lines = document.getElementById("bulk").value
+    .split(/[\n,;\t]+/).map((s) => s.trim()).filter(Boolean);
+  if (!lines.length) { alert(t("emptyBulk")); return; }
+  const seen = new Set();
+  lastBulk = [];
+  for (const raw of lines) {
+    const v = judge(raw);
+    if (!v || seen.has(v.norm)) continue;
+    seen.add(v.norm);
+    lastBulk.push({ raw, v });
+  }
+  renderBulk(lastBulk);
+});
+
+document.getElementById("copyNew").addEventListener("click", async () => {
+  const fresh = lastBulk.filter((r) => r.v.kind === "new").map((r) => r.v.norm);
+  await navigator.clipboard.writeText(fresh.join("\n"));
+  const b = document.getElementById("copyNew");
+  const old = b.textContent;
+  b.textContent = t("copied");
+  setTimeout(() => { b.textContent = old; }, 1400);
+});
+
+applyLang();
+const saved = localStorage.getItem("dalba.pass");
+if (saved) unlock(saved, true);
+</script>
+</body>
+</html>

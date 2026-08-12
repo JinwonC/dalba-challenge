@@ -1,0 +1,69 @@
+name: Order Finance Tabs
+
+# 새 스프레드시트(1fVWfi...) 탭들:
+#  - Get Transactions by Order / Get Price Detail  (주문당 호출 — 무거움)
+#  - Get Order Detail                              (50건 배치 — 가벼움)
+#  - Get Coupon / Get Activity                     (프로모션 성과)
+#  - Get Product SKPP Detail                       (상품 진단 스냅샷)
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'finance | detail | promo | skpp | both | all'
+        required: false
+        default: 'detail'
+      finance_range:
+        description: '거래/가격 기간 (예: 2026-07-01 ~ 2026-08-07)'
+        required: false
+        default: '2026-07-01 ~ 2026-08-07'
+      detail_range:
+        description: '주문상세 기간 (예: 2026-07-01 ~ 2026-08-07)'
+        required: false
+        default: '2026-07-01 ~ 2026-08-07'
+      promo_range:
+        description: '쿠폰/프로모션 기간 (예: 2026-07-01 ~ 2026-08-07)'
+        required: false
+        default: '2026-07-01 ~ 2026-08-07'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: claude/bypass-sheets-timeout-8nw21
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests gspread google-auth
+
+      - name: Write secret files
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          echo '${{ secrets.TOKENS_JSON }}' > tokens.json
+
+      - name: Run order_detail.py (Get Order Detail 탭)
+        if: ${{ contains(fromJSON('["detail","both","all"]'), github.event.inputs.target) }}
+        run: python order_detail.py "${{ github.event.inputs.detail_range }}"
+
+      - name: Run coupons.py (Get Coupon 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["promo","all"]'), github.event.inputs.target) }}
+        run: python coupons.py "${{ github.event.inputs.promo_range }}"
+
+      - name: Run activities.py (Get Activity 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["promo","all"]'), github.event.inputs.target) }}
+        run: python activities.py "${{ github.event.inputs.promo_range }}"
+
+      - name: Run product_skpp.py (Get Product SKPP Detail 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["skpp","all"]'), github.event.inputs.target) }}
+        run: python product_skpp.py
+
+      - name: Run finance_transactions.py (Transactions + Price Detail 탭)
+        if: ${{ !cancelled() && contains(fromJSON('["finance","both","all"]'), github.event.inputs.target) }}
+        run: python finance_transactions.py "${{ github.event.inputs.finance_range }}"
