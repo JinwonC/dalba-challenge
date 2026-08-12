@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>d'Alba Spotlight Day Challenge · Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    color: #2A1F00;
+    min-height: 100vh;
+    background: linear-gradient(180deg,
+      #F4D991 0%, #F8E8B0 15%, #FDF6E0 32%,
+      #FFFBF0 48%, #FDF5DC 64%, #F9E8A8 80%, #F4D991 100%
+    );
+    background-attachment: fixed;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 52px;
+    background: rgba(255,252,240,0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(180,140,40,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 22px; color: #1C1400;
+    text-decoration: none; letter-spacing: 0.02em;
+  }
+  .nav-meta { font-size: 11px; color: #8B6800; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; }
+
+  .hero { padding: 56px 24px 36px; text-align: center; }
+  .hero-eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.22em;
+    text-transform: uppercase; color: #8B6800; margin-bottom: 18px;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 4.6vw, 52px);
+    font-weight: 900; line-height: 1.1; letter-spacing: -0.5px;
+    color: #1C1400; margin-bottom: 12px;
+  }
+  .hero-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(15px, 1.8vw, 20px);
+    font-weight: 400; font-style: italic; color: #7A5500;
+  }
+  .updated {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 22px; padding: 8px 18px; border-radius: 999px;
+    background: rgba(255,252,240,0.85);
+    border: 1px solid rgba(180,140,40,0.25);
+    font-size: 12px; color: #5A4518; font-weight: 500;
+  }
+  .updated .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #2E9E5B; flex: none;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .stats {
+    display: flex; justify-content: center; gap: 14px;
+    flex-wrap: wrap; padding: 0 24px 8px;
+  }
+  .stat {
+    background: rgba(255,252,240,0.85);
+    border: 1px solid rgba(180,140,40,0.22);
+    border-radius: 14px; padding: 16px 28px; text-align: center; min-width: 140px;
+  }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #1C1400; }
+  .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8B6800; margin-top: 5px; }
+
+  /* PODIUM */
+  .podium-wrap { max-width: 860px; margin: 40px auto 0; padding: 0 24px; }
+  .podium {
+    display: flex; align-items: flex-end; justify-content: center; gap: 16px;
+  }
+  .podium-col { flex: 1; max-width: 240px; text-align: center; }
+  .podium-card {
+    background: rgba(255,252,240,0.92);
+    border: 1px solid rgba(180,140,40,0.28);
+    border-radius: 18px 18px 0 0;
+    padding: 26px 14px 20px;
+    position: relative;
+  }
+  .podium-col.first .podium-card {
+    background: linear-gradient(180deg, #FFF6D6 0%, #FFFCF0 100%);
+    border-color: rgba(180,140,40,0.5);
+    box-shadow: 0 12px 34px rgba(180,140,40,0.22);
+  }
+  .medal { font-size: 30px; line-height: 1; }
+  .podium-col.first .medal { font-size: 40px; }
+  .podium-handle {
+    font-weight: 700; font-size: 14px; color: #1C1400;
+    margin-top: 10px; word-break: break-all;
+  }
+  .podium-handle a { color: inherit; text-decoration: none; }
+  .podium-handle a:hover { text-decoration: underline; }
+  .podium-gmv {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700; color: #8B6800; margin-top: 6px;
+  }
+  .podium-col.first .podium-gmv { font-size: 30px; color: #6E5200; }
+  .podium-posts { font-size: 11px; color: #7A6A40; margin-top: 4px; }
+  .podium-base {
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(180deg, #E8C56A, #D9B24E);
+    border: 1px solid rgba(150,110,20,0.35); border-top: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-weight: 900; color: rgba(90,60,0,0.55);
+  }
+  .podium-col.first  .podium-base { height: 84px; font-size: 34px; }
+  .podium-col.second .podium-base { height: 58px; font-size: 26px; }
+  .podium-col.third  .podium-base { height: 40px; font-size: 22px; }
+
+  /* TABLE */
+  .board { max-width: 860px; margin: 44px auto 0; padding: 0 24px 20px; }
+  .board-title {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+    color: #1C1400; margin-bottom: 14px; text-align: center;
+  }
+  .table-card {
+    background: rgba(255,252,240,0.92);
+    border: 1px solid rgba(180,140,40,0.25);
+    border-radius: 16px; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 480px; }
+  thead th {
+    text-align: left; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: #8B6800;
+    padding: 14px 18px 10px; border-bottom: 1px solid rgba(180,140,40,0.22);
+  }
+  thead th.num, td.num { text-align: right; }
+  tbody td { padding: 12px 18px; border-bottom: 1px solid rgba(180,140,40,0.12); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.top3 { background: rgba(244,217,145,0.28); }
+  tbody tr.zero td { color: #9A8A60; }
+  .rank-cell { font-family: 'Playfair Display', serif; font-weight: 700; width: 52px; color: #6E5200; }
+  .handle-cell { font-weight: 600; }
+  .handle-cell a { color: inherit; text-decoration: none; }
+  .handle-cell a:hover { text-decoration: underline; }
+  .gmv-cell { font-weight: 700; color: #1C1400; }
+  tr.zero .gmv-cell { font-weight: 400; }
+
+  .board-note { text-align: center; font-size: 12px; color: #7A6A40; margin-top: 14px; line-height: 1.7; }
+
+  footer {
+    text-align: center; padding: 40px 24px 48px;
+    font-size: 11px; color: #8B7A50; letter-spacing: 0.06em;
+  }
+  footer a { color: #8B6800; }
+
+  @media (max-width: 640px) {
+    nav { padding: 12px 20px; }
+    .podium { gap: 8px; }
+    .podium-card { padding: 18px 8px 14px; }
+    .podium-gmv { font-size: 19px; }
+    .podium-col.first .podium-gmv { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">d'Alba</a>
+  <div class="nav-meta">Live Leaderboard</div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">d'Alba Piedmont · TikTok Shop</div>
+  <h1 class="hero-title">Spotlight Day Challenge 🏆</h1>
+  <p class="hero-subtitle" id="campaign-dates">Aug 4 – Sep 6, 2026</p>
+  <div class="updated"><span class="dot"></span><span id="updated-text">Loading…</span></div>
+</section>
+
+<section class="stats" id="stats"></section>
+
+<div class="podium-wrap">
+  <div class="podium" id="podium"></div>
+</div>
+
+<section class="board">
+  <h2 class="board-title">Full Rankings</h2>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th class="rank-cell">#</th>
+          <th>Creator</th>
+          <th class="num">GMV</th>
+          <th class="num">Videos</th>
+        </tr>
+      </thead>
+      <tbody id="board-body"></tbody>
+    </table>
+  </div>
+  <p class="board-note" id="board-note"></p>
+</section>
+
+<footer>
+  GMV refreshes every hour · <a id="join-link" href="#" target="_blank" rel="noopener">Join the challenge</a>
+</footer>
+
+<script>
+  const fmtUSD = n => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const tiktokUrl = h => 'https://www.tiktok.com/@' + encodeURIComponent(h);
+  const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function render(data) {
+    const rows = [...data.leaderboard].sort((a, b) => b.gmv - a.gmv || b.posts - a.posts);
+
+    const ts = new Date(data.updated_at);
+    document.getElementById('updated-text').textContent =
+      'Updated ' + ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+
+    const totalGmv = rows.reduce((s, r) => s + r.gmv, 0);
+    const totalPosts = rows.reduce((s, r) => s + r.posts, 0);
+    document.getElementById('stats').innerHTML = [
+      [fmtUSD(totalGmv), 'Total GMV'],
+      [data.joined_total, 'Creators Joined'],
+      [data.videos_total ?? totalPosts, 'Videos Posted'],
+    ].map(([v, l]) => `<div class="stat"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`).join('');
+
+    const medals = ['🥇', '🥈', '🥉'];
+    const order = [['second', 1], ['first', 0], ['third', 2]];
+    document.getElementById('podium').innerHTML = order.map(([cls, i]) => {
+      const r = rows[i];
+      if (!r) return '';
+      return `<div class="podium-col ${cls}">
+        <div class="podium-card">
+          <div class="medal">${medals[i]}</div>
+          <div class="podium-handle"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></div>
+          <div class="podium-gmv">${fmtUSD(r.gmv)}</div>
+          <div class="podium-posts">${r.posts} video${r.posts === 1 ? '' : 's'}</div>
+        </div>
+        <div class="podium-base">${i + 1}</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('board-body').innerHTML = rows.map((r, i) =>
+      `<tr class="${i < 3 ? 'top3' : ''} ${r.gmv === 0 ? 'zero' : ''}">
+        <td class="rank-cell">${i + 1}</td>
+        <td class="handle-cell"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></td>
+        <td class="num gmv-cell">${fmtUSD(r.gmv)}</td>
+        <td class="num">${r.posts}</td>
+      </tr>`
+    ).join('');
+
+    const silent = data.joined_total - rows.length;
+    document.getElementById('board-note').textContent =
+      silent > 0 ? `+ ${silent} more creators have joined and haven't posted yet. Rankings show creators with at least one video.` : '';
+
+    if (data.campaign?.join_link) document.getElementById('join-link').href = data.campaign.join_link;
+    if (data.campaign?.start && data.campaign?.end) {
+      const f = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      document.getElementById('campaign-dates').textContent =
+        `${f(data.campaign.start)} – ${f(data.campaign.end)}, ${data.campaign.end.slice(0, 4)}`;
+    }
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('data/leaderboard.json?t=' + Date.now(), { cache: 'no-store' });
+      render(await res.json());
+    } catch (e) {
+      document.getElementById('updated-text').textContent = 'Could not load leaderboard data';
+    }
+  }
+
+  load();
+  setInterval(load, 5 * 60 * 1000); // re-fetch every 5 min; data itself refreshes hourly
+</script>
+
+</body>
+</html>
