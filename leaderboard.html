@@ -82,6 +82,56 @@
   .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #1C1400; }
   .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8B6800; margin-top: 5px; }
 
+  /* REWARD TIERS */
+  .tiers { max-width: 860px; margin: 36px auto 0; padding: 0 24px; }
+  .tiers-title {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+    color: #1C1400; margin-bottom: 14px; text-align: center;
+  }
+  .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .tier-card {
+    background: rgba(255,252,240,0.92);
+    border: 1px solid rgba(180,140,40,0.28);
+    border-radius: 16px; padding: 20px 18px; text-align: center;
+  }
+  .tier-card.gold {
+    background: linear-gradient(180deg, #FFF6D6 0%, #FFFCF0 100%);
+    border-color: rgba(180,140,40,0.5);
+  }
+  .tier-goal { font-size: 12px; font-weight: 600; color: #5A4518; }
+  .tier-goal strong { color: #2E9E5B; font-weight: 700; }
+  .tier-payout {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px; font-weight: 900; color: #6E5200; margin: 8px 0 2px;
+  }
+  .tier-payout-label { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8B6800; }
+  .tier-spots { margin-top: 14px; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+  .spot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1.5px solid rgba(150,110,20,0.4); background: transparent;
+  }
+  .spot.filled { background: #D9A514; border-color: #B8890A; }
+  .tier-spots-label { font-size: 11px; color: #7A6A40; margin-top: 7px; }
+
+  /* PROGRESS BAR */
+  .prog { display: flex; align-items: center; gap: 8px; min-width: 150px; }
+  .prog-track {
+    flex: 1; height: 7px; border-radius: 99px;
+    background: rgba(180,140,40,0.16); overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #E8C56A, #C9940B);
+  }
+  .prog-label { font-size: 11px; color: #7A6A40; white-space: nowrap; }
+  .tier-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    background: linear-gradient(90deg, #E8C56A, #D9B24E);
+    border: 1px solid rgba(150,110,20,0.35);
+    font-size: 11px; font-weight: 700; color: #4A3600; white-space: nowrap;
+  }
+  .podium-next { font-size: 10.5px; color: #2E7D48; font-weight: 600; margin-top: 7px; }
+
   /* PODIUM */
   .podium-wrap { max-width: 860px; margin: 40px auto 0; padding: 0 24px; }
   .podium {
@@ -136,7 +186,7 @@
     border: 1px solid rgba(180,140,40,0.25);
     border-radius: 16px; overflow-x: auto;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 480px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 660px; }
   thead th {
     text-align: left; font-size: 10px; font-weight: 600;
     letter-spacing: 0.16em; text-transform: uppercase; color: #8B6800;
@@ -168,6 +218,7 @@
     .podium-card { padding: 18px 8px 14px; }
     .podium-gmv { font-size: 19px; }
     .podium-col.first .podium-gmv { font-size: 23px; }
+    .tier-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -187,6 +238,11 @@
 
 <section class="stats" id="stats"></section>
 
+<section class="tiers">
+  <h2 class="tiers-title">🎁 Reward Tiers</h2>
+  <div class="tier-grid" id="tier-grid"></div>
+</section>
+
 <div class="podium-wrap">
   <div class="podium" id="podium"></div>
 </div>
@@ -201,6 +257,7 @@
           <th>Creator</th>
           <th class="num">GMV</th>
           <th class="num">Videos</th>
+          <th>Reward Progress</th>
         </tr>
       </thead>
       <tbody id="board-body"></tbody>
@@ -233,6 +290,38 @@
       [data.videos_total ?? totalPosts, 'Videos Posted'],
     ].map(([v, l]) => `<div class="stat"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`).join('');
 
+    // Reward tiers: assign each creator (GMV desc) the highest tier they've
+    // reached that still has spots left; overflow falls to the next tier down.
+    const tiers = [...(data.tiers || [])].sort((a, b) => b.level_gmv - a.level_gmv);
+    const spotsLeft = tiers.map(t => t.limit);
+    rows.forEach(r => {
+      r.tier = null;
+      for (let t = 0; t < tiers.length; t++) {
+        if (r.gmv >= tiers[t].level_gmv && spotsLeft[t] > 0) { spotsLeft[t]--; r.tier = tiers[t]; break; }
+      }
+      // next threshold to chase: cheapest tier above what they already hold
+      r.next = [...tiers].reverse().find(t => t.level_gmv > (r.tier?.level_gmv ?? 0) && r.gmv < t.level_gmv) || null;
+    });
+
+    document.getElementById('tier-grid').innerHTML = tiers.map((t, i) => {
+      const claimed = t.limit - spotsLeft[i];
+      const dots = Array.from({ length: t.limit }, (_, d) =>
+        `<span class="spot ${d < claimed ? 'filled' : ''}"></span>`).join('');
+      return `<div class="tier-card ${i === 0 ? 'gold' : ''}">
+        <div class="tier-goal">Reach <strong>${fmtUSD(t.level_gmv).replace('.00', '')}</strong> Video GMV</div>
+        <div class="tier-payout">${fmtUSD(t.payout).replace('.00', '')}</div>
+        <div class="tier-payout-label">Cash Reward</div>
+        <div class="tier-spots">${dots}</div>
+        <div class="tier-spots-label">${claimed} of ${t.limit} spot${t.limit === 1 ? '' : 's'} claimed</div>
+      </div>`;
+    }).join('');
+
+    const shortUSD = n => fmtUSD(n).replace(/\.00$/, '');
+    const nextLine = r => {
+      if (!r.next) return r.tier ? 'Top tier reached! 🎉' : '';
+      return `${shortUSD(r.next.level_gmv - r.gmv)} to the ${shortUSD(r.next.payout)} tier`;
+    };
+
     const medals = ['🥇', '🥈', '🥉'];
     const order = [['second', 1], ['first', 0], ['third', 2]];
     document.getElementById('podium').innerHTML = order.map(([cls, i]) => {
@@ -244,19 +333,26 @@
           <div class="podium-handle"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></div>
           <div class="podium-gmv">${fmtUSD(r.gmv)}</div>
           <div class="podium-posts">${r.posts} video${r.posts === 1 ? '' : 's'}</div>
+          ${r.tier ? `<div class="podium-next"><span class="tier-badge">${shortUSD(r.tier.payout)} tier ✓</span></div>` : ''}
+          ${nextLine(r) ? `<div class="podium-next">${nextLine(r)}</div>` : ''}
         </div>
         <div class="podium-base">${i + 1}</div>
       </div>`;
     }).join('');
 
-    document.getElementById('board-body').innerHTML = rows.map((r, i) =>
-      `<tr class="${i < 3 ? 'top3' : ''} ${r.gmv === 0 ? 'zero' : ''}">
+    document.getElementById('board-body').innerHTML = rows.map((r, i) => {
+      const target = r.next?.level_gmv;
+      const prog = target
+        ? `<div class="prog"><div class="prog-track"><div class="prog-fill" style="width:${Math.min(100, r.gmv / target * 100)}%"></div></div><span class="prog-label">${nextLine(r)}</span></div>`
+        : (r.tier ? '<span class="prog-label">Top tier reached! 🎉</span>' : '');
+      return `<tr class="${i < 3 ? 'top3' : ''} ${r.gmv === 0 ? 'zero' : ''}">
         <td class="rank-cell">${i + 1}</td>
         <td class="handle-cell"><a href="${tiktokUrl(r.handle)}" target="_blank" rel="noopener">@${esc(r.handle)}</a></td>
         <td class="num gmv-cell">${fmtUSD(r.gmv)}</td>
         <td class="num">${r.posts}</td>
-      </tr>`
-    ).join('');
+        <td>${r.tier ? `<span class="tier-badge">${shortUSD(r.tier.payout)} tier ✓</span> ` : ''}${prog}</td>
+      </tr>`;
+    }).join('');
 
     const silent = data.joined_total - rows.length;
     document.getElementById('board-note').textContent =

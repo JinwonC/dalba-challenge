@@ -7,6 +7,11 @@
     "join_link": "https://creators.cruva.com/frttdh"
   },
   "updated_at": "2026-08-12T01:17:25Z",
+  "tiers": [
+    { "level_gmv": 1000, "payout": 3000, "limit": 2 },
+    { "level_gmv": 800, "payout": 1500, "limit": 5 },
+    { "level_gmv": 500, "payout": 700, "limit": 8 }
+  ],
   "joined_total": 72,
   "videos_total": 56,
   "leaderboard": [
