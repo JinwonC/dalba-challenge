@@ -280,7 +280,7 @@
 
     const ts = new Date(data.updated_at);
     document.getElementById('updated-text').textContent =
-      'Updated ' + ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+      'Updated ' + ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles', timeZoneName: 'short' }) + ' · updates every hour';
 
     const totalGmv = rows.reduce((s, r) => s + r.gmv, 0);
     const totalPosts = rows.reduce((s, r) => s + r.posts, 0);

@@ -6,34 +6,126 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-12T01:17:25Z",
+  "updated_at": "2026-08-12T01:52:11Z",
   "tiers": [
-    { "level_gmv": 1000, "payout": 3000, "limit": 2 },
-    { "level_gmv": 800, "payout": 1500, "limit": 5 },
-    { "level_gmv": 500, "payout": 700, "limit": 8 }
+    {
+      "level_gmv": 1000,
+      "payout": 3000,
+      "limit": 2
+    },
+    {
+      "level_gmv": 800,
+      "payout": 1500,
+      "limit": 5
+    },
+    {
+      "level_gmv": 500,
+      "payout": 700,
+      "limit": 8
+    }
   ],
   "joined_total": 72,
   "videos_total": 56,
   "leaderboard": [
-    { "handle": "dan.brea", "gmv": 370.27, "posts": 4 },
-    { "handle": "jeanienguyen8899", "gmv": 369.14, "posts": 16 },
-    { "handle": "ristones", "gmv": 50.35, "posts": 3 },
-    { "handle": "bedau18tuoine", "gmv": 48.21, "posts": 2 },
-    { "handle": "carmentellsastory", "gmv": 10.50, "posts": 4 },
-    { "handle": "sweetmeap", "gmv": 0, "posts": 6 },
-    { "handle": "vanessagoeslive2.0", "gmv": 0, "posts": 3 },
-    { "handle": "holycartt", "gmv": 0, "posts": 3 },
-    { "handle": "khadijaraiy", "gmv": 0, "posts": 3 },
-    { "handle": "ratchdrn", "gmv": 0, "posts": 2 },
-    { "handle": "jenjenfox", "gmv": 0, "posts": 1 },
-    { "handle": "angelaffordablefinds", "gmv": 0, "posts": 1 },
-    { "handle": "oliviacaridi", "gmv": 0, "posts": 1 },
-    { "handle": "j_lev68", "gmv": 0, "posts": 1 },
-    { "handle": ".samanthaalmeida", "gmv": 0, "posts": 1 },
-    { "handle": "kbeautymom75", "gmv": 0, "posts": 1 },
-    { "handle": "hollybeautyfinds", "gmv": 0, "posts": 1 },
-    { "handle": "jessy_hdz_", "gmv": 0, "posts": 1 },
-    { "handle": "ngocng_8", "gmv": 0, "posts": 1 },
-    { "handle": "oilmaguerrero", "gmv": 0, "posts": 1 }
+    {
+      "handle": "dan.brea",
+      "gmv": 370.27,
+      "posts": 4
+    },
+    {
+      "handle": "jeanienguyen8899",
+      "gmv": 369.14,
+      "posts": 16
+    },
+    {
+      "handle": "ristones",
+      "gmv": 50.35,
+      "posts": 3
+    },
+    {
+      "handle": "bedau18tuoine",
+      "gmv": 48.21,
+      "posts": 2
+    },
+    {
+      "handle": "carmentellsastory",
+      "gmv": 10.5,
+      "posts": 4
+    },
+    {
+      "handle": "sweetmeap",
+      "gmv": 0,
+      "posts": 6
+    },
+    {
+      "handle": "vanessagoeslive2.0",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
+      "handle": "holycartt",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
+      "handle": "khadijaraiy",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
+      "handle": "ratchdrn",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
+      "handle": "jenjenfox",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "angelaffordablefinds",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "oliviacaridi",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "j_lev68",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": ".samanthaalmeida",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "kbeautymom75",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "hollybeautyfinds",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "jessy_hdz_",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "ngocng_8",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "oilmaguerrero",
+      "gmv": 0,
+      "posts": 1
+    }
   ]
 }
