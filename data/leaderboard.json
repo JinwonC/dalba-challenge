@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-13T03:20:48Z",
+  "updated_at": "2026-08-13T04:21:23Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -93,6 +93,11 @@
       "posts": 2
     },
     {
+      "handle": "j_lev68",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
       "handle": "jenjenfox",
       "gmv": 0,
       "posts": 1
@@ -104,11 +109,6 @@
     },
     {
       "handle": "oliviacaridi",
-      "gmv": 0,
-      "posts": 1
-    },
-    {
-      "handle": "j_lev68",
       "gmv": 0,
       "posts": 1
     },
