@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-13T02:21:31Z",
+  "updated_at": "2026-08-13T03:20:48Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,7 +24,7 @@
       "limit": 8
     }
   ],
-  "joined_total": 83,
+  "joined_total": 84,
   "videos_total": 56,
   "leaderboard": [
     {
@@ -35,7 +35,7 @@
     {
       "handle": "dan.brea",
       "gmv": 427.31,
-      "posts": 5
+      "posts": 6
     },
     {
       "handle": "ristones",
@@ -70,7 +70,7 @@
     {
       "handle": "sweetmeap",
       "gmv": 0,
-      "posts": 6
+      "posts": 7
     },
     {
       "handle": "vanessagoeslive2.0",
@@ -84,6 +84,11 @@
     },
     {
       "handle": "ratchdrn",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
+      "handle": "medina.beauty22",
       "gmv": 0,
       "posts": 2
     },
