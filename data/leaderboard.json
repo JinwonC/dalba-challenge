@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-13T17:33:12Z",
+  "updated_at": "2026-08-13T17:34:22Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,28 +24,28 @@
       "limit": 8
     }
   ],
-  "joined_total": 87,
+  "joined_total": 89,
   "videos_total": 56,
   "leaderboard": [
     {
       "handle": "jeanienguyen8899",
-      "gmv": 627.08,
-      "posts": 16
+      "gmv": 656.77,
+      "posts": 17
     },
     {
       "handle": "dan.brea",
-      "gmv": 427.31,
+      "gmv": 504.44,
       "posts": 6
+    },
+    {
+      "handle": "bedau18tuoine",
+      "gmv": 231.42,
+      "posts": 5
     },
     {
       "handle": "ristones",
       "gmv": 123.34,
-      "posts": 5
-    },
-    {
-      "handle": "bedau18tuoine",
-      "gmv": 48.21,
-      "posts": 4
+      "posts": 8
     },
     {
       "handle": "ngocng_8",
@@ -55,7 +55,7 @@
     {
       "handle": "carmentellsastory",
       "gmv": 10.5,
-      "posts": 4
+      "posts": 5
     },
     {
       "handle": "holycartt",
@@ -65,7 +65,7 @@
     {
       "handle": "khadijaraiy",
       "gmv": 0,
-      "posts": 7
+      "posts": 8
     },
     {
       "handle": "sweetmeap",
