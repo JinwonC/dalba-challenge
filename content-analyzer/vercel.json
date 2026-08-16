@@ -3,5 +3,14 @@
   "framework": null,
   "functions": {
     "api/*.js": { "maxDuration": 300, "memory": 2048 }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": false,
+      "claude/cruva-mcp-connection-bzrzb7": false,
+      "claude/youtube-tiktok-analyzer-zj3msg": false,
+      "claude/bypass-sheets-timeout-8nw21": false,
+      "claude/nifty-hamilton-881x4x": false
+    }
   }
 }
