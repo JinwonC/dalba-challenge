@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-13T23:25:08Z",
+  "updated_at": "2026-08-16T09:32:52Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,71 +24,101 @@
       "limit": 8
     }
   ],
-  "joined_total": 90,
-  "videos_total": 56,
+  "joined_total": 100,
+  "videos_total": 138,
   "leaderboard": [
     {
       "handle": "jeanienguyen8899",
-      "gmv": 656.77,
-      "posts": 17
+      "gmv": 995.67,
+      "posts": 19
     },
     {
       "handle": "dan.brea",
-      "gmv": 504.44,
-      "posts": 6
+      "gmv": 560.12,
+      "posts": 7
     },
     {
-      "handle": "bedau18tuoine",
-      "gmv": 231.42,
-      "posts": 5
+      "handle": "siana_far",
+      "gmv": 445.61,
+      "posts": 2
     },
     {
       "handle": "ristones",
-      "gmv": 123.34,
-      "posts": 8
+      "gmv": 436.09,
+      "posts": 9
+    },
+    {
+      "handle": "bedau18tuoine",
+      "gmv": 388.12,
+      "posts": 7
     },
     {
       "handle": "ngocng_8",
-      "gmv": 17.0,
-      "posts": 1
+      "gmv": 84.64,
+      "posts": 2
+    },
+    {
+      "handle": "khadijaraiy",
+      "gmv": 41.52,
+      "posts": 14
+    },
+    {
+      "handle": "kely6941",
+      "gmv": 40.73,
+      "posts": 2
+    },
+    {
+      "handle": "holycartt",
+      "gmv": 14.38,
+      "posts": 11
     },
     {
       "handle": "carmentellsastory",
       "gmv": 10.5,
-      "posts": 5
-    },
-    {
-      "handle": "holycartt",
-      "gmv": 0,
-      "posts": 8
-    },
-    {
-      "handle": "khadijaraiy",
-      "gmv": 0,
       "posts": 8
     },
     {
       "handle": "sweetmeap",
       "gmv": 0,
-      "posts": 7
+      "posts": 10
     },
     {
       "handle": "vanessagoeslive2.0",
       "gmv": 0,
-      "posts": 4
+      "posts": 5
     },
     {
       "handle": "eva.vazquez.munoz",
       "gmv": 0,
-      "posts": 2
+      "posts": 4
     },
     {
-      "handle": "ratchdrn",
+      "handle": "danieliscala",
+      "gmv": 0,
+      "posts": 4
+    },
+    {
+      "handle": "kbeautymom75",
+      "gmv": 0,
+      "posts": 4
+    },
+    {
+      "handle": "oilmaguerrero",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
+      "handle": "medina.beauty22",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
+      "handle": "ratchfinds",
       "gmv": 0,
       "posts": 2
     },
     {
-      "handle": "medina.beauty22",
+      "handle": "cam_for_dayz",
       "gmv": 0,
       "posts": 2
     },
@@ -96,6 +126,31 @@
       "handle": "j_lev68",
       "gmv": 0,
       "posts": 2
+    },
+    {
+      "handle": "alexdamontilla",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
+      "handle": "dessikafrouni",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
+      "handle": "blessed_girl069",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
+      "handle": "leesorganiclife",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "accordingtojeri",
+      "gmv": 0,
+      "posts": 1
     },
     {
       "handle": "jenjenfox",
@@ -118,11 +173,6 @@
       "posts": 1
     },
     {
-      "handle": "kbeautymom75",
-      "gmv": 0,
-      "posts": 1
-    },
-    {
       "handle": "hollybeautyfinds",
       "gmv": 0,
       "posts": 1
@@ -133,17 +183,22 @@
       "posts": 1
     },
     {
-      "handle": "oilmaguerrero",
+      "handle": "hubbywifeycaplan",
       "gmv": 0,
       "posts": 1
     },
     {
-      "handle": "cam_for_dayz",
+      "handle": "ariamvoficial",
       "gmv": 0,
       "posts": 1
     },
     {
-      "handle": "siana_far",
+      "handle": "re.becca.lynn",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "angelinarachelmut",
       "gmv": 0,
       "posts": 1
     }
