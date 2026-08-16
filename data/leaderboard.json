@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-16T09:32:52Z",
+  "updated_at": "2026-08-16T10:21:06Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -88,12 +88,12 @@
       "posts": 5
     },
     {
-      "handle": "eva.vazquez.munoz",
+      "handle": "danieliscala",
       "gmv": 0,
       "posts": 4
     },
     {
-      "handle": "danieliscala",
+      "handle": "eva.vazquez.munoz",
       "gmv": 0,
       "posts": 4
     },
