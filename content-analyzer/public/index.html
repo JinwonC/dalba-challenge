@@ -137,6 +137,13 @@
   .htoggle{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer}
   .htoggle:hover{border-color:var(--gold);background:var(--gold-soft)}
   .hempty{color:var(--muted);font-size:13px;padding:14px 4px}
+  .hsearch{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12.5px;color:var(--slate);width:210px}
+  .hsearch:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
+  .hpager{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px}
+  .pbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer}
+  .pbtn:hover:not(:disabled){border-color:var(--gold);background:var(--gold-soft)}
+  .pbtn:disabled{opacity:.4;cursor:default}
+  .pinfo{font-size:12.5px;color:var(--muted);min-width:66px;text-align:center}
   .hitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:9px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
   .hitem:hover{border-color:var(--gold);box-shadow:0 1px 8px rgba(184,137,46,.12)}
@@ -520,13 +527,28 @@ let HISTORY = [];
 let HIST_ERR = null;
 let HIST_OPEN = (localStorage.getItem('histOpen') ?? '1') === '1';
 let HIST_MGR = localStorage.getItem('histMgr') || '';
+let HIST_Q = '';
+let HIST_PAGE = 0;
+let HIST_TYPING = false;
+const PAGE_SIZE = 10;
 function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+new Date(ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } }
 function managerCounts(){
   const m = new Map();
   HISTORY.forEach(it=>{ const g=(it.manager||'').trim(); if(g) m.set(g,(m.get(g)||0)+1); });
   return [...m.entries()].sort((a,b)=> a[0].localeCompare(b[0],'ko'));
 }
-function filteredHistory(){ return HIST_MGR ? HISTORY.filter(it=>(it.manager||'').trim()===HIST_MGR) : HISTORY; }
+// Manager filter + free-text search over creator handle, video id, title, product.
+// Every whitespace-separated term must match; a leading @ is ignored.
+function filteredHistory(){
+  const terms = HIST_Q.trim().toLowerCase().split(/\s+/).filter(Boolean).map(t=>t.replace(/^@/,''));
+  return HISTORY.filter(it=>{
+    if(HIST_MGR && (it.manager||'').trim()!==HIST_MGR) return false;
+    if(!terms.length) return true;
+    const hay = [it.creator,it.id,it.title,it.product,it.manager]
+      .map(x=>String(x||'').toLowerCase()).join('  ');
+    return terms.every(t=>hay.includes(t));
+  });
+}
 function hitemHTML(it){ return `
     <div class="hitem" data-id="${esc(it.id)}">
       ${it.thumbnail?`<img src="${esc(it.thumbnail)}" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div style="width:42px;height:54px;border-radius:6px;background:#eee"></div>'}
@@ -553,28 +575,69 @@ function renderHistoryList(){
   }
   // Drop a stale filter if that manager no longer has any records.
   if(HIST_MGR && !HISTORY.some(it=>(it.manager||'').trim()===HIST_MGR)){ HIST_MGR=''; localStorage.setItem('histMgr',''); }
+
   const list = filteredHistory();
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  if(HIST_PAGE > pages-1) HIST_PAGE = pages-1;
+  if(HIST_PAGE < 0) HIST_PAGE = 0;
+  const start = HIST_PAGE * PAGE_SIZE;
+  const pageItems = list.slice(start, start + PAGE_SIZE);
+
   const opts = managerCounts();
+  const search = `<input id="histSearch" class="hsearch" type="search" autocomplete="off"
+      placeholder="크리에이터 · 영상ID · 제품 검색" value="${esc(HIST_Q)}" />`;
   const filter = `<select id="histFilter" class="hfilter" title="담당자 필터">
       <option value="">전체 담당자 (${HISTORY.length})</option>
-      ${opts.map(([m,c])=>`<option value="${esc(m)}" ${m===HIST_MGR?'selected':''}>👤 ${esc(m)} (${c})</option>`).join('')}
+      ${opts.map(([m,c])=>`<option value="${esc(m)}" ${m===HIST_MGR?'selected':''}>${esc(m)} (${c})</option>`).join('')}
     </select>`;
-  const toggle = `<button id="histToggle" class="htoggle">${HIST_OPEN?'▾ 접기':`▸ 펼치기 (${list.length})`}</button>`;
+  const toggle = `<button id="histToggle" class="htoggle">${HIST_OPEN?'접기':`펼치기 (${list.length})`}</button>`;
+
+  const scope = (HIST_Q.trim() || HIST_MGR)
+    ? `검색결과 ${list.length}건 / 전체 ${HISTORY.length}건`
+    : `총 ${HISTORY.length}건`;
+  const range = (HIST_OPEN && list.length) ? ` · ${start+1}-${Math.min(start+PAGE_SIZE, list.length)} 표시` : '';
   const head = `<div class="hhead">
-      <h4>📁 분석 기록 · ${HIST_MGR?`${esc(HIST_MGR)} ${list.length}건`:`총 ${HISTORY.length}건`} · 클릭하면 다시 봅니다</h4>
-      <div class="hctrl">${filter}${toggle}</div>
+      <h4>📁 분석 기록 · ${esc(scope)}${range} · 클릭하면 다시 봅니다</h4>
+      <div class="hctrl">${search}${filter}${toggle}</div>
     </div>`;
+
+  const pager = (HIST_OPEN && pages > 1) ? `<div class="hpager">
+      <button class="pbtn" data-pg="0" ${HIST_PAGE===0?'disabled':''}>처음</button>
+      <button class="pbtn" data-pg="${HIST_PAGE-1}" ${HIST_PAGE===0?'disabled':''}>이전</button>
+      <span class="pinfo">${HIST_PAGE+1} / ${pages}</span>
+      <button class="pbtn" data-pg="${HIST_PAGE+1}" ${HIST_PAGE>=pages-1?'disabled':''}>다음</button>
+      <button class="pbtn" data-pg="${pages-1}" ${HIST_PAGE>=pages-1?'disabled':''}>마지막</button>
+    </div>` : '';
+
   const body = !HIST_OPEN ? '' :
-    (list.length ? `<div class="hlist">${list.map(hitemHTML).join('')}</div>`
-                 : `<div class="hempty">해당 담당자의 기록이 없습니다.</div>`);
+    (pageItems.length ? `<div class="hlist">${pageItems.map(hitemHTML).join('')}</div>${pager}`
+                      : `<div class="hempty">${HIST_Q.trim()?'검색 결과가 없습니다.':'해당 담당자의 기록이 없습니다.'}</div>`);
   box.innerHTML = head + body;
+
   $('#histToggle').addEventListener('click', ()=>{ HIST_OPEN=!HIST_OPEN; localStorage.setItem('histOpen',HIST_OPEN?'1':'0'); renderHistoryList(); });
   $('#histFilter').addEventListener('change', (e)=>{
     HIST_MGR = e.target.value; localStorage.setItem('histMgr', HIST_MGR);
+    HIST_PAGE = 0;
     if(!HIST_OPEN){ HIST_OPEN=true; localStorage.setItem('histOpen','1'); }
     renderHistoryList();
   });
+  const si = $('#histSearch');
+  si.addEventListener('input', (e)=>{
+    HIST_Q = e.target.value; HIST_PAGE = 0; HIST_TYPING = true;
+    if(!HIST_OPEN){ HIST_OPEN=true; localStorage.setItem('histOpen','1'); }
+    renderHistoryList();
+  });
+  // innerHTML replaces the input, so restore focus/caret while the user types.
+  if(HIST_TYPING){
+    si.focus();
+    try{ si.setSelectionRange(si.value.length, si.value.length); }catch{}
+    HIST_TYPING = false;
+  }
   if(HIST_OPEN){
+    box.querySelectorAll('.pbtn').forEach(b=> b.addEventListener('click', ()=>{
+      HIST_PAGE = Number(b.dataset.pg); renderHistoryList();
+      box.scrollIntoView({ block:'start', behavior:'smooth' });
+    }));
     box.querySelectorAll('.hitem').forEach(el=> el.addEventListener('click', (e)=>{ if(e.target.closest('.hdel')) return; openSaved(el.dataset.id); }));
     box.querySelectorAll('.hdel').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); deleteHistory(b.dataset.del); }));
   }
@@ -592,6 +655,7 @@ async function deleteHistory(id){
 function prependHistory(item){
   if(!item || !item.id) return;
   HISTORY = [item, ...HISTORY.filter(x=>x.id!==item.id)];
+  HIST_PAGE = 0;
   renderHistoryList();
 }
 async function loadHistory(){

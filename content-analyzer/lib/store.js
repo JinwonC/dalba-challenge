@@ -79,10 +79,15 @@ export async function saveAnalysis(record) {
 /** List saved analyses (newest first), summary fields only. */
 export async function listAnalyses() {
   if (!storeEnabled()) return [];
-  const ids = await redis().zrange(ZKEY(), 0, 299, { rev: true });
+  const ids = await redis().zrange(ZKEY(), 0, 999, { rev: true });
   if (!ids || !ids.length) return [];
-  const vals = await redis().mget(...ids.map(SKEY));
-  return (vals || []).filter(Boolean);
+  // Chunk the MGET so a large history cannot exceed the REST request limit.
+  const out = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const vals = await redis().mget(...ids.slice(i, i + 200).map(SKEY));
+    out.push(...(vals || []).filter(Boolean));
+  }
+  return out;
 }
 
 /** Fetch one full saved analysis by id (Upstash, then legacy Blob if present). */
