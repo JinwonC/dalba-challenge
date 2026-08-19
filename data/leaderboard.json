@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-19T08:21:03Z",
+  "updated_at": "2026-08-19T18:21:32Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,8 +24,8 @@
       "limit": 8
     }
   ],
-  "joined_total": 106,
-  "videos_total": 168,
+  "joined_total": 107,
+  "videos_total": 169,
   "leaderboard": [
     {
       "handle": "jeanienguyen8899",
@@ -45,7 +45,7 @@
     {
       "handle": "dan.brea",
       "gmv": 781.52,
-      "posts": 8
+      "posts": 9
     },
     {
       "handle": "ristones",
