@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-19T18:21:32Z",
+  "updated_at": "2026-08-20T11:21:37Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,37 +24,37 @@
       "limit": 8
     }
   ],
-  "joined_total": 107,
-  "videos_total": 169,
+  "joined_total": 111,
+  "videos_total": 182,
   "leaderboard": [
+    {
+      "handle": "dan.brea",
+      "gmv": 1353.54,
+      "posts": 9
+    },
     {
       "handle": "jeanienguyen8899",
       "gmv": 1310.58,
-      "posts": 19
+      "posts": 20
+    },
+    {
+      "handle": "bedau18tuoine",
+      "gmv": 1053.39,
+      "posts": 10
     },
     {
       "handle": "siana_far",
       "gmv": 997.4,
-      "posts": 2
-    },
-    {
-      "handle": "bedau18tuoine",
-      "gmv": 899.71,
-      "posts": 8
-    },
-    {
-      "handle": "dan.brea",
-      "gmv": 781.52,
-      "posts": 9
+      "posts": 3
     },
     {
       "handle": "ristones",
-      "gmv": 615.9,
-      "posts": 10
+      "gmv": 679.85,
+      "posts": 11
     },
     {
       "handle": "kely6941",
-      "gmv": 103.33,
+      "gmv": 144.76,
       "posts": 2
     },
     {
@@ -83,14 +83,24 @@
       "posts": 9
     },
     {
+      "handle": "dalba_global",
+      "gmv": 8.8,
+      "posts": 1
+    },
+    {
       "handle": "sweetmeap",
       "gmv": 0,
       "posts": 10
     },
     {
+      "handle": "alexdamontilla",
+      "gmv": 0,
+      "posts": 8
+    },
+    {
       "handle": "vanessagoeslive2.0",
       "gmv": 0,
-      "posts": 7
+      "posts": 8
     },
     {
       "handle": "danieliscala",
@@ -99,11 +109,6 @@
     },
     {
       "handle": "oilmaguerrero",
-      "gmv": 0,
-      "posts": 5
-    },
-    {
-      "handle": "alexdamontilla",
       "gmv": 0,
       "posts": 5
     },
@@ -168,6 +173,11 @@
       "posts": 2
     },
     {
+      "handle": "melinda.travelmation",
+      "gmv": 0,
+      "posts": 2
+    },
+    {
       "handle": "leesorganiclife",
       "gmv": 0,
       "posts": 1
@@ -208,12 +218,12 @@
       "posts": 1
     },
     {
-      "handle": "angelinarachelmut",
+      "handle": "re.becca.lynn",
       "gmv": 0,
       "posts": 1
     },
     {
-      "handle": "re.becca.lynn",
+      "handle": "angelinarachelmut",
       "gmv": 0,
       "posts": 1
     },
@@ -228,12 +238,17 @@
       "posts": 1
     },
     {
-      "handle": "dalba_global",
+      "handle": "agallen22",
       "gmv": 0,
       "posts": 1
     },
     {
-      "handle": "agallen22",
+      "handle": "amanunez_",
+      "gmv": 0,
+      "posts": 1
+    },
+    {
+      "handle": "isamarllanes",
       "gmv": 0,
       "posts": 1
     }
