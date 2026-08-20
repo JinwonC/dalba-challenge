@@ -6,7 +6,7 @@
     "timezone": "UTC",
     "join_link": "https://creators.cruva.com/frttdh"
   },
-  "updated_at": "2026-08-20T11:21:37Z",
+  "updated_at": "2026-08-20T23:21:56Z",
   "tiers": [
     {
       "level_gmv": 1000,
@@ -24,33 +24,33 @@
       "limit": 8
     }
   ],
-  "joined_total": 111,
-  "videos_total": 182,
+  "joined_total": 115,
+  "videos_total": 187,
   "leaderboard": [
+    {
+      "handle": "jeanienguyen8899",
+      "gmv": 1361.73,
+      "posts": 20
+    },
     {
       "handle": "dan.brea",
       "gmv": 1353.54,
       "posts": 9
     },
     {
-      "handle": "jeanienguyen8899",
-      "gmv": 1310.58,
-      "posts": 20
-    },
-    {
       "handle": "bedau18tuoine",
-      "gmv": 1053.39,
+      "gmv": 1163.42,
       "posts": 10
     },
     {
       "handle": "siana_far",
-      "gmv": 997.4,
+      "gmv": 1101.59,
       "posts": 3
     },
     {
       "handle": "ristones",
-      "gmv": 679.85,
-      "posts": 11
+      "gmv": 712.38,
+      "posts": 12
     },
     {
       "handle": "kely6941",
@@ -59,7 +59,7 @@
     },
     {
       "handle": "ngocng_8",
-      "gmv": 100.83,
+      "gmv": 139.84,
       "posts": 2
     },
     {
@@ -78,14 +78,24 @@
       "posts": 17
     },
     {
-      "handle": "carmentellsastory",
-      "gmv": 10.5,
-      "posts": 9
+      "handle": "dinabalina",
+      "gmv": 29.69,
+      "posts": 2
     },
     {
       "handle": "dalba_global",
-      "gmv": 8.8,
+      "gmv": 24.95,
       "posts": 1
+    },
+    {
+      "handle": "isamarllanes",
+      "gmv": 16.15,
+      "posts": 1
+    },
+    {
+      "handle": "carmentellsastory",
+      "gmv": 10.5,
+      "posts": 9
     },
     {
       "handle": "sweetmeap",
@@ -95,7 +105,7 @@
     {
       "handle": "alexdamontilla",
       "gmv": 0,
-      "posts": 8
+      "posts": 9
     },
     {
       "handle": "vanessagoeslive2.0",
@@ -103,12 +113,12 @@
       "posts": 8
     },
     {
-      "handle": "danieliscala",
+      "handle": "oilmaguerrero",
       "gmv": 0,
-      "posts": 5
+      "posts": 6
     },
     {
-      "handle": "oilmaguerrero",
+      "handle": "danieliscala",
       "gmv": 0,
       "posts": 5
     },
@@ -138,17 +148,17 @@
       "posts": 3
     },
     {
+      "handle": "j_lev68",
+      "gmv": 0,
+      "posts": 3
+    },
+    {
       "handle": "ratchfinds",
       "gmv": 0,
       "posts": 2
     },
     {
       "handle": "cam_for_dayz",
-      "gmv": 0,
-      "posts": 2
-    },
-    {
-      "handle": "j_lev68",
       "gmv": 0,
       "posts": 2
     },
@@ -168,12 +178,12 @@
       "posts": 2
     },
     {
-      "handle": "dinabalina",
+      "handle": "melinda.travelmation",
       "gmv": 0,
       "posts": 2
     },
     {
-      "handle": "melinda.travelmation",
+      "handle": "re.becca.lynn",
       "gmv": 0,
       "posts": 2
     },
@@ -218,11 +228,6 @@
       "posts": 1
     },
     {
-      "handle": "re.becca.lynn",
-      "gmv": 0,
-      "posts": 1
-    },
-    {
       "handle": "angelinarachelmut",
       "gmv": 0,
       "posts": 1
@@ -244,11 +249,6 @@
     },
     {
       "handle": "amanunez_",
-      "gmv": 0,
-      "posts": 1
-    },
-    {
-      "handle": "isamarllanes",
       "gmv": 0,
       "posts": 1
     }
