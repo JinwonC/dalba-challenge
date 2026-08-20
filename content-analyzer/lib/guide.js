@@ -120,6 +120,12 @@ const SYSTEM = `너는 d'Alba Piedmont의 시니어 숏폼 크리에이티브 �
 목표: 특정 크리에이터(A)가 "다른 제품으로" 바이럴 낸 영상들의 구조를 최대한 그대로 복제하고,
 그 자리에 우리 제품 소구를 끼워 넣는 촬영 가이드("Contents Brief")를 만든다.
 
+입력의 역할 분리(절대 규칙):
+- "CREATOR A" 영상들 = 유일한 구조 소스. 스텝 순서, 훅 방식, 연출 장치(PIP/마커/B&A), 톤, CTA, 영상 길이 감각은 전부 여기서만 가져온다.
+- "OUR PRODUCT SOURCE" = 제품 소구 소스일 뿐이다. 여기서는 제품명·성분·효능 클레임·표현만 가져오고,
+  그 영상의 구조·순서·연출·톤은 절대 참고하지 않는다(구조 정보는 의도적으로 제거되어 제공된다).
+- 만약 가이드의 스텝 구조가 A의 영상들과 다르고 우리 영상과 비슷해진다면 그것은 실패다.
+
 가장 중요한 원칙 — 공통 패턴 우선:
 - A의 바이럴 영상이 여러 개(보통 4-5개) 주어진다. 먼저 그 영상들 사이의 "반복되는 공통점"을 찾아라:
   반복되는 훅 방식, 반복되는 텍스트 오버레이 습관, 반복되는 연출 장치(PIP/이미지 팝업, 마커, Before-After), 반복되는 액션 비트, 반복되는 CTA, 반복되는 리액션 톤, 반복되는 로드베어링 표현.
@@ -152,6 +158,29 @@ KEYWORDS: ${kw}
 }
 
 /**
+ * Product-only digest of OUR video: claims, ingredient mentions, keywords —
+ * deliberately NO scene structure, hook breakdown, timing or persuasion flow,
+ * so the model cannot copy our video's format (structure must come from A).
+ */
+function productDigest(meta, report) {
+  const r = report || {};
+  const lines = (r.scenes || [])
+    .map((s) => [s.audio_original, s.audio_kr].filter(Boolean).join(" / "))
+    .filter(Boolean)
+    .map((x) => "  - " + x)
+    .join("\n");
+  const kw = (r.keywords || []).map((k) => k.keyword + " (" + k.note + ")").join("; ");
+  return `### OUR PRODUCT SOURCE (claims only — NOT a structure reference)
+product mentioned by: @${meta?.author || "?"} | title: ${meta?.title || ""}
+요약: ${r.summary || ""}
+제품 관련 대사(클레임·성분·소구 발췌):
+${lines || "  (none)"}
+키워드: ${kw || "(none)"}
+d'Alba 연관성: ${r.dalba_relevance || ""}
+`;
+}
+
+/**
  * Generate a "Contents Brief" shooting guide.
  * @param {Array} creatorReports  Creator A's viral videos (structure source): [{meta, report}]
  * @param {Object|null} ourReport Our own reference video (product message source): {meta, report}
@@ -166,7 +195,7 @@ export async function generateGuide({ creatorReports = [], ourReport = null, pro
     .map((c, i) => reportDigest(`CREATOR A — VIRAL #${i + 1}`, c.meta, c.report))
     .join('\n');
   const ourBlock = ourReport
-    ? reportDigest('OUR REFERENCE VIDEO (product message source)', ourReport.meta, ourReport.report)
+    ? productDigest(ourReport.meta, ourReport.report)
     : '(우리 영상 없음 — 아래 제품 정보 텍스트를 사용)';
 
   const creatorName = meta.creator || creatorReports[0]?.meta?.author || 'the creator';
@@ -188,9 +217,9 @@ ${(productInfo || '(없음 — 위 우리 영상 분석에서 제품 소구를 �
 
 지시:
 1) 먼저 A의 여러 영상에서 반복되는 공통 패턴(훅·구조·PIP/오버레이·B&A·CTA·톤)을 찾아 common_patterns에 정리하고, 그 공통 공식을 스텝 구조와 연출 장치에 그대로 반영하라.
-2) 각 스텝의 say/text_overlay는 A의 말투로, 내용은 우리 제품으로 대입하라.
+2) 각 스텝의 say/text_overlay는 반드시 A의 말투·표현·리듬으로 쓰고(A 영상의 실제 문장 패턴을 변형), 내용만 우리 제품으로 대입하라. 우리 영상의 문장 스타일을 쓰지 마라.
 3) 로드베어링 문구는 highlights에 원문 그대로.
-4) Product 페이지 불릿은 위 제품 정보에서만 뽑아라(없는 수치 금지).`;
+4) Product 페이지 불릿은 위 제품 정보/제품 클레임에서만 뽑아라(없는 수치 금지).\n5) 다시 강조: 구조·연출·스텝 순서는 오직 CREATOR A 영상들에서. OUR PRODUCT SOURCE는 무엇을 말할지(클레임)만 제공한다.`;
 
   const response = await withRetry(() => client.models.generateContent({
     model: MODEL,
