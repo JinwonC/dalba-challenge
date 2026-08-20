@@ -3,7 +3,9 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { runScrape, runReport, runComments, runAnalysis, HttpError } from './lib/pipeline.js';
+import { runScrape, runReport, runComments, runAnalysis, runGuide, HttpError } from './lib/pipeline.js';
+import { pushToDrive, driveEnabled } from './lib/drive.js';
+import { guideToPlainText } from './lib/guideText.js';
 import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis, migrateLegacyToUpstash } from './lib/store.js';
 import uploadHandler from './api/upload.js';
 
@@ -75,6 +77,24 @@ app.post('/api/delete', async (req, res) => {
 app.post('/api/migrate', async (_req, res) => {
   try { res.json({ ok: true, ...(await migrateLegacyToUpstash()) }); }
   catch (err) { send(res, err); }
+});
+
+
+app.post('/api/guide', async (req, res) => {
+  try {
+    const { creatorReports, ourReport, productInfo, meta } = req.body || {};
+    res.json(await runGuide({ creatorReports, ourReport, productInfo, meta }));
+  } catch (err) { send(res, err); }
+});
+
+app.post('/api/guide-save', async (req, res) => {
+  try {
+    const { guide = {}, meta = {} } = req.body || {};
+    if (!driveEnabled()) return res.json({ driveUrl: null });
+    const title = `[가이드] ${guide.creator ? '@' + guide.creator + ' 스타일' : ''} — ${meta.product || guide?.product?.name || 'Contents Brief'}`.slice(0, 90);
+    const driveUrl = await pushToDrive({ title, text: guideToPlainText(guide, meta) }).catch(() => null);
+    res.json({ driveUrl });
+  } catch (err) { send(res, err); }
 });
 
 // One-shot (local/testing only; too slow for a single serverless call).

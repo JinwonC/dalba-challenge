@@ -3,6 +3,7 @@ import { downloadVideo, fetchSubtitles } from './vision.js';
 import { generateReport } from './report.js';
 import { analyzeComments } from './comments.js';
 import { saveVideo, pruneOldVideos } from './videos.js';
+import { generateGuide } from './guide.js';
 
 /** Stable id for a piece of content (TikTok video id or Instagram shortcode). */
 export function contentId(url) {
@@ -145,6 +146,17 @@ export async function runAnalysis({ url }) {
   const { platform, meta, embed, media } = await runScrape({ url });
   const { report } = await runReport({ ...media, meta });
   return { platform, meta, embed, report };
+}
+
+
+/** Stage: synthesize a shooting guide from pre-analyzed reports (text-only, fast). */
+export async function runGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {} }) {
+  if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
+  if (!Array.isArray(creatorReports) || !creatorReports.length) {
+    throw new HttpError(400, '크리에이터 바이럴 영상이 최소 1개 필요합니다.');
+  }
+  const guide = await generateGuide({ creatorReports, ourReport, productInfo, meta });
+  return { guide };
 }
 
 export { HttpError };
