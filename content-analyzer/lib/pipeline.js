@@ -4,6 +4,7 @@ import { generateReport } from './report.js';
 import { analyzeComments } from './comments.js';
 import { saveVideo, pruneOldVideos } from './videos.js';
 import { generateGuide } from './guide.js';
+import { extractDna, analyzeVisualStyle } from './dna.js';
 
 /** Stable id for a piece of content (TikTok video id or Instagram shortcode). */
 export function contentId(url) {
@@ -149,13 +150,32 @@ export async function runAnalysis({ url }) {
 }
 
 
+
+/** Stage: extract creator style DNA from pre-analyzed reports (text-only, fast). */
+export async function runDna({ creatorReports = [] }) {
+  if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
+  if (!Array.isArray(creatorReports) || !creatorReports.length) {
+    throw new HttpError(400, '크리에이터 영상 분석이 최소 1개 필요합니다.');
+  }
+  return { dna: await extractDna({ creatorReports }) };
+}
+
+/** Stage: visual style pass — Gemini watches one creator video (visuals only). */
+export async function runStylePass({ videoUrl }) {
+  if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
+  if (!videoUrl) throw new HttpError(400, 'Missing "videoUrl".');
+  assertAllowedMediaUrl(videoUrl);
+  const videoBuffer = await downloadVideo(videoUrl);
+  return { style: await analyzeVisualStyle({ videoBuffer }) };
+}
+
 /** Stage: synthesize a shooting guide from pre-analyzed reports (text-only, fast). */
-export async function runGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {} }) {
+export async function runGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {}, dna = null }) {
   if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
   if (!Array.isArray(creatorReports) || !creatorReports.length) {
     throw new HttpError(400, '크리에이터 바이럴 영상이 최소 1개 필요합니다.');
   }
-  const guide = await generateGuide({ creatorReports, ourReport, productInfo, meta });
+  const guide = await generateGuide({ creatorReports, ourReport, productInfo, meta, dna });
   return { guide };
 }
 

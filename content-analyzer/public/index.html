@@ -228,6 +228,17 @@
   .prod .pb{font-size:15px;margin:10px 0}
   .prod .pb em{color:#e5484d;font-weight:800;font-style:normal}
   .gbar-actions{display:flex;gap:10px;justify-content:center;margin:18px 0 4px;flex-wrap:wrap}
+  .dnagrid{display:grid;grid-template-columns:150px 1fr;gap:10px 14px;align-items:start}
+  .dnagrid label{font-size:12.5px;font-weight:700;color:var(--gold);padding-top:8px}
+  .dnagrid .gtext{font-size:13px}
+  .dnapace{background:var(--gold-soft);border:1px solid #efe4cd;border-radius:9px;padding:9px 12px;font-size:13px}
+  @media(max-width:700px){.dnagrid{grid-template-columns:1fr}}
+  .hookopt{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
+  .hookopt .holabel{font-weight:800;font-size:14px;color:var(--gold);margin-bottom:6px}
+  .hookopt .ovtxt{color:#e5484d;font-weight:800;font-size:15px;margin:6px 0}
+  .hookopt .line{font-weight:700;font-style:italic;font-size:14px;margin:4px 0}
+  .hookopt .line em{color:#e5484d}
+  .hookopt .horat{color:var(--muted);font-size:12px;margin-top:6px}
 
 </style>
 </head>
@@ -297,8 +308,8 @@
       </div>
 
       <div class="gactions">
-        <button class="go" id="guideGo">📋 가이드 생성</button>
-        <span class="ghint2" id="guideHint">A 영상은 이미 분석한 것이면 즉시, 새 링크는 개당 60~120초 걸려요.</span>
+        <button class="go" id="guideGo">① 스타일 DNA 추출</button>
+        <span class="ghint2" id="guideHint">① DNA 추출(확인·수정 가능) → ② 가이드 생성 순서예요. 이미 분석한 영상이면 빠르고, 새 링크는 개당 60~120초.</span>
       </div>
     </div>
   </div>
@@ -1046,27 +1057,30 @@ function wireGuide(){
   renderGChips();
 }
 
-// resolve one video ref -> {meta, report}, reusing history or scraping+reporting
+// resolve one video ref -> {meta, report, video}, reusing history or scraping+reporting
 async function gResolveReport(ref, manager, prodName){
   if(ref.kind==='history'){
     const rec = await getJSON('/api/analysis?id='+encodeURIComponent(ref.id));
     ref.creator = rec.meta?.author || ref.creator;
-    return { meta: rec.meta||{}, report: rec.report||{} };
+    return { meta: rec.meta||{}, report: rec.report||{}, video: rec.video||null };
   }
-  // link: scrape + report (may already be in history by id → reuse)
   const vid = gVideoIdFromUrl(ref.url);
   if(vid){
     const known = HISTORY.find(h=>h.id===vid);
-    if(known){ const rec = await getJSON('/api/analysis?id='+encodeURIComponent(vid)); if(rec&&rec.report){ ref.creator=rec.meta?.author||''; return { meta:rec.meta||{}, report:rec.report||{} }; } }
+    if(known){ const rec = await getJSON('/api/analysis?id='+encodeURIComponent(vid)); if(rec&&rec.report){ ref.creator=rec.meta?.author||''; return { meta:rec.meta||{}, report:rec.report||{}, video: rec.video||null }; } }
   }
   const s = await scrapeLink(ref.url, manager, prodName);
   const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
   ref.creator = s.meta?.author || '';
-  // best-effort: also save so future runs reuse it
   postJSON('/api/save', { meta:s.meta, embed:s.embed, report:data.report, comments:null, video:data.video||null }).catch(()=>{});
-  return { meta: s.meta||{}, report: data.report||{} };
+  return { meta: s.meta||{}, report: data.report||{}, video: data.video||null };
 }
 
+// state carried between stage 1 (DNA) and stage 2 (guide)
+let GRESOLVED = null; // { creatorReports:[{meta,report,video}], ourReport }
+let GDNA = null;      // extracted DNA (pre-edit)
+
+// ---- Stage 1: resolve reports → extract DNA → visual style pass → review panel ----
 async function runGuide(){
   const manager=$('#gManager').value.trim();
   const prodName=$('#gProdName').value.trim();
@@ -1075,7 +1089,11 @@ async function runGuide(){
   if(!GOUR && !productInfo){ $('#status').innerHTML='<div class="err">우리 레퍼런스 영상 또는 제품 정보 중 하나는 필요해요.</div>'; return; }
   $('#guideGo').disabled=true; $('#guideResult').innerHTML='';
   const jobs = [...GCREATORS.map(c=>({ref:c,role:'creator'})), ...(GOUR?[{ref:GOUR,role:'our'}]:[])];
-  BATCH = { n: jobs.length+1, i:0, finished:false, items: jobs.map(j=>({label:(j.role==='our'?'[우리] ':'')+(j.ref.creator?'@'+j.ref.creator:j.ref.label), status:'pending', note:''})).concat([{label:'가이드 합성 (Gemini)', status:'pending', note:''}]) };
+  const STYLE_MAX = 2;
+  BATCH = { n: jobs.length+2, i:0, finished:false,
+    items: jobs.map(j=>({label:(j.role==='our'?'[우리] ':'')+(j.ref.creator?'@'+j.ref.creator:j.ref.label), status:'pending', note:''}))
+      .concat([{label:'스타일 DNA 추출 (말버릇·페이싱)', status:'pending', note:''},
+               {label:`영상 직접 시청 스타일 패스 (최대 ${STYLE_MAX}개)`, status:'pending', note:''}]) };
   renderBatch();
   try{
     const creatorReports=[]; let ourReport=null;
@@ -1091,17 +1109,96 @@ async function runGuide(){
       renderBatch();
     }
     if(!creatorReports.length) throw new Error('크리에이터 영상 분석을 하나도 못 가져왔어요.');
-    const gi=jobs.length; BATCH.i=gi; BATCH.items[gi].status='running'; renderBatch();
-    $('#status').innerHTML='<div class="loading"><div class="spinner"></div>가이드 합성 중… (Gemini)</div>';
-    const meta={ manager, product: prodName, creator: creatorReports[0] && GCREATORS[0]?.creator };
-    const { guide } = await postJSON('/api/guide', { creatorReports, ourReport, productInfo, meta });
-    BATCH.items[gi].status='done'; BATCH.items[gi].note='완료'; BATCH.finished=true; renderBatch();
+    GRESOLVED = { creatorReports, ourReport };
+
+    // DNA extraction (text, fast)
+    const di=jobs.length; BATCH.i=di; BATCH.items[di].status='running'; renderBatch();
+    $('#status').innerHTML='<div class="loading"><div class="spinner"></div>스타일 DNA 추출 중…</div>';
+    const { dna } = await postJSON('/api/dna', { creatorReports });
+    BATCH.items[di].status='done'; BATCH.items[di].note='완료'; renderBatch();
+
+    // Visual style pass — watch up to 2 creator videos that still have a stored mp4
+    const si=jobs.length+1; BATCH.i=si; BATCH.items[si].status='running'; renderBatch();
+    const withVideo = creatorReports.filter(r=>r.video).slice(0, STYLE_MAX);
+    const styles=[];
+    for(let i=0;i<withVideo.length;i++){
+      $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>영상 직접 시청 중… (${i+1}/${withVideo.length}) — 시각 스타일 추출</div>`;
+      try{ const r = await postJSON('/api/stylepass', { videoUrl: withVideo[i].video }); if(r.style) styles.push(r.style); }
+      catch(e){ /* best-effort */ }
+    }
+    if(styles.length){ dna.visual_style = styles; BATCH.items[si].status='done'; BATCH.items[si].note=`${styles.length}개 영상 시청 완료`; }
+    else { BATCH.items[si].status='done'; BATCH.items[si].note='저장된 영상 없음 — 생략'; }
+    BATCH.finished=true; renderBatch();
+    $('#status').innerHTML='';
+    GDNA = dna;
+    renderDnaPanel(dna);
+  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'DNA 추출 실패')}</div>`; if(BATCH){BATCH.finished=true;renderBatch();} }
+  finally{ $('#guideGo').disabled=false; }
+}
+
+// ---- DNA review/edit panel (human-in-the-loop before guide synthesis) ----
+function dnaFieldText(dna){
+  const hf=(dna.hook_formulas||[]).map(h=>`${h.type} — ${h.description}\n  예시: "${h.example_original}"`).join('\n');
+  const dv=(dna.devices||[]).map(d=>`${d.name} (${d.frequency}) — ${d.how_used}`).join('\n');
+  const vs=(dna.visual_style||[]).map((v,i)=>`[영상${i+1}] 장소:${v.setting} / 프레이밍:${v.framing} / 조명:${v.lighting} / 자막:${v.captions_style} / 편집:${v.editing_pace} / 제품:${v.product_handling} / 룩:${v.wardrobe_look}${v.other?' / 기타:'+v.other:''}`).join('\n');
+  return { hf, dv, vs };
+}
+function renderDnaPanel(dna){
+  const { hf, dv, vs } = dnaFieldText(dna);
+  const p = dna.pacing||{};
+  const pace = `평균 길이 ${p.avg_duration_s??'?'}초 (${p.min_duration_s??'?'}~${p.max_duration_s??'?'}초) · 평균 씬 ${p.avg_scene_count??'?'}개 · 씬당 ${p.avg_scene_seconds??'?'}초`;
+  $('#guideResult').innerHTML = `
+    <div class="card" style="max-width:900px;margin:0 auto">
+      <div class="head"><h3>🧬 @${esc(dna.creator||'')} 스타일 DNA <span style="color:var(--muted);font-weight:400;font-size:12px">· 확인하고 필요하면 직접 수정하세요 — 이 내용이 가이드의 기준이 됩니다</span></h3></div>
+      <div class="body">
+        <div class="dnagrid">
+          <label>훅 공식 (유형별)</label><textarea id="dnaHooks" class="gtext" rows="5">${esc(hf)}</textarea>
+          <label>말버릇·캐치프레이즈 (원문)</label><textarea id="dnaCatch" class="gtext" rows="3">${esc((dna.catchphrases||[]).join('\n'))}</textarea>
+          <label>말투</label><textarea id="dnaSpeech" class="gtext" rows="2">${esc(dna.speech_style||'')}</textarea>
+          <label>연출 장치 (빈도)</label><textarea id="dnaDevices" class="gtext" rows="4">${esc(dv)}</textarea>
+          <label>전형적 구조</label><textarea id="dnaStruct" class="gtext" rows="2">${esc(dna.structure_pattern||'')}</textarea>
+          <label>CTA 습관</label><textarea id="dnaCta" class="gtext" rows="2">${esc(dna.cta_habits||'')}</textarea>
+          <label>톤</label><input id="dnaTone" class="ginput" style="width:100%" value="${esc(dna.tone||'')}" />
+          <label>시각 스타일 ${vs?'(영상 직접 시청)':'(저장 영상 없어 생략)'}</label><textarea id="dnaVisual" class="gtext" rows="4">${esc(vs)}</textarea>
+          <label>페이싱 (자동 계산 · 수정 불가)</label><div class="dnapace">${esc(pace)}</div>
+        </div>
+        <div class="gactions" style="margin-top:16px">
+          <button class="go" id="guideFinal">② 이 DNA로 가이드 생성</button>
+          <span class="ghint2">수정한 내용이 그대로 가이드 합성에 들어갑니다.</span>
+        </div>
+      </div>
+    </div>`;
+  $('#guideFinal').addEventListener('click', runGuideFinal);
+  window.scrollTo({ top: $('#guideResult').offsetTop-12, behavior:'smooth' });
+}
+
+// ---- Stage 2: synthesize the guide from (possibly edited) DNA ----
+async function runGuideFinal(){
+  if(!GRESOLVED){ $('#status').innerHTML='<div class="err">먼저 ① DNA 추출을 실행하세요.</div>'; return; }
+  const manager=$('#gManager').value.trim();
+  const prodName=$('#gProdName').value.trim();
+  const productInfo=$('#gProduct').value.trim();
+  const dna = {
+    creator: GDNA?.creator||'',
+    hook_formulas: $('#dnaHooks').value.trim(),
+    catchphrases: $('#dnaCatch').value.trim().split('\n').map(x=>x.trim()).filter(Boolean),
+    speech_style: $('#dnaSpeech').value.trim(),
+    devices: $('#dnaDevices').value.trim(),
+    structure_pattern: $('#dnaStruct').value.trim(),
+    cta_habits: $('#dnaCta').value.trim(),
+    tone: $('#dnaTone').value.trim(),
+    visual_style: $('#dnaVisual').value.trim(),
+    pacing: GDNA?.pacing||null,
+  };
+  const btn=$('#guideFinal'); if(btn) btn.disabled=true;
+  $('#status').innerHTML='<div class="loading"><div class="spinner"></div>가이드 합성 중… (Gemini)</div>';
+  try{
+    const meta={ manager, product: prodName, creator: dna.creator };
+    const { guide } = await postJSON('/api/guide', { creatorReports: GRESOLVED.creatorReports.map(r=>({meta:r.meta,report:r.report})), ourReport: GRESOLVED.ourReport?{meta:GRESOLVED.ourReport.meta,report:GRESOLVED.ourReport.report}:null, productInfo, meta, dna });
     $('#status').innerHTML='';
     renderBrief(guide, null);
-    // export to Drive (best-effort, async)
     postJSON('/api/guide-save', { guide, meta }).then(r=>{ const el=$('#gDriveSlot'); if(el) el.innerHTML = r?.driveUrl?`<a class="copy" href="${esc(r.driveUrl)}" target="_blank" rel="noopener">📄 Drive에서 열기</a>`:'<span class="copy" style="opacity:.55;cursor:default">Drive 저장 안 됨</span>'; }).catch(()=>{});
-  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'가이드 생성 실패')}</div>`; if(BATCH){BATCH.finished=true;renderBatch();} }
-  finally{ $('#guideGo').disabled=false; }
+  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'가이드 생성 실패')}</div>`; if(btn) btn.disabled=false; }
 }
 
 function hlText(text, highlights){
@@ -1113,6 +1210,13 @@ function renderBrief(g, driveUrl){
   g=g||{};
   const links=(g.reference_videos||[]).map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">🔗 ${esc(v.label)}</a>`).join('');
   const cpat=(g.common_patterns||[]).map(p=>`<div class="cpat"><span class="cpa">${esc(p.aspect)}</span><span>${esc(p.finding)}</span></div>`).join('');
+  const hooks=(g.hook_options||[]).map(o=>`
+    <div class="hookopt">
+      <div class="holabel">Hook ${esc(o.label||"")}</div>
+      ${o.text_overlay?`<div class="ovtxt">"${esc(o.text_overlay)}"</div>`:""}
+      ${(o.say||[]).map(l=>`<div class="line">${hlText(l.text,l.highlights)}</div>`).join("")}
+      ${o.rationale?`<div class="horat">${esc(o.rationale)}</div>`:""}
+    </div>`).join("");
   const steps=(g.steps||[]).map((s,i)=>`
     <div class="step">
       <div class="sname">Step ${i+1} — ${esc(s.name||'')}</div>
@@ -1140,6 +1244,7 @@ function renderBrief(g, driveUrl){
       </div>
       ${g.structure_summary?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">구조 요약</span></div><p style="text-align:center;font-size:14px;margin:14px auto 0;max-width:82%">${esc(g.structure_summary)}</p></div>`:''}
       ${cpat?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">반복 공통 패턴</span></div><div style="margin-top:16px">${cpat}</div></div>`:''}
+      ${hooks?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">훅 3안 · A/B 테스트</span></div><div style="margin-top:14px">${hooks}</div></div>`:''}
       <div class="brief-sec">${steps}</div>
       ${tips?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">Tips</span></div><div style="margin-top:14px">${tips}</div></div>`:''}
       <div class="brief-sec prod"><div class="brief-h">Product</div><div class="pname">${esc(g.product?.name||'')}</div>${bullets}</div>

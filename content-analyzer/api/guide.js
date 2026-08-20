@@ -9,6 +9,7 @@ export default async function handler(req, res) {
       ourReport: b.ourReport,
       productInfo: b.productInfo,
       meta: b.meta,
+      dna: b.dna,
     }));
   } catch (err) {
     const status = err instanceof HttpError ? err.status : 502;

@@ -3,7 +3,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { runScrape, runReport, runComments, runAnalysis, runGuide, HttpError } from './lib/pipeline.js';
+import { runScrape, runReport, runComments, runAnalysis, runGuide, runDna, runStylePass, HttpError } from './lib/pipeline.js';
 import { pushToDrive, driveEnabled } from './lib/drive.js';
 import { guideToPlainText } from './lib/guideText.js';
 import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis, migrateLegacyToUpstash } from './lib/store.js';
@@ -80,10 +80,20 @@ app.post('/api/migrate', async (_req, res) => {
 });
 
 
+app.post('/api/dna', async (req, res) => {
+  try { res.json(await runDna({ creatorReports: req.body?.creatorReports })); }
+  catch (err) { send(res, err); }
+});
+
+app.post('/api/stylepass', async (req, res) => {
+  try { res.json(await runStylePass({ videoUrl: req.body?.videoUrl })); }
+  catch (err) { send(res, err); }
+});
+
 app.post('/api/guide', async (req, res) => {
   try {
-    const { creatorReports, ourReport, productInfo, meta } = req.body || {};
-    res.json(await runGuide({ creatorReports, ourReport, productInfo, meta }));
+    const { creatorReports, ourReport, productInfo, meta, dna } = req.body || {};
+    res.json(await runGuide({ creatorReports, ourReport, productInfo, meta, dna }));
   } catch (err) { send(res, err); }
 });
 

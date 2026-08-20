@@ -20,6 +20,17 @@ export function guideToPlainText(guide = {}, meta = {}) {
     t += `\n`;
   }
 
+  if ((g.hook_options || []).length) {
+    t += `■ 훅 3안 (A/B 테스트용)\n`;
+    g.hook_options.forEach((h) => {
+      t += `  [${h.label}]\n`;
+      if (h.text_overlay) t += `    화면텍스트: ${h.text_overlay}\n`;
+      (h.say || []).forEach((l) => { t += `    Say: ${l.text}\n`; });
+      if (h.rationale) t += `    (${h.rationale})\n`;
+    });
+    t += `\n`;
+  }
+
   (g.steps || []).forEach((s, i) => {
     t += `── Step ${i + 1} — ${s.name || ''} ──\n`;
     if (s.directive) t += `[촬영] ${s.directive}\n`;

@@ -47,6 +47,32 @@ const GUIDE_SCHEMA = {
         propertyOrdering: ['aspect', 'finding'],
       },
     },
+    hook_options: {
+      type: 'array',
+      description: '훅 3안(A/B/C). A의 훅 공식 유형별로 하나씩 — 크리에이터가 자기에게 맞는 것을 고르게 한다.',
+      items: {
+        type: 'object',
+        properties: {
+          label: { type: 'string', description: '옵션 라벨. 예: "A — 도발/금기형".' },
+          text_overlay: { type: 'string', description: '이 훅의 화면 텍스트(영어).' },
+          say: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                text: { type: 'string', description: '대사 한 줄(영어, A의 실제 훅 문장 리듬).' },
+                highlights: { type: 'array', items: { type: 'string' }, description: '빨강 강조 문구.' },
+              },
+              required: ['text', 'highlights'],
+              propertyOrdering: ['text', 'highlights'],
+            },
+          },
+          rationale: { type: 'string', description: '이 훅이 왜 A 스타일인지(한국어 한 줄, 어떤 영상의 어떤 훅에서 왔는지).' },
+        },
+        required: ['label', 'text_overlay', 'say', 'rationale'],
+        propertyOrdering: ['label', 'text_overlay', 'say', 'rationale'],
+      },
+    },
     steps: {
       type: 'array',
       description: '크리에이터 A의 실제 영상 구조(훅→시연→성분→CTA 등)를 순서대로 미러링한 스텝. 보통 6-8개.',
@@ -112,8 +138,8 @@ const GUIDE_SCHEMA = {
       propertyOrdering: ['name', 'bullets'],
     },
   },
-  required: ['product_line', 'reference_note', 'structure_summary', 'common_patterns', 'steps', 'tips', 'product'],
-  propertyOrdering: ['product_line', 'reference_note', 'structure_summary', 'common_patterns', 'steps', 'tips', 'product'],
+  required: ['product_line', 'reference_note', 'structure_summary', 'common_patterns', 'hook_options', 'steps', 'tips', 'product'],
+  propertyOrdering: ['product_line', 'reference_note', 'structure_summary', 'common_patterns', 'hook_options', 'steps', 'tips', 'product'],
 };
 
 const SYSTEM = `너는 d'Alba Piedmont의 시니어 숏폼 크리에이티브 디렉터다.
@@ -187,7 +213,7 @@ d'Alba 연관성: ${r.dalba_relevance || ""}
  * @param {string} productInfo    Optional free text with our product's specific claims/numbers.
  * @param {Object} meta           { manager, product, creator }
  */
-export async function generateGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {}, tries = 3 }) {
+export async function generateGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {}, dna = null, tries = 3 }) {
   const client = ai();
   if (!creatorReports.length) throw new Error('크리에이터 A의 바이럴 영상이 최소 1개 필요합니다.');
 
@@ -200,9 +226,19 @@ export async function generateGuide({ creatorReports = [], ourReport = null, pro
 
   const creatorName = meta.creator || creatorReports[0]?.meta?.author || 'the creator';
 
+  const dnaBlock = dna ? `=== 크리에이터 A 스타일 DNA (담당자 검증 완료 — 최우선 스타일 소스) ===
+이 DNA는 A의 영상들에서 추출되어 담당자가 확인·수정한 것이다. 최우선으로 반영하라:
+- hook_options는 DNA의 hook_formulas 유형별로 하나씩 만들 것(원문 예시의 문장 리듬을 그대로 변형).
+- 대사에 DNA의 catchphrases(말버릇 원문)를 자연스럽게 섞을 것.
+- pacing 수치에 맞춰 각 스텝 directive에 목표 타임코드를 표기할 것(예: "0:00-0:03 · ..."). 총 길이는 avg_duration_s 안팎.
+- visual_style이 있으면 directive에 배경/프레이밍/자막 스타일을 반영할 것.
+${JSON.stringify(dna).slice(0, 6000)}
+
+` : '';
+
   const prompt = `크리에이터 A(=@${creatorName})의 바이럴 영상 구조를 복제해, 우리 제품용 촬영 가이드를 만들어라.
 
-=== 크리에이터 A의 바이럴 영상 분석 (구조 소스) ===
+${dnaBlock}=== 크리에이터 A의 바이럴 영상 분석 (구조 소스) ===
 ${creatorBlock}
 
 === 우리 레퍼런스 영상 분석 (제품 메시지 소스) ===
@@ -219,7 +255,9 @@ ${(productInfo || '(없음 — 위 우리 영상 분석에서 제품 소구를 �
 1) 먼저 A의 여러 영상에서 반복되는 공통 패턴(훅·구조·PIP/오버레이·B&A·CTA·톤)을 찾아 common_patterns에 정리하고, 그 공통 공식을 스텝 구조와 연출 장치에 그대로 반영하라.
 2) 각 스텝의 say/text_overlay는 반드시 A의 말투·표현·리듬으로 쓰고(A 영상의 실제 문장 패턴을 변형), 내용만 우리 제품으로 대입하라. 우리 영상의 문장 스타일을 쓰지 마라.
 3) 로드베어링 문구는 highlights에 원문 그대로.
-4) Product 페이지 불릿은 위 제품 정보/제품 클레임에서만 뽑아라(없는 수치 금지).\n5) 다시 강조: 구조·연출·스텝 순서는 오직 CREATOR A 영상들에서. OUR PRODUCT SOURCE는 무엇을 말할지(클레임)만 제공한다.`;
+4) hook_options에 훅 3안을 만들어라 — A의 훅 유형별 1개씩, 라벨 "A — <유형>", "B — <유형>", "C — <유형>". steps의 첫 스텝(Hook)은 그중 가장 강한 안을 기본으로 쓴다.
+5) Product 페이지 불릿은 위 제품 정보/제품 클레임에서만 뽑아라(없는 수치 금지).
+6) 다시 강조: 구조·연출·스텝 순서는 오직 CREATOR A 영상들에서. OUR PRODUCT SOURCE는 무엇을 말할지(클레임)만 제공한다.`;
 
   const response = await withRetry(() => client.models.generateContent({
     model: MODEL,
