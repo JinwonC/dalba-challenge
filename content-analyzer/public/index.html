@@ -156,6 +156,79 @@
   .hitem .hdel{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#b91c1c;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer}
   .hitem .hdel:hover{background:#fef2f2;border-color:#f3c2c2}
   .foot{max-width:1180px;margin:0 auto 50px;padding:0 20px;color:var(--muted);font-size:12px;text-align:center}
+  /* guide generator */
+  .gpanel{max-width:900px;margin:16px auto 0;padding:0 20px}
+  .gcol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .gsec{margin-bottom:22px}
+  .gsec h3{margin:0 0 4px;font-size:15px}
+  .gsec h3 .gmax,.gsec h3 .gopt{font-size:11.5px;font-weight:600;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:2px 9px;margin-left:6px}
+  .gsec h3 .gopt{color:var(--muted);background:#f1f0ec}
+  .gdesc{margin:0 0 10px;color:var(--muted);font-size:12.5px}
+  .gadd{display:flex;gap:8px}
+  .gadd input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+  .gadd input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
+  .gaddbtn{flex:0 0 auto;border:1px solid var(--slate);background:var(--slate);color:#fff;border-radius:9px;padding:0 16px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .gaddbtn:hover{background:#111827}
+  .gsearchwrap{position:relative;margin-top:8px}
+  .gsearchwrap input{width:100%;padding:10px 13px;border:1px solid var(--line);border-radius:9px;font-size:13.5px}
+  .gsearchwrap input:focus{outline:none;border-color:var(--gold)}
+  .gsearchres{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-height:240px;overflow:auto;z-index:20;display:none}
+  .gsearchres.on{display:block}
+  .gsr{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-top:1px solid var(--line);font-size:13px}
+  .gsr:first-child{border-top:0}
+  .gsr:hover{background:var(--gold-soft)}
+  .gsr .gsrid{color:var(--muted);font-size:11px;margin-left:auto}
+  .gchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .gchip{display:flex;align-items:center;gap:8px;background:var(--gold-soft);border:1px solid #efe4cd;border-radius:10px;padding:7px 10px;font-size:12.5px;max-width:100%}
+  .gchip .gcname{font-weight:700}
+  .gchip .gcsrc{color:var(--muted);font-size:11px}
+  .gchip .gcx{border:0;background:none;color:#b91c1c;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+  .gtext{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;line-height:1.5}
+  .gtext:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,46,.15)}
+  .grow2{display:flex;gap:10px}
+  .ginput{flex:1;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+  .ginput:focus{outline:none;border-color:var(--gold)}
+  .gactions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ghint2{color:var(--muted);font-size:12px}
+
+  /* guide result — Contents Brief */
+  .gresult{max-width:900px;margin:22px auto 60px;padding:0 20px}
+  .brief{background:#fff;border:1px solid var(--line);border-radius:16px;padding:0;overflow:hidden}
+  .brief-cover{padding:40px 34px 30px;border-bottom:3px solid #111827;text-align:center}
+  .brief-cover .bt{display:inline-block;font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:700;font-size:40px;background:#ffe95c;padding:2px 18px;line-height:1.15}
+  .brief-cover .bsub{margin-top:14px;font-size:18px;color:#111}
+  .brief-cover .bnote{margin-top:16px;font-size:14px;color:#333}
+  .brief-cover .blinks{margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .brief-cover .blinks a{background:#ffe95c;color:#1a4bd8;font-weight:700;text-decoration:none;border-radius:6px;padding:3px 10px;font-size:13px}
+  .brief-sec{padding:26px 34px;border-bottom:1px solid var(--line)}
+  .brief-sec:last-child{border-bottom:0}
+  .brief-h{text-align:center;font-size:24px;font-weight:700;margin:0 0 18px}
+  .brief-h.hl{display:inline-block;background:#ffe95c;padding:2px 14px}
+  .brief-hwrap{text-align:center}
+  .cpat{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .cpat:first-child{border-top:0}
+  .cpat .cpa{flex:0 0 120px;font-weight:700;color:var(--gold)}
+  .step{padding:22px 0;border-top:1px dashed var(--line)}
+  .step:first-child{border-top:0}
+  .step .sname{text-align:center;font-size:20px;font-weight:700;margin:0 0 10px}
+  .step .sdir{text-align:center;color:#e5484d;font-weight:700;font-size:14px;margin:0 0 10px}
+  .step .sov{text-align:center;margin:12px auto;max-width:80%}
+  .step .sov .lbl{color:var(--muted);font-size:12px}
+  .step .sov .ovtxt{color:#e5484d;font-weight:800;font-size:17px;margin-top:2px}
+  .step .say{text-align:center;margin:14px auto;max-width:88%}
+  .step .say .lbl{font-weight:700;font-size:13px}
+  .step .say .line{font-weight:700;font-style:italic;font-size:15px;margin-top:6px;line-height:1.5}
+  .step .say .line em{color:#e5484d;font-style:italic}
+  .step .meta2{margin-top:12px;background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:#555}
+  .step .meta2 b{color:#333}
+  .tip{text-align:center;font-size:15px;margin:8px 0}
+  .tip.em{color:#e5484d;font-weight:700}
+  .prod{text-align:center}
+  .prod .pname{font-size:20px;font-weight:800;margin:6px 0 16px}
+  .prod .pb{font-size:15px;margin:10px 0}
+  .prod .pb em{color:#e5484d;font-weight:800;font-style:normal}
+  .gbar-actions{display:flex;gap:10px;justify-content:center;margin:18px 0 4px;flex-wrap:wrap}
+
 </style>
 </head>
 <body>
@@ -167,8 +240,9 @@
   <div class="tabs">
     <button class="tab on" data-mode="link">🔗 링크 (틱톡·인스타)</button>
     <button class="tab" data-mode="upload">📁 파일 업로드</button>
+    <button class="tab" data-mode="guide">📋 가이드 생성기</button>
   </div>
-  <div class="bar">
+  <div class="bar" id="bar">
     <input id="url" type="text" placeholder="틱톡·인스타 링크 (여러 개는 쉼표/공백/줄바꿈으로 구분, 최대 5개)" />
     <label id="fileLabel" class="filebtn" style="display:none">📁 영상 선택<input id="file" type="file" accept="video/*" multiple hidden /></label>
     <span id="fileName" class="filename"></span>
@@ -176,10 +250,61 @@
     <input id="product" type="text" class="meta-in" placeholder="제품명 (예: 달바 멀티밤)" />
     <button class="go" id="go">분석하기</button>
   </div>
-  <div class="hint">한 번에 <b>최대 5개</b>까지 순차 분석돼요. · 스크랩 + 화면분석에 개당 60~120초. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기. · 업로드는 <b>mp4(H.264)</b> 권장(브라우저 재생·점프 지원).</div>
+  <div class="hint" id="analyzerHint">한 번에 <b>최대 5개</b>까지 순차 분석돼요. · 스크랩 + 화면분석에 개당 60~120초. · 분석은 한국어, 스크립트/키워드는 영어 원문 + 한국어 병기. · 업로드는 <b>mp4(H.264)</b> 권장(브라우저 재생·점프 지원).</div>
 
   <div class="status" id="status"></div>
   <div class="batchbar" id="batchbar" style="display:none"></div>
+
+  <div class="gpanel" id="guidePanel" style="display:none">
+    <div class="gcol">
+      <div class="gsec">
+        <h3>1 · 크리에이터 A의 바이럴 영상 <span class="gmax">최대 5개</span></h3>
+        <p class="gdesc">이 크리에이터의 <b>반복되는 공통 구조</b>(훅·PIP·B&amp;A·CTA·톤)를 뽑아 복제합니다. 링크를 붙여넣거나 히스토리에서 검색해 추가하세요.</p>
+        <div class="gadd">
+          <input id="gCreatorUrl" type="text" placeholder="틱톡·인스타 링크 붙여넣기 (여러 개는 줄바꿈/공백)" />
+          <button class="gaddbtn" id="gCreatorAdd">추가</button>
+        </div>
+        <div class="gsearchwrap">
+          <input id="gCreatorSearch" type="text" placeholder="🔍 히스토리에서 검색해 추가 (크리에이터·영상ID)" autocomplete="off" />
+          <div class="gsearchres" id="gCreatorRes"></div>
+        </div>
+        <div class="gchips" id="gCreatorChips"></div>
+      </div>
+
+      <div class="gsec">
+        <h3>2 · 우리 레퍼런스 영상 <span class="gopt">선택 · 1개</span></h3>
+        <p class="gdesc">같은 제품의 우리 바이럴(제품 정보 포함). 제품 소구를 여기서 가져옵니다. 없으면 아래 제품 정보만으로도 됩니다.</p>
+        <div class="gadd">
+          <input id="gOurUrl" type="text" placeholder="우리 영상 링크 (선택)" />
+          <button class="gaddbtn" id="gOurAdd">추가</button>
+        </div>
+        <div class="gsearchwrap">
+          <input id="gOurSearch" type="text" placeholder="🔍 히스토리에서 검색해 지정 (선택)" autocomplete="off" />
+          <div class="gsearchres" id="gOurRes"></div>
+        </div>
+        <div class="gchips" id="gOurChips"></div>
+      </div>
+
+      <div class="gsec">
+        <h3>3 · 제품 정보 <span class="gopt">권장</span></h3>
+        <p class="gdesc">제품명·핵심 성분·소구·임상 수치 등. 여기 적은 근거만 가이드에 들어갑니다(없는 수치는 안 씀).</p>
+        <textarea id="gProduct" class="gtext" rows="5" placeholder="예)&#10;제품명: d'Alba Intensive Volufiline Grinding Cream&#10;핵심: Brushed-On Botox (안에서부터 볼륨), 성분 Volufiline&#10;그라인딩 방식 = 매번 신선·위생적&#10;임상: 1회 사용 후 11.271% cheek lifting"></textarea>
+      </div>
+
+      <div class="gsec grow2">
+        <input id="gManager" type="text" class="ginput" placeholder="담당자 (예: 최진원)" />
+        <input id="gProdName" type="text" class="ginput" placeholder="제품명 라벨 (예: 볼루필린 그라인딩크림)" />
+      </div>
+
+      <div class="gactions">
+        <button class="go" id="guideGo">📋 가이드 생성</button>
+        <span class="ghint2" id="guideHint">A 영상은 이미 분석한 것이면 즉시, 새 링크는 개당 60~120초 걸려요.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gresult" id="guideResult"></div>
+
 
   <div class="history" id="history"></div>
 
@@ -208,6 +333,13 @@ let MODE = 'link';
 document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>{
   MODE = t.dataset.mode;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===t));
+  const guide = MODE==='guide';
+  // analyzer chrome vs guide panel
+  $('#bar').style.display = guide ? 'none' : '';
+  $('#analyzerHint').style.display = guide ? 'none' : '';
+  $('#guidePanel').style.display = guide ? '' : 'none';
+  if(guide){ $('#layout').style.display='none'; $('#history').style.display='none'; }
+  else { $('#history').style.display=''; $('#guideResult').innerHTML=''; }
   const up = MODE==='upload';
   $('#url').style.display = up ? 'none' : '';
   $('#fileLabel').style.display = up ? '' : 'none';
@@ -848,6 +980,176 @@ async function runUpload(){
   finally{ $('#go').disabled = false; }
 }
 
+
+// ===== 가이드 생성기 =====
+let GCREATORS = [];   // [{kind:'history'|'link', id?, url, label, creator}]
+let GOUR = null;      // same shape or null
+const GMAX = 5;
+
+function gLabelFromUrl(u){
+  const id = (typeof contentId==='function') ? contentId(u) : null;
+  return id || u.replace(/^https?:\/\/(www\.)?/,'').slice(0,28);
+}
+function gVideoIdFromUrl(u){
+  let m = String(u).match(/\/video\/(\d+)/); if(m) return m[1];
+  m = String(u).match(/instagram\.com\/(?:reel|reels|p|tv)\/([\w-]+)/i); if(m) return 'ig_'+m[1];
+  return null;
+}
+function renderGChips(){
+  $('#gCreatorChips').innerHTML = GCREATORS.map((c,i)=>`
+    <div class="gchip"><span class="gcname">${esc(c.creator? '@'+c.creator : c.label)}</span>
+      <span class="gcsrc">${c.kind==='history'?'기록':'링크'}</span>
+      <button class="gcx" data-gi="${i}">✕</button></div>`).join('')
+    || '<span style="color:var(--muted);font-size:12.5px">아직 없음 — 링크 추가 또는 히스토리 검색</span>';
+  $('#gCreatorChips').querySelectorAll('.gcx').forEach(b=>b.addEventListener('click',()=>{ GCREATORS.splice(Number(b.dataset.gi),1); renderGChips(); }));
+  $('#gOurChips').innerHTML = GOUR ? `<div class="gchip"><span class="gcname">${esc(GOUR.creator?'@'+GOUR.creator:GOUR.label)}</span><span class="gcsrc">${GOUR.kind==='history'?'기록':'링크'}</span><button class="gcx" data-our="1">✕</button></div>` : '<span style="color:var(--muted);font-size:12.5px">없음 (선택)</span>';
+  const ox=$('#gOurChips').querySelector('.gcx'); if(ox) ox.addEventListener('click',()=>{ GOUR=null; renderGChips(); });
+}
+function gAddCreatorLinks(raw){
+  const urls=[...new Set(String(raw).split(/[\s,]+/).map(x=>x.trim()).filter(Boolean))];
+  for(const u of urls){
+    if(GCREATORS.length>=GMAX){ alert(`크리에이터 영상은 최대 ${GMAX}개예요.`); break; }
+    if(GCREATORS.some(c=>c.url===u)) continue;
+    GCREATORS.push({ kind:'link', url:u, label:gLabelFromUrl(u), creator:'' });
+  }
+  renderGChips();
+}
+function gHistItem(it){ return { kind:'history', id:it.id, url:it.url||'', label:it.id, creator:it.creator||'' }; }
+function gRenderSearch(box, q, onPick){
+  const el=$(box);
+  const terms=String(q).trim().toLowerCase().split(/\s+/).filter(Boolean).map(t=>t.replace(/^@/,''));
+  if(!terms.length){ el.classList.remove('on'); el.innerHTML=''; return; }
+  const hits=HISTORY.filter(it=>{
+    const hay=[it.creator,it.id,it.title,it.product,it.manager].map(x=>String(x||'').toLowerCase()).join('  ');
+    return terms.every(t=>hay.includes(t));
+  }).slice(0,12);
+  el.innerHTML = hits.length ? hits.map(it=>`<div class="gsr" data-id="${esc(it.id)}"><b>@${esc(it.creator||'?')}</b> <span style="color:var(--muted)">${esc((it.title||'').slice(0,30))}</span><span class="gsrid">${esc(it.id)}</span></div>`).join('') : '<div class="gsr" style="color:var(--muted);cursor:default">결과 없음</div>';
+  el.classList.add('on');
+  el.querySelectorAll('.gsr[data-id]').forEach(r=>r.addEventListener('click',()=>{
+    const it=HISTORY.find(x=>x.id===r.dataset.id); if(it) onPick(it);
+    el.classList.remove('on');
+  }));
+}
+
+function wireGuide(){
+  $('#gCreatorAdd').addEventListener('click',()=>{ gAddCreatorLinks($('#gCreatorUrl').value); $('#gCreatorUrl').value=''; });
+  $('#gCreatorUrl').addEventListener('keydown',e=>{ if(e.key==='Enter'){ gAddCreatorLinks($('#gCreatorUrl').value); $('#gCreatorUrl').value=''; }});
+  $('#gCreatorSearch').addEventListener('input',e=> gRenderSearch('#gCreatorRes', e.target.value, it=>{
+    if(GCREATORS.length>=GMAX){ alert(`최대 ${GMAX}개예요.`); return; }
+    if(!GCREATORS.some(c=>c.kind==='history'&&c.id===it.id)) GCREATORS.push(gHistItem(it));
+    $('#gCreatorSearch').value=''; renderGChips();
+  }));
+  $('#gOurAdd').addEventListener('click',()=>{ const u=$('#gOurUrl').value.trim(); if(u){ GOUR={kind:'link',url:u,label:gLabelFromUrl(u),creator:''}; $('#gOurUrl').value=''; renderGChips(); }});
+  $('#gOurSearch').addEventListener('input',e=> gRenderSearch('#gOurRes', e.target.value, it=>{ GOUR=gHistItem(it); $('#gOurSearch').value=''; renderGChips(); }));
+  document.addEventListener('click',e=>{ if(!e.target.closest('.gsearchwrap')){ $('#gCreatorRes')&&$('#gCreatorRes').classList.remove('on'); $('#gOurRes')&&$('#gOurRes').classList.remove('on'); }});
+  $('#guideGo').addEventListener('click', runGuide);
+  renderGChips();
+}
+
+// resolve one video ref -> {meta, report}, reusing history or scraping+reporting
+async function gResolveReport(ref, manager, prodName){
+  if(ref.kind==='history'){
+    const rec = await getJSON('/api/analysis?id='+encodeURIComponent(ref.id));
+    ref.creator = rec.meta?.author || ref.creator;
+    return { meta: rec.meta||{}, report: rec.report||{} };
+  }
+  // link: scrape + report (may already be in history by id → reuse)
+  const vid = gVideoIdFromUrl(ref.url);
+  if(vid){
+    const known = HISTORY.find(h=>h.id===vid);
+    if(known){ const rec = await getJSON('/api/analysis?id='+encodeURIComponent(vid)); if(rec&&rec.report){ ref.creator=rec.meta?.author||''; return { meta:rec.meta||{}, report:rec.report||{} }; } }
+  }
+  const s = await scrapeLink(ref.url, manager, prodName);
+  const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
+  ref.creator = s.meta?.author || '';
+  // best-effort: also save so future runs reuse it
+  postJSON('/api/save', { meta:s.meta, embed:s.embed, report:data.report, comments:null, video:data.video||null }).catch(()=>{});
+  return { meta: s.meta||{}, report: data.report||{} };
+}
+
+async function runGuide(){
+  const manager=$('#gManager').value.trim();
+  const prodName=$('#gProdName').value.trim();
+  const productInfo=$('#gProduct').value.trim();
+  if(!GCREATORS.length){ $('#status').innerHTML='<div class="err">크리에이터 A의 바이럴 영상을 1개 이상 추가하세요.</div>'; return; }
+  if(!GOUR && !productInfo){ $('#status').innerHTML='<div class="err">우리 레퍼런스 영상 또는 제품 정보 중 하나는 필요해요.</div>'; return; }
+  $('#guideGo').disabled=true; $('#guideResult').innerHTML='';
+  const jobs = [...GCREATORS.map(c=>({ref:c,role:'creator'})), ...(GOUR?[{ref:GOUR,role:'our'}]:[])];
+  BATCH = { n: jobs.length+1, i:0, finished:false, items: jobs.map(j=>({label:(j.role==='our'?'[우리] ':'')+(j.ref.creator?'@'+j.ref.creator:j.ref.label), status:'pending', note:''})).concat([{label:'가이드 합성 (Gemini)', status:'pending', note:''}]) };
+  renderBatch();
+  try{
+    const creatorReports=[]; let ourReport=null;
+    for(let i=0;i<jobs.length;i++){
+      BATCH.i=i; BATCH.items[i].status='running'; renderBatch();
+      $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>${i+1}/${jobs.length} · 영상 분석 가져오는 중…</div>`;
+      try{
+        const rep = await gResolveReport(jobs[i].ref, manager, prodName);
+        if(jobs[i].role==='our') ourReport=rep; else creatorReports.push(rep);
+        BATCH.items[i].status='done'; BATCH.items[i].note = jobs[i].ref.creator?'@'+jobs[i].ref.creator:'완료';
+        BATCH.items[i].label=(jobs[i].role==='our'?'[우리] ':'')+(jobs[i].ref.creator?'@'+jobs[i].ref.creator:jobs[i].ref.label);
+      }catch(e){ BATCH.items[i].status='fail'; BATCH.items[i].note=e.message||'실패'; }
+      renderBatch();
+    }
+    if(!creatorReports.length) throw new Error('크리에이터 영상 분석을 하나도 못 가져왔어요.');
+    const gi=jobs.length; BATCH.i=gi; BATCH.items[gi].status='running'; renderBatch();
+    $('#status').innerHTML='<div class="loading"><div class="spinner"></div>가이드 합성 중… (Gemini)</div>';
+    const meta={ manager, product: prodName, creator: creatorReports[0] && GCREATORS[0]?.creator };
+    const { guide } = await postJSON('/api/guide', { creatorReports, ourReport, productInfo, meta });
+    BATCH.items[gi].status='done'; BATCH.items[gi].note='완료'; BATCH.finished=true; renderBatch();
+    $('#status').innerHTML='';
+    renderBrief(guide, null);
+    // export to Drive (best-effort, async)
+    postJSON('/api/guide-save', { guide, meta }).then(r=>{ const el=$('#gDriveSlot'); if(el) el.innerHTML = r?.driveUrl?`<a class="copy" href="${esc(r.driveUrl)}" target="_blank" rel="noopener">📄 Drive에서 열기</a>`:'<span class="copy" style="opacity:.55;cursor:default">Drive 저장 안 됨</span>'; }).catch(()=>{});
+  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'가이드 생성 실패')}</div>`; if(BATCH){BATCH.finished=true;renderBatch();} }
+  finally{ $('#guideGo').disabled=false; }
+}
+
+function hlText(text, highlights){
+  let s = esc(String(text||'').replace(/\*\*/g,'').replace(/__/g,''));
+  (highlights||[]).forEach(h=>{ const e=esc(h); if(e){ s = s.split(e).join('<em>'+e+'</em>'); } });
+  return s;
+}
+function renderBrief(g, driveUrl){
+  g=g||{};
+  const links=(g.reference_videos||[]).map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">🔗 ${esc(v.label)}</a>`).join('');
+  const cpat=(g.common_patterns||[]).map(p=>`<div class="cpat"><span class="cpa">${esc(p.aspect)}</span><span>${esc(p.finding)}</span></div>`).join('');
+  const steps=(g.steps||[]).map((s,i)=>`
+    <div class="step">
+      <div class="sname">Step ${i+1} — ${esc(s.name||'')}</div>
+      ${s.directive?`<div class="sdir">${esc(s.directive)}</div>`:''}
+      ${s.text_overlay?`<div class="sov"><div class="lbl">Text overlay</div><div class="ovtxt">"${esc(s.text_overlay)}"</div></div>`:''}
+      ${(s.say||[]).length?`<div class="say"><div class="lbl">Say :</div>${s.say.map(l=>`<div class="line">${hlText(l.text,l.highlights)}</div>`).join('')}</div>`:''}
+      ${(s.reference_hint||s.our_angle)?`<div class="meta2">${s.reference_hint?`<div>🎬 <b>참고:</b> ${esc(s.reference_hint)}</div>`:''}${s.our_angle?`<div>🎯 <b>우리 소구:</b> ${esc(s.our_angle)}</div>`:''}</div>`:''}
+    </div>`).join('');
+  const tips=(g.tips||[]).map(t=>`<div class="tip ${t.emphasis?'em':''}">${esc(t.text)}</div>`).join('');
+  const bullets=(g.product?.bullets||[]).map(b=>`<div class="pb">✔ ${b.highlight?`<em>${esc(b.highlight)}</em> `:''}${esc(b.text)}</div>`).join('');
+
+  $('#guideResult').innerHTML = `
+    <div class="gbar-actions">
+      <span id="gDriveSlot"><span class="copy" style="opacity:.55;cursor:default">📄 Drive 저장 중…</span></span>
+      <button class="htoggle" id="gPrint">🖨 인쇄 / PDF</button>
+    </div>
+    <div class="brief" id="briefDoc">
+      <div class="brief-cover">
+        <div class="bt">Contents Brief</div>
+        <div class="bsub">${esc(g.product_line||'')}</div>
+        <div style="margin-top:10px;font-size:16px">[ Shooting Guide ]</div>
+        ${g.reference_note?`<div class="bnote">${esc(g.reference_note)}</div>`:''}
+        ${links?`<div class="blinks">${links}</div>`:''}
+        ${g.creator?`<div style="margin-top:10px;color:var(--muted);font-size:13px">레퍼런스 크리에이터: @${esc(g.creator)}</div>`:''}
+      </div>
+      ${g.structure_summary?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">구조 요약</span></div><p style="text-align:center;font-size:14px;margin:14px auto 0;max-width:82%">${esc(g.structure_summary)}</p></div>`:''}
+      ${cpat?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">반복 공통 패턴</span></div><div style="margin-top:16px">${cpat}</div></div>`:''}
+      <div class="brief-sec">${steps}</div>
+      ${tips?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">Tips</span></div><div style="margin-top:14px">${tips}</div></div>`:''}
+      <div class="brief-sec prod"><div class="brief-h">Product</div><div class="pname">${esc(g.product?.name||'')}</div>${bullets}</div>
+    </div>`;
+  const pb=$('#gPrint'); if(pb) pb.addEventListener('click',()=>window.print());
+  if(driveUrl){ const el=$('#gDriveSlot'); if(el) el.innerHTML=`<a class="copy" href="${esc(driveUrl)}" target="_blank" rel="noopener">📄 Drive에서 열기</a>`; }
+  window.scrollTo({ top: $('#guideResult').offsetTop-12, behavior:'smooth' });
+}
+
+wireGuide();
 loadHistory();
 </script>
 </body>
