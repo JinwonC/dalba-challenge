@@ -106,12 +106,17 @@ const DNA_SCHEMA = {
         propertyOrdering: ['name', 'how_used', 'frequency'],
       },
     },
+    pip_inventory: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'A가 영상에서 실제로 화면에 띄운 PIP(이미지/클립 팝업) 목록. 각 항목: 무엇을(댓글캡처/검색결과 캡처/B&A 사진/타인 영상 클립/제품 클로즈업 등) + 어느 비트에서 + 왜. 예: "성분 설명 비트에서 derm 리액션 영상 클립 — 권위 차용". 여러 영상에 반복된 것 위주. 3-8개. 없으면 빈 배열.',
+    },
     structure_pattern: { type: 'string', description: 'A의 전형적 비트 순서(한국어). 예: "도발 훅 → 문제 시연 → 성분 폭로 → 데모 → 소셜프루프 → 스카시티 CTA".' },
     cta_habits: { type: 'string', description: 'CTA 습관(한국어): 어떤 문구/타이밍/긴급성 장치를 쓰는지 + 실제 원문 예시(영어).' },
     tone: { type: 'string', description: '전반적 톤(한국어 한 줄). 예: "빠르고 확신에 찬 친구가 몰래 알려주는 꿀팁 톤".' },
   },
-  required: ['hook_formulas', 'catchphrases', 'speech_style', 'devices', 'structure_pattern', 'cta_habits', 'tone'],
-  propertyOrdering: ['hook_formulas', 'catchphrases', 'speech_style', 'devices', 'structure_pattern', 'cta_habits', 'tone'],
+  required: ['hook_formulas', 'catchphrases', 'speech_style', 'devices', 'pip_inventory', 'structure_pattern', 'cta_habits', 'tone'],
+  propertyOrdering: ['hook_formulas', 'catchphrases', 'speech_style', 'devices', 'pip_inventory', 'structure_pattern', 'cta_habits', 'tone'],
 };
 
 function creatorDigest(label, meta, report) {
@@ -145,7 +150,8 @@ export async function extractDna({ creatorReports = [] }) {
 규칙:
 - 여러 영상에 반복되는 것일수록 진짜 DNA다. 성과(조회수)가 높은 영상의 패턴에 더 가중치를 준다.
 - catchphrases와 example_original은 반드시 영상 대사 원문(verbatim)에서 그대로 가져온다. 지어내지 말 것.
-- 한 영상에만 나온 특이 요소는 devices/hook_formulas에 넣지 않는다(빈도 기준 미달).`;
+- 한 영상에만 나온 특이 요소는 devices/hook_formulas에 넣지 않는다(빈도 기준 미달).
+- PIP(화면에 띄우는 이미지/클립 팝업)는 pip_inventory에 따로 정리한다: 씬 visual 설명에서 화면에 뜨는 사진/캡처/클립을 찾아 무엇을·언제·왜 띄웠는지 기록.`;
   const prompt = `아래는 같은 크리에이터의 바이럴 영상 ${creatorReports.length}개 분석이다. 스타일 DNA를 추출하라.
 
 ${block}`;
@@ -171,12 +177,13 @@ const STYLE_SCHEMA = {
     lighting: { type: 'string', description: '조명 느낌(한국어).' },
     captions_style: { type: 'string', description: '화면 자막/텍스트 오버레이 스타일(한국어): 폰트 느낌, 위치, 색, 이모지 사용.' },
     editing_pace: { type: 'string', description: '컷 편집 속도/줌·트랜지션 습관(한국어).' },
+    pip_usage: { type: 'string', description: '이 영상에서 화면에 띄운 PIP(이미지/클립 팝업): 무엇을 언제 띄웠는지(한국어). 없으면 빈 문자열.' },
     product_handling: { type: 'string', description: '제품을 어떻게 다루나(한국어): 들이대기, 클로즈업, 사용 순간 연출.' },
     wardrobe_look: { type: 'string', description: '의상/메이크업/전반적 룩(한국어).' },
     other: { type: 'string', description: '기타 눈에 띄는 시각적 습관(한국어). 없으면 빈 문자열.' },
   },
-  required: ['setting', 'framing', 'lighting', 'captions_style', 'editing_pace', 'product_handling', 'wardrobe_look', 'other'],
-  propertyOrdering: ['setting', 'framing', 'lighting', 'captions_style', 'editing_pace', 'product_handling', 'wardrobe_look', 'other'],
+  required: ['setting', 'framing', 'lighting', 'captions_style', 'editing_pace', 'pip_usage', 'product_handling', 'wardrobe_look', 'other'],
+  propertyOrdering: ['setting', 'framing', 'lighting', 'captions_style', 'editing_pace', 'pip_usage', 'product_handling', 'wardrobe_look', 'other'],
 };
 
 /**
@@ -196,7 +203,7 @@ export async function analyzeVisualStyle({ videoBuffer, mimeType = 'video/mp4' }
   if (file.state !== 'ACTIVE') throw new Error(`Gemini could not process the video (state: ${file.state}).`);
 
   const prompt = `이 영상을 보고 "시각적 스타일"만 분석하라(내용/대사 분석 금지 — 이미 따로 했다).
-촬영 장소, 프레이밍, 조명, 화면 자막 스타일(위치·색·이모지), 컷 편집 속도, 제품을 다루는 방식, 룩. 전부 한국어로.`;
+촬영 장소, 프레이밍, 조명, 화면 자막 스타일(위치·색·이모지), 컷 편집 속도, PIP(화면에 띄운 이미지/클립 팝업 — 무엇을 언제), 제품을 다루는 방식, 룩. 전부 한국어로.`;
 
   const response = await withRetry(() => client.models.generateContent({
     model: MODEL,

@@ -21,20 +21,21 @@ export function guideToPlainText(guide = {}, meta = {}) {
   }
 
   if ((g.hook_options || []).length) {
-    t += `■ 훅 3안 (A/B 테스트용)\n`;
+    t += `■ Hook 3안 (A/B 테스트용)\n`;
     g.hook_options.forEach((h) => {
       t += `  [${h.label}]\n`;
       if (h.text_overlay) t += `    화면텍스트: ${h.text_overlay}\n`;
       (h.say || []).forEach((l) => { t += `    Say: ${l.text}\n`; });
-      if (h.rationale) t += `    (${h.rationale})\n`;
+      if (h.rationale) t += `    (근거: ${h.rationale})\n`;
     });
     t += `\n`;
   }
 
   (g.steps || []).forEach((s, i) => {
-    t += `── Step ${i + 1} — ${s.name || ''} ──\n`;
+    t += `── Step ${i + 1} — ${s.name || ''}${s.time_budget ? ' (' + s.time_budget + ')' : ''} ──\n`;
     if (s.directive) t += `[촬영] ${s.directive}\n`;
     if (s.text_overlay) t += `[화면텍스트] ${s.text_overlay}\n`;
+    if (s.pip) t += `[PIP] ${s.pip}\n`;
     (s.say || []).forEach((line) => { t += `  Say: ${line.text}\n`; });
     if (s.reference_hint) t += `  (참고: ${s.reference_hint})\n`;
     if (s.our_angle) t += `  (우리 소구: ${s.our_angle})\n`;
