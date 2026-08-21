@@ -67,7 +67,7 @@ export default function Home() {
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: 20, maxWidth: 1400, margin: '0 auto', color: '#111' }}>
       <h2 style={{ margin: '0 0 4px' }}>d'Alba 영상 성과 · 크리에이터 평가</h2>
       <div style={{ color: '#666', fontSize: 13, marginBottom: 16 }}>
-        영상성과_신API테스트 시트 기반 · 평가(상/중/하)·특이사항은 시트에 저장됩니다
+        pickdi video list 시트 기반 · 평가(상/중/하)·특이사항은 별도 리뷰 탭에 저장됩니다
       </div>
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
@@ -87,7 +87,7 @@ export default function Home() {
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#f5f5f7', textAlign: 'left' }}>
-              {['영상', '핸들', '상품ID', '게시일', '조회수', 'GMV', 'GPM', '판매수량', '주문수', 'CTR', '평가', '특이사항'].map((h) => (
+              {['영상', '크리에이터', '핸들', '상품ID', '게시일', '조회수', 'GMV', 'GPM', '판매수량', '주문수', 'CTR', '평가', '특이사항'].map((h) => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
@@ -96,11 +96,12 @@ export default function Home() {
             {rows.map((v) => (
               <tr key={v.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ ...td, maxWidth: 260 }}>
-                  <a href={`https://www.tiktok.com/@${v.handle}/video/${v.id}`} target="_blank" rel="noreferrer"
+                  <a href={v.link || `https://www.tiktok.com/@${v.handle}/video/${v.id}`} target="_blank" rel="noreferrer"
                      style={{ color: '#0a58ca', textDecoration: 'none' }} title={v.title}>
                     {v.title ? v.title.slice(0, 40) : '(제목없음)'}
                   </a>
                 </td>
+                <td style={td}>{v.creator}</td>
                 <td style={td}>{v.handle}</td>
                 <td style={{ ...td, fontFamily: 'monospace', fontSize: 11, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.product}>{v.product}</td>
                 <td style={td}>{v.postDate}</td>
@@ -125,7 +126,7 @@ export default function Home() {
               </tr>
             ))}
             {!rows.length && !loading && (
-              <tr><td colSpan={12} style={{ ...td, color: '#999', padding: 30, textAlign: 'center' }}>데이터 없음 — 날짜/최소GMV를 조정해 조회하세요</td></tr>
+              <tr><td colSpan={13} style={{ ...td, color: '#999', padding: 30, textAlign: 'center' }}>데이터 없음 — 날짜/최소GMV를 조정해 조회하세요</td></tr>
             )}
           </tbody>
         </table>

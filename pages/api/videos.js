@@ -1,9 +1,17 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readAll, listTabs, readHeadOf, readRangeOf, listTabsOf, SHEET_ID, TAB } from '../../lib/sheets';
+import { readVideoTable, readReviews } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
   return isNaN(v) ? 0 : v;
+}
+// "2023-11-09 19:03:59" / "2024-1-5 6:15" 등 → "YYYY-MM-DD"
+function toDate(x) {
+  const s = String(x == null ? '' : x).trim();
+  if (!s) return '';
+  const m = s.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (!m) return s.slice(0, 10);
+  return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
 }
 
 export default async function handler(req, res) {
@@ -11,40 +19,10 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
-    if (req.query.debug === 'dump') {
-      const t = req.query.tab || 'pickdi video list';
-      const rows = await readRangeOf(t, 'A1:Z6');
-      return res.status(200).json({ tab: t, rows });
-    }
-    if (req.query.debug === 'probe') {
-      const ids = {
-        '1_qkd6(Video)': '1_qkd6LZ1wFoihhJSuYdabQ4iRbx-jsFYVxeGIoEb-_g',
-        '15dP91(US매출)': '15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o',
-        '1AhVPP(Ads)': '1AhVPPUq6Npri72uhtFcOUVMBl1jA7nf2P0qDCDRRKfA',
-        '1fVWfi(Finance)': '1fVWfictZo6BiKyWO-eFfSo3fAVscOQMPVg1gqa5oMWI',
-      };
-      const out = {};
-      for (const [k, sid] of Object.entries(ids)) {
-        const r = await listTabsOf(sid);
-        out[k] = r.error ? r.error : (r.tabs || []).filter((t) => /영상|성과|video|신API|test/i.test(t || ''));
-      }
-      return res.status(200).json(out);
-    }
-    if (req.query.debug === 'tabs') {
-      const tabs = await listTabs();
-      return res.status(200).json({ sheetId: SHEET_ID, tab: TAB, tabs });
-    }
-    if (req.query.debug === 'head') {
-      const tabs = await listTabs();
-      const cand = tabs.filter((t) => /영상|성과|video|creator|creative/i.test(t || ''));
-      const heads = {};
-      for (const t of cand) { try { heads[t] = await readHeadOf(t); } catch (e) { heads[t] = String(e.message || e); } }
-      return res.status(200).json({ heads });
-    }
-    const rows = await readAll();
-    const header = rows[0] || [];
+    const { header, rows } = await readVideoTable();
+    const reviews = await readReviews();
     const H = {};
-    header.forEach((h, i) => { H[h] = i; });
+    header.forEach((h, i) => { H[String(h).trim()] = i; });
     const g = (row, name) => (H[name] != null ? row[H[name]] : '');
 
     const from = req.query.from || '2000-01-01';
@@ -52,16 +30,19 @@ export default async function handler(req, res) {
     const minGmv = num(req.query.minGmv || '0');
 
     const out = [];
-    for (let r = 1; r < rows.length; r++) {
-      const row = rows[r];
-      const post = String(g(row, 'video_post_time') || '').slice(0, 10);
+    for (const row of rows) {
+      const id = String(g(row, 'id') || '').replace(/^'/, '').trim();
+      if (!id) continue;
+      const post = toDate(g(row, 'video_post_time'));
       if (!post || post < from || post > to) continue;
       const gmv = num(g(row, 'gmv.amount'));
       if (gmv < minGmv) continue;
+      const rv = reviews[id] || {};
       out.push({
-        id: String(g(row, 'id') || '').replace(/^'/, ''),
+        id,
         title: g(row, 'title') || '',
         handle: g(row, 'username') || '',
+        creator: g(row, 'creator.nick_name') || '',
         product: g(row, 'products') || '',
         postDate: post,
         views: num(g(row, 'views')),
@@ -70,12 +51,13 @@ export default async function handler(req, res) {
         units: num(g(row, 'items_sold')),
         orders: num(g(row, 'sku_orders')),
         ctr: g(row, 'click_through_rate') || '',
-        rating: g(row, '평가') || '',
-        note: g(row, '특이사항') || '',
+        link: g(row, 'Video Link') || `https://www.tiktok.com/@${g(row, 'username')}/video/${id}`,
+        rating: rv.rating || '',
+        note: rv.note || '',
       });
     }
     out.sort((a, b) => b.gmv - a.gmv);
-    res.status(200).json({ count: out.length, videos: out.slice(0, 1500) });
+    res.status(200).json({ count: out.length, videos: out.slice(0, 2000) });
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e), detail: String((e && e.stack) || '').split('\n').slice(0, 4) });
   }
