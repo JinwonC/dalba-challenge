@@ -1,15 +1,16 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
+import { readAll } from '../../lib/sheets';
+
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
   return isNaN(v) ? 0 : v;
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
-    const { readAll } = require('../../lib/sheets');
     const rows = await readAll();
     const header = rows[0] || [];
     const H = {};
@@ -48,4 +49,4 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e), detail: String((e && e.stack) || '').split('\n').slice(0, 4) });
   }
-};
+}

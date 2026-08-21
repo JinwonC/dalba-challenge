@@ -1,6 +1,7 @@
-const { readHeader, readColumn, updateValues, ensureReviewCols, colLetter, TAB } = require('../../lib/sheets');
+// POST /api/review  { id, rating, note }
+import { readHeader, readColumn, updateValues, ensureReviewCols, colLetter, TAB } from '../../lib/sheets';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'unauthorized' });
   }
@@ -25,4 +26,4 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }
-};
+}
