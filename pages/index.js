@@ -50,9 +50,17 @@ export default function Home() {
       setRows(vids);
       setCount(j.count || 0);
       setVisible(PAGE);
-      const rv = {};
-      for (const v of vids) rv[v.id] = { rating: v.rating || '', note: v.note || '' };
+      const rv = {}; const mt = {};
+      for (const v of vids) {
+        rv[v.id] = { rating: v.rating || '', note: v.note || '' };
+        mt[v.id] = {
+          postDate: v.postDate || '', creator: v.creator || '', handle: v.handle || '',
+          link: v.link || (v.handle ? `https://www.tiktok.com/@${v.handle}/video/${v.id}` : ''),
+          title: v.title || '',
+        };
+      }
       setReviews(rv);
+      metaRef.current = mt;
     } catch (e) { setErr(String(e.message || e)); }
     setLoading(false);
   }, [from, to, minGmv, headers]);
@@ -66,6 +74,7 @@ export default function Home() {
   // ── 배치 저장 큐 ──────────────────────────────────────────
   const pendingRef = useRef({});   // { id: {rating?, note?} }
   const timerRef = useRef(null);
+  const metaRef = useRef({});       // { id: {postDate,creator,handle,link,title} } — 스냅샷
 
   const flush = useCallback(async () => {
     const batch = pendingRef.current;
@@ -74,7 +83,7 @@ export default function Home() {
     if (!ids.length) return;
     setSyncing((s) => s + ids.length);
     await Promise.all(ids.map((id) =>
-      fetch('/api/review', { method: 'POST', headers: headers(), body: JSON.stringify({ id, ...batch[id] }) })
+      fetch('/api/review', { method: 'POST', headers: headers(), body: JSON.stringify({ id, ...batch[id], meta: metaRef.current[id] }) })
         .then((r) => r.json())
         .then((j) => { if (!j.ok) throw new Error(j.error || 'fail'); })
         .catch((e) => { setErr('저장 실패: ' + (e.message || e)); })
