@@ -1,5 +1,5 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readAll, listTabs, readHeadOf, SHEET_ID, TAB } from '../../lib/sheets';
+import { readAll, listTabs, readHeadOf, listTabsOf, SHEET_ID, TAB } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
@@ -11,6 +11,20 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
+    if (req.query.debug === 'probe') {
+      const ids = {
+        '1_qkd6(Video)': '1_qkd6LZ1wFoihhJSuYdabQ4iRbx-jsFYVxeGIoEb-_g',
+        '15dP91(US매출)': '15dP91bH_skc7ZzcJ3ehH9H4IKCzSxcfuOcREr3OaL0o',
+        '1AhVPP(Ads)': '1AhVPPUq6Npri72uhtFcOUVMBl1jA7nf2P0qDCDRRKfA',
+        '1fVWfi(Finance)': '1fVWfictZo6BiKyWO-eFfSo3fAVscOQMPVg1gqa5oMWI',
+      };
+      const out = {};
+      for (const [k, sid] of Object.entries(ids)) {
+        const r = await listTabsOf(sid);
+        out[k] = r.error ? r.error : (r.tabs || []).filter((t) => /영상|성과|video|신API|test/i.test(t || ''));
+      }
+      return res.status(200).json(out);
+    }
     if (req.query.debug === 'tabs') {
       const tabs = await listTabs();
       return res.status(200).json({ sheetId: SHEET_ID, tab: TAB, tabs });
