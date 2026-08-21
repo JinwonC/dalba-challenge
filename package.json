@@ -7,7 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "googleapis": "144.0.0",
+    "google-auth-library": "9.14.1",
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1"
