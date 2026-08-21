@@ -1,5 +1,5 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readAll } from '../../lib/sheets';
+import { readAll, listTabs, SHEET_ID, TAB } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
@@ -11,6 +11,10 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
+    if (req.query.debug === 'tabs') {
+      const tabs = await listTabs();
+      return res.status(200).json({ sheetId: SHEET_ID, tab: TAB, tabs });
+    }
     const rows = await readAll();
     const header = rows[0] || [];
     const H = {};
