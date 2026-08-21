@@ -246,6 +246,21 @@
   .stime{font-size:12.5px;font-weight:700;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:2px 10px;vertical-align:middle;margin-left:6px}
   .pipbox{margin:12px auto 0;max-width:88%;background:#eef4ff;border:1px solid #c9d8f7;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#1e3a8a}
 
+  .gempty2{color:var(--muted);font-size:12.5px}
+  .revsec{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .revh{font-size:13px;font-weight:800;color:var(--slate);margin-bottom:10px}
+  .revhook{background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+  .revmeta{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .bodyoutline{background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .beat{padding:6px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .beat:first-child{border-top:0}
+  .beatn{font-weight:700}
+  .beatt{color:var(--gold);font-size:11px;margin-left:6px}
+  .beats{color:#555;font-size:12px;margin-top:2px}
+  .slayer{font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 8px;vertical-align:middle;margin-left:4px}
+  .slayer.hook{background:#fef3c7;color:#92400e}
+  .slayer.body{background:#dcfce7;color:#166534}
+  .semo{font-size:10.5px;font-weight:700;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:1px 8px;vertical-align:middle;margin-left:4px}
 </style>
 </head>
 <body>
@@ -275,35 +290,49 @@
   <div class="gpanel" id="guidePanel" style="display:none">
     <div class="gcol">
       <div class="gsec">
-        <h3>1 · 크리에이터 A의 바이럴 영상 <span class="gmax">최대 5개</span></h3>
-        <p class="gdesc">이 크리에이터의 <b>반복되는 공통 구조</b>(훅·PIP·B&amp;A·CTA·톤)를 뽑아 복제합니다. 링크를 붙여넣거나 히스토리에서 검색해 추가하세요.</p>
+        <h3>1 · 훅 스택 <span class="gmax">영상 2개+</span></h3>
+        <p class="gdesc"><b>검증된 훅</b>으로 쓸 영상들(다른 크리에이터·다른 시점 OK). AI가 이 훅들을 <b>레이어링</b>해서 원문을 살려 결합해요. 링크 붙여넣기 또는 히스토리 검색.</p>
         <div class="gadd">
-          <input id="gCreatorUrl" type="text" placeholder="틱톡·인스타 링크 붙여넣기 (여러 개는 줄바꿈/공백)" />
-          <button class="gaddbtn" id="gCreatorAdd">추가</button>
+          <input id="gHookUrl" type="text" placeholder="틱톡·인스타 링크 (여러 개는 줄바꿈/공백)" />
+          <button class="gaddbtn" id="gHookAdd">추가</button>
         </div>
         <div class="gsearchwrap">
-          <input id="gCreatorSearch" type="text" placeholder="🔍 히스토리에서 검색해 추가 (크리에이터·영상ID)" autocomplete="off" />
-          <div class="gsearchres" id="gCreatorRes"></div>
+          <input id="gHookSearch" type="text" placeholder="🔍 히스토리에서 검색해 추가" autocomplete="off" />
+          <div class="gsearchres" id="gHookRes"></div>
         </div>
-        <div class="gchips" id="gCreatorChips"></div>
+        <div class="gchips" id="gHookChips"></div>
       </div>
 
       <div class="gsec">
-        <h3>2 · 우리 레퍼런스 영상 <span class="gopt">선택 · 1개</span></h3>
-        <p class="gdesc">같은 제품의 우리 바이럴(제품 정보 포함). 제품 소구를 여기서 가져옵니다. 없으면 아래 제품 정보만으로도 됩니다.</p>
+        <h3>2 · 바디 레퍼런스 <span class="gmax">우리 영상 1개</span></h3>
+        <p class="gdesc"><b>잘 된 우리 영상 1개.</b> 이 영상의 <b>구조·소구순서·문장을 그대로 복제</b>하고 훅만 위 스택으로 교체합니다. (제품·성분 파트엔 감정 필터 적용)</p>
         <div class="gadd">
-          <input id="gOurUrl" type="text" placeholder="우리 영상 링크 (선택)" />
-          <button class="gaddbtn" id="gOurAdd">추가</button>
+          <input id="gBodyUrl" type="text" placeholder="우리 영상 링크" />
+          <button class="gaddbtn" id="gBodyAdd">추가</button>
         </div>
         <div class="gsearchwrap">
-          <input id="gOurSearch" type="text" placeholder="🔍 히스토리에서 검색해 지정 (선택)" autocomplete="off" />
-          <div class="gsearchres" id="gOurRes"></div>
+          <input id="gBodySearch" type="text" placeholder="🔍 히스토리에서 검색해 지정" autocomplete="off" />
+          <div class="gsearchres" id="gBodyRes"></div>
         </div>
-        <div class="gchips" id="gOurChips"></div>
+        <div class="gchips" id="gBodyChips"></div>
       </div>
 
       <div class="gsec">
-        <h3>3 · 제품 정보 <span class="gopt">권장</span></h3>
+        <h3>3 · 스타일 레퍼런스 <span class="gmax">크리에이터 영상 여러 개</span></h3>
+        <p class="gdesc">섭외할 크리에이터의 영상들. <b>촬영·편집 스타일</b>(컷 속도·앵글·비주얼 훅 연출)만 뽑아 <b>대사는 안 건드리고</b> 촬영 디렉션으로만 반영해요.</p>
+        <div class="gadd">
+          <input id="gStyleUrl" type="text" placeholder="크리에이터 영상 링크 (여러 개는 줄바꿈/공백)" />
+          <button class="gaddbtn" id="gStyleAdd">추가</button>
+        </div>
+        <div class="gsearchwrap">
+          <input id="gStyleSearch" type="text" placeholder="🔍 히스토리에서 검색해 추가" autocomplete="off" />
+          <div class="gsearchres" id="gStyleRes"></div>
+        </div>
+        <div class="gchips" id="gStyleChips"></div>
+      </div>
+
+      <div class="gsec">
+        <h3>4 · 제품 정보 <span class="gopt">권장</span></h3>
         <p class="gdesc">제품명·핵심 성분·소구·임상 수치 등. 여기 적은 근거만 가이드에 들어갑니다(없는 수치는 안 씀).</p>
         <textarea id="gProduct" class="gtext" rows="5" placeholder="예)&#10;제품명: d'Alba Intensive Volufiline Grinding Cream&#10;핵심: Brushed-On Botox (안에서부터 볼륨), 성분 Volufiline&#10;그라인딩 방식 = 매번 신선·위생적&#10;임상: 1회 사용 후 11.271% cheek lifting"></textarea>
       </div>
@@ -314,8 +343,8 @@
       </div>
 
       <div class="gactions">
-        <button class="go" id="guideGo">🧬 1단계 · 스타일 DNA 추출</button>
-        <span class="ghint2" id="guideHint">1단계에서 A의 스타일 DNA를 뽑아 보여드려요(수정 가능) → 확인 후 2단계에서 가이드 생성. 이미 분석한 영상은 즉시, 새 링크는 개당 60~120초.</span>
+        <button class="go" id="guideGo">🧩 1단계 · 레이어 추출 (훅 스택 · 바디 · 스타일)</button>
+        <span class="ghint2" id="guideHint">1단계에서 훅 스택·바디 개요·스타일을 뽑아 보여드려요(수정 가능) → 확인 후 2단계에서 가이드 조립. 이미 분석한 영상은 즉시, 새 링크는 개당 60~120초.</span>
       </div>
     </div>
   </div>
@@ -998,13 +1027,14 @@ async function runUpload(){
 }
 
 
-// ===== 가이드 생성기 =====
-let GCREATORS = [];   // [{kind:'history'|'link', id?, url, label, creator}]
-let GOUR = null;      // same shape or null
-const GMAX = 5;
+// ===== 가이드 생성기 (3레이어: 훅 스택 · 바디 · 스타일) =====
+let GHOOKS = [];   // layer 1: [{kind,url,id?,label,creator}] (2+)
+let GBODY = null;  // layer 2: single ref
+let GSTYLE = [];   // layer 3: [{...}] (creator's videos)
+const GHMAX = 6, GSMAX = 6;
 
 function gLabelFromUrl(u){
-  const id = (typeof contentId==='function') ? contentId(u) : null;
+  const id = gVideoIdFromUrl(u);
   return id || u.replace(/^https?:\/\/(www\.)?/,'').slice(0,28);
 }
 function gVideoIdFromUrl(u){
@@ -1012,26 +1042,30 @@ function gVideoIdFromUrl(u){
   m = String(u).match(/instagram\.com\/(?:reel|reels|p|tv)\/([\w-]+)/i); if(m) return 'ig_'+m[1];
   return null;
 }
-function renderGChips(){
-  $('#gCreatorChips').innerHTML = GCREATORS.map((c,i)=>`
-    <div class="gchip"><span class="gcname">${esc(c.creator? '@'+c.creator : c.label)}</span>
-      <span class="gcsrc">${c.kind==='history'?'기록':'링크'}</span>
-      <button class="gcx" data-gi="${i}">✕</button></div>`).join('')
-    || '<span style="color:var(--muted);font-size:12.5px">아직 없음 — 링크 추가 또는 히스토리 검색</span>';
-  $('#gCreatorChips').querySelectorAll('.gcx').forEach(b=>b.addEventListener('click',()=>{ GCREATORS.splice(Number(b.dataset.gi),1); renderGChips(); }));
-  $('#gOurChips').innerHTML = GOUR ? `<div class="gchip"><span class="gcname">${esc(GOUR.creator?'@'+GOUR.creator:GOUR.label)}</span><span class="gcsrc">${GOUR.kind==='history'?'기록':'링크'}</span><button class="gcx" data-our="1">✕</button></div>` : '<span style="color:var(--muted);font-size:12.5px">없음 (선택)</span>';
-  const ox=$('#gOurChips').querySelector('.gcx'); if(ox) ox.addEventListener('click',()=>{ GOUR=null; renderGChips(); });
+function gHistItem(it){ return { kind:'history', id:it.id, url:it.url||'', label:it.id, creator:it.creator||'' }; }
+function chipHTML(c,i,tag){ return `<div class="gchip"><span class="gcname">${esc(c.creator? '@'+c.creator : c.label)}</span><span class="gcsrc">${c.kind==='history'?'기록':'링크'}</span><button class="gcx" data-tag="${tag}" data-gi="${i}">✕</button></div>`; }
+function renderChips(){
+  $('#gHookChips').innerHTML = GHOOKS.length ? GHOOKS.map((c,i)=>chipHTML(c,i,'hook')).join('') : '<span class="gempty2">아직 없음 — 2개 이상 넣으세요</span>';
+  $('#gBodyChips').innerHTML = GBODY ? chipHTML(GBODY,0,'body') : '<span class="gempty2">아직 없음 — 우리 영상 1개</span>';
+  $('#gStyleChips').innerHTML = GSTYLE.length ? GSTYLE.map((c,i)=>chipHTML(c,i,'style')).join('') : '<span class="gempty2">아직 없음 — 크리에이터 영상 여러 개</span>';
+  document.querySelectorAll('#guidePanel .gcx').forEach(b=>b.addEventListener('click',()=>{
+    const t=b.dataset.tag, i=Number(b.dataset.gi);
+    if(t==='hook') GHOOKS.splice(i,1);
+    else if(t==='body') GBODY=null;
+    else GSTYLE.splice(i,1);
+    renderChips();
+  }));
 }
-function gAddCreatorLinks(raw){
+function addLinks(arr, raw, max, tag){
   const urls=[...new Set(String(raw).split(/[\s,]+/).map(x=>x.trim()).filter(Boolean))];
   for(const u of urls){
-    if(GCREATORS.length>=GMAX){ alert(`크리에이터 영상은 최대 ${GMAX}개예요.`); break; }
-    if(GCREATORS.some(c=>c.url===u)) continue;
-    GCREATORS.push({ kind:'link', url:u, label:gLabelFromUrl(u), creator:'' });
+    if(tag==='body'){ GBODY={kind:'link',url:u,label:gLabelFromUrl(u),creator:''}; break; }
+    if(arr.length>=max){ alert(`이 항목은 최대 ${max}개예요.`); break; }
+    if(arr.some(c=>c.url===u)) continue;
+    arr.push({ kind:'link', url:u, label:gLabelFromUrl(u), creator:'' });
   }
-  renderGChips();
+  renderChips();
 }
-function gHistItem(it){ return { kind:'history', id:it.id, url:it.url||'', label:it.id, creator:it.creator||'' }; }
 function gRenderSearch(box, q, onPick){
   const el=$(box);
   const terms=String(q).trim().toLowerCase().split(/\s+/).filter(Boolean).map(t=>t.replace(/^@/,''));
@@ -1040,179 +1074,186 @@ function gRenderSearch(box, q, onPick){
     const hay=[it.creator,it.id,it.title,it.product,it.manager].map(x=>String(x||'').toLowerCase()).join('  ');
     return terms.every(t=>hay.includes(t));
   }).slice(0,12);
-  el.innerHTML = hits.length ? hits.map(it=>`<div class="gsr" data-id="${esc(it.id)}"><b>@${esc(it.creator||'?')}</b> <span style="color:var(--muted)">${esc((it.title||'').slice(0,30))}</span><span class="gsrid">${esc(it.id)}</span></div>`).join('') : '<div class="gsr" style="color:var(--muted);cursor:default">결과 없음</div>';
+  el.innerHTML = hits.length ? hits.map(it=>`<div class="gsr" data-id="${esc(it.id)}"><b>@${esc(it.creator||'?')}</b> <span style="color:var(--muted)">${esc((it.title||'').slice(0,28))}</span><span class="gsrid">${esc(it.id)}</span></div>`).join('') : '<div class="gsr" style="color:var(--muted);cursor:default">결과 없음</div>';
   el.classList.add('on');
-  el.querySelectorAll('.gsr[data-id]').forEach(r=>r.addEventListener('click',()=>{
-    const it=HISTORY.find(x=>x.id===r.dataset.id); if(it) onPick(it);
-    el.classList.remove('on');
-  }));
+  el.querySelectorAll('.gsr[data-id]').forEach(r=>r.addEventListener('click',()=>{ const it=HISTORY.find(x=>x.id===r.dataset.id); if(it) onPick(it); el.classList.remove('on'); }));
 }
-
 function wireGuide(){
-  $('#gCreatorAdd').addEventListener('click',()=>{ gAddCreatorLinks($('#gCreatorUrl').value); $('#gCreatorUrl').value=''; });
-  $('#gCreatorUrl').addEventListener('keydown',e=>{ if(e.key==='Enter'){ gAddCreatorLinks($('#gCreatorUrl').value); $('#gCreatorUrl').value=''; }});
-  $('#gCreatorSearch').addEventListener('input',e=> gRenderSearch('#gCreatorRes', e.target.value, it=>{
-    if(GCREATORS.length>=GMAX){ alert(`최대 ${GMAX}개예요.`); return; }
-    if(!GCREATORS.some(c=>c.kind==='history'&&c.id===it.id)) GCREATORS.push(gHistItem(it));
-    $('#gCreatorSearch').value=''; renderGChips();
-  }));
-  $('#gOurAdd').addEventListener('click',()=>{ const u=$('#gOurUrl').value.trim(); if(u){ GOUR={kind:'link',url:u,label:gLabelFromUrl(u),creator:''}; $('#gOurUrl').value=''; renderGChips(); }});
-  $('#gOurSearch').addEventListener('input',e=> gRenderSearch('#gOurRes', e.target.value, it=>{ GOUR=gHistItem(it); $('#gOurSearch').value=''; renderGChips(); }));
-  document.addEventListener('click',e=>{ if(!e.target.closest('.gsearchwrap')){ $('#gCreatorRes')&&$('#gCreatorRes').classList.remove('on'); $('#gOurRes')&&$('#gOurRes').classList.remove('on'); }});
+  $('#gHookAdd').addEventListener('click',()=>{ addLinks(GHOOKS,$('#gHookUrl').value,GHMAX,'hook'); $('#gHookUrl').value=''; });
+  $('#gHookUrl').addEventListener('keydown',e=>{ if(e.key==='Enter'){ addLinks(GHOOKS,$('#gHookUrl').value,GHMAX,'hook'); $('#gHookUrl').value=''; }});
+  $('#gHookSearch').addEventListener('input',e=> gRenderSearch('#gHookRes', e.target.value, it=>{ if(GHOOKS.length<GHMAX && !GHOOKS.some(c=>c.kind==='history'&&c.id===it.id)) GHOOKS.push(gHistItem(it)); $('#gHookSearch').value=''; renderChips(); }));
+  $('#gBodyAdd').addEventListener('click',()=>{ const u=$('#gBodyUrl').value.trim(); if(u){ GBODY={kind:'link',url:u,label:gLabelFromUrl(u),creator:''}; $('#gBodyUrl').value=''; renderChips(); }});
+  $('#gBodySearch').addEventListener('input',e=> gRenderSearch('#gBodyRes', e.target.value, it=>{ GBODY=gHistItem(it); $('#gBodySearch').value=''; renderChips(); }));
+  $('#gStyleAdd').addEventListener('click',()=>{ addLinks(GSTYLE,$('#gStyleUrl').value,GSMAX,'style'); $('#gStyleUrl').value=''; });
+  $('#gStyleUrl').addEventListener('keydown',e=>{ if(e.key==='Enter'){ addLinks(GSTYLE,$('#gStyleUrl').value,GSMAX,'style'); $('#gStyleUrl').value=''; }});
+  $('#gStyleSearch').addEventListener('input',e=> gRenderSearch('#gStyleRes', e.target.value, it=>{ if(GSTYLE.length<GSMAX && !GSTYLE.some(c=>c.kind==='history'&&c.id===it.id)) GSTYLE.push(gHistItem(it)); $('#gStyleSearch').value=''; renderChips(); }));
+  document.addEventListener('click',e=>{ if(!e.target.closest('.gsearchwrap')) document.querySelectorAll('#guidePanel .gsearchres').forEach(x=>x.classList.remove('on')); });
   $('#guideGo').addEventListener('click', runGuide);
-  renderGChips();
+  renderChips();
 }
 
-// resolve one video ref -> {meta, report}, reusing history or scraping+reporting
 async function gResolveReport(ref, manager, prodName){
   if(ref.kind==='history'){
     const rec = await getJSON('/api/analysis?id='+encodeURIComponent(ref.id));
     ref.creator = rec.meta?.author || ref.creator;
     return { meta: rec.meta||{}, report: rec.report||{}, video: rec.video||null };
   }
-  // link: scrape + report (may already be in history by id → reuse)
   const vid = gVideoIdFromUrl(ref.url);
-  if(vid){
-    const known = HISTORY.find(h=>h.id===vid);
-    if(known){ const rec = await getJSON('/api/analysis?id='+encodeURIComponent(vid)); if(rec&&rec.report){ ref.creator=rec.meta?.author||''; return { meta:rec.meta||{}, report:rec.report||{}, video: rec.video||null }; } }
-  }
+  if(vid){ const known=HISTORY.find(h=>h.id===vid); if(known){ const rec=await getJSON('/api/analysis?id='+encodeURIComponent(vid)); if(rec&&rec.report){ ref.creator=rec.meta?.author||''; return { meta:rec.meta||{}, report:rec.report||{}, video:rec.video||null }; } } }
   const s = await scrapeLink(ref.url, manager, prodName);
   const data = await reportWithRetry(s.media||{}, s.meta||{}, s.embed?.videoId);
   ref.creator = s.meta?.author || '';
-  // best-effort: also save so future runs reuse it
   postJSON('/api/save', { meta:s.meta, embed:s.embed, report:data.report, comments:null, video:data.video||null }).catch(()=>{});
   return { meta: s.meta||{}, report: data.report||{}, video: data.video||null };
 }
 
-// Resolved inputs + extracted DNA, held between stage 1 (DNA) and stage 2 (guide).
 let GSTATE = null;
 
-// Stage 1 — resolve all reports, extract creator DNA, show the review panel.
+// Stage 1 — resolve all layers, extract hook-stack + style DNA, show review panel.
 async function runGuide(){
-  const manager=$('#gManager').value.trim();
-  const prodName=$('#gProdName').value.trim();
-  const productInfo=$('#gProduct').value.trim();
-  if(!GCREATORS.length){ $('#status').innerHTML='<div class="err">크리에이터 A의 바이럴 영상을 1개 이상 추가하세요.</div>'; return; }
-  if(!GOUR && !productInfo){ $('#status').innerHTML='<div class="err">우리 레퍼런스 영상 또는 제품 정보 중 하나는 필요해요.</div>'; return; }
+  const manager=$('#gManager').value.trim(), prodName=$('#gProdName').value.trim(), productInfo=$('#gProduct').value.trim();
+  if(GHOOKS.length<2){ $('#status').innerHTML='<div class="err">훅 스택은 영상 2개 이상 넣어주세요 (검증된 훅을 결합합니다).</div>'; return; }
+  if(!GBODY){ $('#status').innerHTML='<div class="err">바디 레퍼런스(잘 된 우리 영상 1개)를 넣어주세요.</div>'; return; }
+  if(!GSTYLE.length){ $('#status').innerHTML='<div class="err">스타일 레퍼런스(크리에이터 영상)를 1개 이상 넣어주세요.</div>'; return; }
   $('#guideGo').disabled=true; $('#guideResult').innerHTML='';
-  const jobs = [...GCREATORS.map(c=>({ref:c,role:'creator'})), ...(GOUR?[{ref:GOUR,role:'our'}]:[])];
-  BATCH = { n: jobs.length+1, i:0, finished:false, items: jobs.map(j=>({label:(j.role==='our'?'[우리] ':'')+(j.ref.creator?'@'+j.ref.creator:j.ref.label), status:'pending', note:''})).concat([{label:'스타일 DNA 추출 (Gemini)', status:'pending', note:''}]) };
+  const jobs=[...GHOOKS.map(r=>({ref:r,role:'hook'})), {ref:GBODY,role:'body'}, ...GSTYLE.map(r=>({ref:r,role:'style'}))];
+  BATCH={ n:jobs.length+2, i:0, finished:false, items: jobs.map(j=>({label:`[${j.role}] `+(j.ref.creator?'@'+j.ref.creator:j.ref.label), status:'pending', note:''})).concat([{label:'훅 스태킹 (Gemini)',status:'pending',note:''},{label:'스타일 DNA 추출 (Gemini)',status:'pending',note:''}]) };
   renderBatch();
   try{
-    const creatorReports=[]; let ourReport=null;
+    const hookReports=[], styleReports=[]; let bodyReport=null;
     for(let i=0;i<jobs.length;i++){
       BATCH.i=i; BATCH.items[i].status='running'; renderBatch();
       $('#status').innerHTML=`<div class="loading"><div class="spinner"></div>${i+1}/${jobs.length} · 영상 분석 가져오는 중…</div>`;
       try{
-        const rep = await gResolveReport(jobs[i].ref, manager, prodName);
-        if(jobs[i].role==='our') ourReport=rep; else creatorReports.push(rep);
-        BATCH.items[i].status='done'; BATCH.items[i].note = jobs[i].ref.creator?'@'+jobs[i].ref.creator:'완료';
-        BATCH.items[i].label=(jobs[i].role==='our'?'[우리] ':'')+(jobs[i].ref.creator?'@'+jobs[i].ref.creator:jobs[i].ref.label);
+        const rep=await gResolveReport(jobs[i].ref, manager, prodName);
+        if(jobs[i].role==='hook') hookReports.push(rep);
+        else if(jobs[i].role==='body') bodyReport=rep;
+        else styleReports.push(rep);
+        BATCH.items[i].status='done'; BATCH.items[i].note=jobs[i].ref.creator?'@'+jobs[i].ref.creator:'완료';
+        BATCH.items[i].label=`[${jobs[i].role}] `+(jobs[i].ref.creator?'@'+jobs[i].ref.creator:jobs[i].ref.label);
       }catch(e){ BATCH.items[i].status='fail'; BATCH.items[i].note=e.message||'실패'; }
       renderBatch();
     }
-    if(!creatorReports.length) throw new Error('크리에이터 영상 분석을 하나도 못 가져왔어요.');
-    const di=jobs.length; BATCH.i=di; BATCH.items[di].status='running'; renderBatch();
+    if(hookReports.length<2) throw new Error('훅 영상 분석을 2개 이상 못 가져왔어요.');
+    if(!bodyReport) throw new Error('바디 레퍼런스 분석을 못 가져왔어요.');
+    if(!styleReports.length) throw new Error('스타일 레퍼런스 분석을 못 가져왔어요.');
+    const meta={ manager, product: prodName };
+    // hook stacking
+    const hi=jobs.length; BATCH.i=hi; BATCH.items[hi].status='running'; renderBatch();
+    $('#status').innerHTML='<div class="loading"><div class="spinner"></div>훅 스태킹 중… (Gemini)</div>';
+    const hookRes = await postJSON('/api/hookstack', { hookReports:hookReports.map(r=>({meta:r.meta,report:r.report})), productInfo, meta });
+    BATCH.items[hi].status='done'; BATCH.items[hi].note=`${(hookRes.hooks||[]).length}안`; renderBatch();
+    // style DNA
+    const si=hi+1; BATCH.i=si; BATCH.items[si].status='running'; renderBatch();
     $('#status').innerHTML='<div class="loading"><div class="spinner"></div>스타일 DNA 추출 중… (Gemini)</div>';
-    const { dna } = await postJSON('/api/dna', { creatorReports });
-    BATCH.items[di].status='done'; BATCH.items[di].note='완료'; BATCH.finished=true; renderBatch();
+    const { dna } = await postJSON('/api/dna', { creatorReports: styleReports.map(r=>({meta:r.meta,report:r.report})) });
+    BATCH.items[si].status='done'; BATCH.items[si].note='완료'; BATCH.finished=true; renderBatch();
     $('#status').innerHTML='';
-    GSTATE = { creatorReports, ourReport, productInfo, manager, prodName, pacing: dna.pacing || null };
-    renderDnaPanel(dna);
-  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'DNA 추출 실패')}</div>`; if(BATCH){BATCH.finished=true;renderBatch();} }
+    GSTATE={ hookReports, bodyReport, styleReports, styleVideos: styleReports.filter(r=>r.video), productInfo, manager, prodName, pacing: dna.pacing||null };
+    renderReviewPanel(hookRes, bodyReport, dna);
+  }catch(err){ $('#status').innerHTML=`<div class="err">${esc(err.message||'1단계 실패')}</div>`; if(BATCH){BATCH.finished=true;renderBatch();} }
   finally{ $('#guideGo').disabled=false; }
 }
 
-// ---- DNA review panel (editable before final generation) ----
-function dnaTA(id,label,val,rows,ph){
-  return `<div class="dnafield"><label>${label}</label><textarea id="${id}" rows="${rows||2}" placeholder="${esc(ph||'')}">${esc(val||'')}</textarea></div>`;
-}
-function renderDnaPanel(dna){
+// ---- review panel: hook stack (editable) + body outline + style DNA (editable) ----
+function dnaTA(id,label,val,rows,ph){ return `<div class="dnafield"><label>${label}</label><textarea id="${id}" rows="${rows||2}" placeholder="${esc(ph||'')}">${esc(val||'')}</textarea></div>`; }
+function renderReviewPanel(hookRes, bodyReport, dna){
   dna=dna||{};
-  const hooks=(dna.hook_formulas||[]).map(h=>[h.type,h.description,h.example_original].join(' :: ')).join('\n');
+  const hooks=(hookRes.hooks||[]);
+  const hookCards=hooks.map((h,i)=>`
+    <div class="revhook">
+      <div class="dnafield"><label>${esc(h.label||('훅 '+(i+1)))} · 오버레이</label><textarea id="rvHookOv${i}" rows="1">${esc(h.text_overlay||'')}</textarea></div>
+      <div class="dnafield"><label>Say (한 줄에 하나)</label><textarea id="rvHookSay${i}" rows="2">${esc((h.say||[]).map(l=>l.text).join('\n'))}</textarea></div>
+      <div class="revmeta">🔗 결합: ${esc((h.stacked_from||[]).join(' + ').slice(0,120))}${h.emotion_note?` · 🫀 ${esc(h.emotion_note)}`:''}</div>
+    </div>`).join('');
+  const beats=(bodyReport?.report?.scenes||[]);
+  const bodyOutline=beats.map((s,i)=>`<div class="beat"><span class="beatn">${i+1}. ${esc(s.scene||'')}</span> <span class="beatt">${esc(s.time||'')}</span><div class="beats">"${esc(s.audio_original||'')}"</div></div>`).join('');
   const devices=(dna.devices||[]).map(d=>[d.name,d.frequency,d.how_used].join(' :: ')).join('\n');
   const pips=(dna.pip_inventory||[]).join('\n');
   const p=dna.pacing||{};
-  const pacingTxt = p.avg_duration_s!=null
-    ? `평균 길이 ${p.avg_duration_s}s (${p.min_duration_s??'?'}–${p.max_duration_s??'?'}s) · 평균 씬 ${p.avg_scene_count??'?'}개 · 씬당 평균 ${p.avg_scene_seconds??'?'}s · 표본 ${p.videos}개`
-    : `표본 ${p.videos||0}개 (길이 정보 부족)`;
-  const nVid=(GSTATE?.creatorReports||[]).filter(r=>r.video).length;
+  const pacingTxt = p.avg_duration_s!=null ? `평균 길이 ${p.avg_duration_s}s · 평균 씬 ${p.avg_scene_count??'?'}개 · 씬당 ${p.avg_scene_seconds??'?'}s · 표본 ${p.videos}개` : `표본 ${p.videos||0}개`;
+  const nVid=(GSTATE?.styleVideos||[]).length;
 
   $('#guideResult').innerHTML = `
-  <div class="dnapanel" id="dnaPanel">
-    <div class="dnahead">
-      <h3>🧬 @${esc(dna.creator||'')} 스타일 DNA <span class="gopt">확인·수정 후 생성</span></h3>
-      <p class="gdesc">아래는 A 영상들에서 뽑은 스타일 지문이에요. 틀린 건 고치고, 빼고 싶은 건 지우세요. <b>이 내용 그대로 가이드가 만들어집니다.</b></p>
+  <div class="dnapanel">
+    <div class="dnahead"><h3>🧩 레이어 검토 <span class="gopt">확인·수정 후 조립</span></h3>
+      <p class="gdesc">세 레이어를 각각 확인하세요. 훅과 스타일은 수정 가능해요. <b>이 내용으로 최종 가이드가 조립됩니다.</b></p></div>
+
+    <div class="revsec"><div class="revh">레이어 1 · 훅 스택 (검증 훅 결합)</div>${hookCards||'<div class="gdesc">훅 없음</div>'}</div>
+
+    <div class="revsec"><div class="revh">레이어 2 · 바디 (@${esc(bodyReport?.meta?.author||'')} 영상 구조·문장 복제)</div>
+      <p class="gdesc" style="margin:0 0 8px">이 순서·문장을 그대로 복제하고 훅만 위 스택으로 교체합니다. 제품·성분 파트엔 감정 필터 적용.</p>
+      <div class="bodyoutline">${bodyOutline||'<span class="gdesc">비트 없음</span>'}</div></div>
+
+    <div class="revsec"><div class="revh">레이어 3 · 스타일 (@${esc(dna.creator||'')} 촬영 디렉션)</div>
+      ${dnaTA('rvDevices','연출 장치 (한 줄 = 이름 :: 빈도 :: 사용법)',devices,3)}
+      ${dnaTA('rvPips','PIP 인벤토리 (한 줄에 하나)',pips,3)}
+      ${dnaTA('rvTone','톤',dna.tone,1)}
+      <div class="dnafield"><label>페이싱 (실측)</label><div class="dnaread">${esc(pacingTxt)}</div></div>
+      ${dnaTA('rvVisual','시각 스타일 (영상 직접 시청 결과 또는 직접 입력)',typeof dna.visual_style==='string'?dna.visual_style:'',3,'조명·배경·자막 스타일·컷 속도 등')}
     </div>
-    ${dnaTA('dnaHooks','훅 공식 (한 줄 = 유형 :: 설명 :: 원문 예시)',hooks,3)}
-    ${dnaTA('dnaCatch','말버릇·캐치프레이즈 (한 줄에 하나, 원문 그대로)',(dna.catchphrases||[]).join('\n'),3)}
-    ${dnaTA('dnaSpeech','말투',dna.speech_style,2)}
-    ${dnaTA('dnaDevices','연출 장치 (한 줄 = 이름 :: 빈도 :: 사용법)',devices,3)}
-    ${dnaTA('dnaPips','PIP 인벤토리 — A가 실제 띄운 이미지/클립 팝업 (한 줄에 하나)',pips,3,'예: 성분 설명 비트에서 derm 리액션 클립 — 권위 차용')}
-    ${dnaTA('dnaStructure','전형적 구조(비트 순서)',dna.structure_pattern,2)}
-    ${dnaTA('dnaCta','CTA 습관',dna.cta_habits,2)}
-    ${dnaTA('dnaTone','톤',dna.tone,1)}
-    <div class="dnafield"><label>페이싱 (실측 — 자동 계산)</label><div class="dnaread">${esc(pacingTxt)}</div></div>
-    ${dnaTA('dnaVisual','시각 스타일 (영상 직접 시청 결과 — 아래 버튼으로 채우거나 직접 입력)',typeof dna.visual_style==='string'?dna.visual_style:'',3,'조명·배경·자막 스타일·컷 속도·제품 다루는 방식 등')}
+
     <div class="gactions" style="margin-top:14px">
-      ${nVid?`<button class="htoggle" id="dnaWatch">🎥 영상 직접 시청 스타일 분석 (최대 2개 · 1~3분)</button>`:`<span class="ghint2">저장된 영상이 없어 직접 시청은 불가(분석 7일 지난 영상). 시각 스타일은 직접 입력 가능.</span>`}
-      <button class="go" id="dnaGenerate">📋 이 DNA로 가이드 생성</button>
+      ${nVid?`<button class="htoggle" id="dnaWatch">🎥 스타일 영상 직접 시청 분석 (최대 2개)</button>`:`<span class="ghint2">저장된 스타일 영상이 없어 직접 시청 불가. 직접 입력 가능.</span>`}
+      <button class="go" id="dnaGenerate">🧩 이 레이어들로 가이드 조립</button>
     </div>
-  </div>
-  <div id="dnaBelow"></div>`;
-  const w=$('#dnaWatch'); if(w) w.addEventListener('click', ()=>runStylePassAll(w));
+  </div>`;
+  GSTATE.hooks = hooks;
+  const w=$('#dnaWatch'); if(w) w.addEventListener('click',()=>runStylePassAll(w));
   $('#dnaGenerate').addEventListener('click', generateFinalGuide);
   window.scrollTo({ top: $('#guideResult').offsetTop-12, behavior:'smooth' });
 }
 
 async function runStylePassAll(btn){
-  const vids=(GSTATE?.creatorReports||[]).filter(r=>r.video).slice(0,2);
+  const vids=(GSTATE?.styleVideos||[]).slice(0,2);
   if(!vids.length) return;
-  btn.disabled=true; btn.textContent='🎥 시청 중… (0/'+vids.length+')';
+  btn.disabled=true;
   const notes=[];
   for(let i=0;i<vids.length;i++){
     btn.textContent=`🎥 시청 중… (${i+1}/${vids.length})`;
     try{
       const { style } = await postJSON('/api/stylepass', { videoUrl: vids[i].video });
-      const parts=Object.entries(style||{}).filter(([,v])=>v).map(([k,v])=>{
-        const ko={setting:'배경',framing:'프레이밍',lighting:'조명',captions_style:'자막',editing_pace:'편집',pip_usage:'PIP',product_handling:'제품 연출',wardrobe_look:'룩',other:'기타'}[k]||k;
-        return ko+': '+v;
-      });
-      notes.push(`[영상 ${i+1}] `+parts.join(' / '));
-    }catch(e){ notes.push(`[영상 ${i+1}] 분석 실패: ${e.message}`); }
+      const ko={setting:'배경',framing:'프레이밍',lighting:'조명',captions_style:'자막',editing_pace:'편집',pip_usage:'PIP',product_handling:'제품 연출',wardrobe_look:'룩',other:'기타'};
+      notes.push(`[영상 ${i+1}] `+Object.entries(style||{}).filter(([,v])=>v).map(([k,v])=>(ko[k]||k)+': '+v).join(' / '));
+    }catch(e){ notes.push(`[영상 ${i+1}] 실패: ${e.message}`); }
   }
-  const ta=$('#dnaVisual');
-  ta.value = (ta.value?ta.value+'\n':'') + notes.join('\n');
+  const ta=$('#rvVisual'); ta.value=(ta.value?ta.value+'\n':'')+notes.join('\n');
   btn.textContent='🎥 시청 완료 ✓';
 }
 
-function collectDna(){
-  const lines=(id)=>$(id).value.split('\n').map(x=>x.trim()).filter(Boolean);
-  const trip=(id)=>lines(id).map(l=>{ const p=l.split('::').map(x=>x.trim()); return p; });
+function collectHooks(){
+  return (GSTATE.hooks||[]).map((h,i)=>{
+    const ov=$('#rvHookOv'+i), sy=$('#rvHookSay'+i);
+    return {
+      label: h.label||('훅 '+(i+1)),
+      text_overlay: ov?ov.value.trim():h.text_overlay,
+      say: (sy?sy.value:'' ).split('\n').map(x=>x.trim()).filter(Boolean).map(text=>({ text, highlights: (h.say||[]).find(l=>l.text===text)?.highlights || [] })),
+      rationale: h.rationale||'',
+    };
+  }).filter(h=>h.say.length);
+}
+function collectStyleDna(){
+  const lines=(id)=>($(id)?$(id).value:'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const trip=(id)=>lines(id).map(l=>l.split('::').map(x=>x.trim()));
   return {
-    creator: GSTATE?.creatorReports?.[0]?.meta?.author || '',
-    hook_formulas: trip('#dnaHooks').map(p=>({ type:p[0]||'', description:p[1]||p[0]||'', example_original:p[2]||'' })),
-    catchphrases: lines('#dnaCatch'),
-    speech_style: $('#dnaSpeech').value.trim(),
-    devices: trip('#dnaDevices').map(p=>({ name:p[0]||'', frequency:p[1]||'', how_used:p[2]||p[1]||'' })),
-    pip_inventory: lines('#dnaPips'),
-    structure_pattern: $('#dnaStructure').value.trim(),
-    cta_habits: $('#dnaCta').value.trim(),
-    tone: $('#dnaTone').value.trim(),
-    visual_style: $('#dnaVisual').value.trim() ? { notes: $('#dnaVisual').value.trim() } : null,
+    creator: GSTATE?.styleReports?.[0]?.meta?.author || '',
+    devices: trip('#rvDevices').map(p=>({name:p[0]||'',frequency:p[1]||'',how_used:p[2]||p[1]||''})),
+    pip_inventory: lines('#rvPips'),
+    tone: $('#rvTone')?.value.trim()||'',
+    visual_style: $('#rvVisual')?.value.trim() || '',
     pacing: GSTATE?.pacing || null,
   };
 }
-
-// Stage 2 — synthesize the guide from the (possibly edited) DNA.
 async function generateFinalGuide(){
   if(!GSTATE) return;
   const btn=$('#dnaGenerate'); btn.disabled=true;
-  $('#status').innerHTML='<div class="loading"><div class="spinner"></div>가이드 합성 중… (Gemini)</div>';
+  $('#status').innerHTML='<div class="loading"><div class="spinner"></div>가이드 조립 중… (Gemini)</div>';
   try{
-    const dna=collectDna();
-    const meta={ manager: GSTATE.manager, product: GSTATE.prodName, creator: dna.creator };
-    const { guide } = await postJSON('/api/guide', { creatorReports: GSTATE.creatorReports.map(r=>({meta:r.meta,report:r.report})), ourReport: GSTATE.ourReport?{meta:GSTATE.ourReport.meta,report:GSTATE.ourReport.report}:null, productInfo: GSTATE.productInfo, meta, dna });
+    const stackedHooks=collectHooks();
+    const styleDna=collectStyleDna();
+    const meta={ manager:GSTATE.manager, product:GSTATE.prodName };
+    const body={ meta:GSTATE.bodyReport.meta, report:GSTATE.bodyReport.report };
+    const { guide } = await postJSON('/api/guide', { stackedHooks, bodyReport:body, styleDna, productInfo:GSTATE.productInfo, meta });
     $('#status').innerHTML='';
     renderBrief(guide, null);
     postJSON('/api/guide-save', { guide, meta }).then(r=>{ const el=$('#gDriveSlot'); if(el) el.innerHTML = r?.driveUrl?`<a class="copy" href="${esc(r.driveUrl)}" target="_blank" rel="noopener">📄 Drive에서 열기</a>`:'<span class="copy" style="opacity:.55;cursor:default">Drive 저장 안 됨</span>'; }).catch(()=>{});
@@ -1227,8 +1268,7 @@ function hlText(text, highlights){
 }
 function renderBrief(g, driveUrl){
   g=g||{};
-  const links=(g.reference_videos||[]).map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">🔗 ${esc(v.label)}</a>`).join('');
-  const cpat=(g.common_patterns||[]).map(p=>`<div class="cpat"><span class="cpa">${esc(p.aspect)}</span><span>${esc(p.finding)}</span></div>`).join('');
+  const sdir=(g.style_direction||[]).map(p=>`<div class="cpat"><span class="cpa">${esc(p.aspect)}</span><span>${esc(p.direction)}</span></div>`).join('');
   const hookOpts=(g.hook_options||[]).map(h=>`
     <div class="hopt">
       <div class="hoptlabel">${esc(h.label||'')}</div>
@@ -1238,7 +1278,7 @@ function renderBrief(g, driveUrl){
     </div>`).join('');
   const steps=(g.steps||[]).map((s,i)=>`
     <div class="step">
-      <div class="sname">Step ${i+1} — ${esc(s.name||'')}${s.time_budget?` <span class="stime">${esc(s.time_budget)}</span>`:''}</div>
+      <div class="sname">Step ${i+1} — ${esc(s.name||'')}${s.time_budget?` <span class="stime">${esc(s.time_budget)}</span>`:''}${s.layer?` <span class="slayer ${esc(s.layer)}">${esc(s.layer)}</span>`:''}${s.emotion_applied?` <span class="semo">🫀 감정필터</span>`:''}</div>
       ${s.directive?`<div class="sdir">${esc(s.directive)}</div>`:''}
       ${s.text_overlay?`<div class="sov"><div class="lbl">Text overlay</div><div class="ovtxt">"${esc(s.text_overlay)}"</div></div>`:''}
       ${(s.say||[]).length?`<div class="say"><div class="lbl">Say :</div>${s.say.map(l=>`<div class="line">${hlText(l.text,l.highlights)}</div>`).join('')}</div>`:''}
@@ -1259,13 +1299,12 @@ function renderBrief(g, driveUrl){
         <div class="bsub">${esc(g.product_line||'')}</div>
         <div style="margin-top:10px;font-size:16px">[ Shooting Guide ]</div>
         ${g.reference_note?`<div class="bnote">${esc(g.reference_note)}</div>`:''}
-        ${links?`<div class="blinks">${links}</div>`:''}
-        ${g.creator?`<div style="margin-top:10px;color:var(--muted);font-size:13px">레퍼런스 크리에이터: @${esc(g.creator)}</div>`:''}
+        ${g.creator?`<div style="margin-top:10px;color:var(--muted);font-size:13px">스타일 레퍼런스: @${esc(g.creator)}</div>`:''}
       </div>
-      ${g.structure_summary?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">구조 요약</span></div><p style="text-align:center;font-size:14px;margin:14px auto 0;max-width:82%">${esc(g.structure_summary)}</p></div>`:''}
-      ${cpat?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">반복 공통 패턴</span></div><div style="margin-top:16px">${cpat}</div></div>`:''}
-      ${hookOpts?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">Hook 3안 (A/B)</span></div><div style="margin-top:16px">${hookOpts}</div></div>`:''}
+      ${g.structure_summary?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">3레이어 구성</span></div><p style="text-align:center;font-size:14px;margin:14px auto 0;max-width:82%">${esc(g.structure_summary)}</p></div>`:''}
+      ${hookOpts?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">Hook 3안 (스택)</span></div><div style="margin-top:16px">${hookOpts}</div></div>`:''}
       <div class="brief-sec">${steps}</div>
+      ${sdir?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">🎥 스타일 디렉션</span></div><div style="margin-top:16px">${sdir}</div></div>`:''}
       ${tips?`<div class="brief-sec"><div class="brief-hwrap"><span class="brief-h hl">Tips</span></div><div style="margin-top:14px">${tips}</div></div>`:''}
       <div class="brief-sec prod"><div class="brief-h">Product</div><div class="pname">${esc(g.product?.name||'')}</div>${bullets}</div>
     </div>`;
