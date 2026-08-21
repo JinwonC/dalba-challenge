@@ -5,6 +5,7 @@ import { analyzeComments } from './comments.js';
 import { saveVideo, pruneOldVideos } from './videos.js';
 import { generateGuide } from './guide.js';
 import { extractDna, analyzeVisualStyle } from './dna.js';
+import { stackHooks } from './hookstack.js';
 
 /** Stable id for a piece of content (TikTok video id or Instagram shortcode). */
 export function contentId(url) {
@@ -151,6 +152,14 @@ export async function runAnalysis({ url }) {
 
 
 
+
+/** Stage: stack proven hooks from several videos into 3 combined options. */
+export async function runHookStack({ hookReports = [], productInfo = '', language = '', meta = {} }) {
+  if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
+  if (!Array.isArray(hookReports) || !hookReports.length) throw new HttpError(400, '훅 영상이 최소 1개 필요합니다.');
+  return await stackHooks({ hookReports, productInfo, language, meta });
+}
+
 /** Stage: extract creator style DNA from pre-analyzed reports (text-only, fast). */
 export async function runDna({ creatorReports = [] }) {
   if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
@@ -170,12 +179,11 @@ export async function runStylePass({ videoUrl }) {
 }
 
 /** Stage: synthesize a shooting guide from pre-analyzed reports (text-only, fast). */
-export async function runGuide({ creatorReports = [], ourReport = null, productInfo = '', meta = {}, dna = null }) {
+export async function runGuide({ stackedHooks = [], bodyReport = null, styleDna = null, productInfo = '', meta = {} }) {
   if (!process.env.GEMINI_API_KEY) throw new HttpError(500, 'GEMINI_API_KEY is not set on the server.');
-  if (!Array.isArray(creatorReports) || !creatorReports.length) {
-    throw new HttpError(400, '크리에이터 바이럴 영상이 최소 1개 필요합니다.');
-  }
-  const guide = await generateGuide({ creatorReports, ourReport, productInfo, meta, dna });
+  if (!Array.isArray(stackedHooks) || !stackedHooks.length) throw new HttpError(400, '훅(레이어 1)이 필요합니다.');
+  if (!bodyReport) throw new HttpError(400, '바디 레퍼런스 영상(레이어 2)이 필요합니다.');
+  const guide = await generateGuide({ stackedHooks, bodyReport, styleDna, productInfo, meta });
   return { guide };
 }
 

@@ -3,7 +3,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { runScrape, runReport, runComments, runAnalysis, runGuide, runDna, runStylePass, HttpError } from './lib/pipeline.js';
+import { runScrape, runReport, runComments, runAnalysis, runGuide, runHookStack, runDna, runStylePass, HttpError } from './lib/pipeline.js';
 import { pushToDrive, driveEnabled } from './lib/drive.js';
 import { guideToPlainText } from './lib/guideText.js';
 import { saveAnalysis, listAnalyses, getAnalysis, deleteAnalysis, migrateLegacyToUpstash } from './lib/store.js';
@@ -80,6 +80,13 @@ app.post('/api/migrate', async (_req, res) => {
 });
 
 
+app.post('/api/hookstack', async (req, res) => {
+  try {
+    const { hookReports, productInfo, language, meta } = req.body || {};
+    res.json(await runHookStack({ hookReports, productInfo, language, meta }));
+  } catch (err) { send(res, err); }
+});
+
 app.post('/api/dna', async (req, res) => {
   try { res.json(await runDna({ creatorReports: req.body?.creatorReports })); }
   catch (err) { send(res, err); }
@@ -92,8 +99,8 @@ app.post('/api/stylepass', async (req, res) => {
 
 app.post('/api/guide', async (req, res) => {
   try {
-    const { creatorReports, ourReport, productInfo, meta, dna } = req.body || {};
-    res.json(await runGuide({ creatorReports, ourReport, productInfo, meta, dna }));
+    const { stackedHooks, bodyReport, styleDna, productInfo, meta } = req.body || {};
+    res.json(await runGuide({ stackedHooks, bodyReport, styleDna, productInfo, meta }));
   } catch (err) { send(res, err); }
 });
 

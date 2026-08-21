@@ -1,27 +1,22 @@
-/** Render a generated guide into readable plain text (for Drive export). */
+/** Render a generated 3-layer guide into readable plain text (for Drive export). */
 export function guideToPlainText(guide = {}, meta = {}) {
   const g = guide || {};
   let t = `Contents Brief\n${g.product_line || ''}\n[ Shooting Guide ]\n\n`;
   if (meta.manager) t += `담당자: ${meta.manager}\n`;
-  if (g.creator) t += `레퍼런스 크리에이터: @${g.creator}\n`;
+  if (g.creator) t += `스타일 레퍼런스: @${g.creator}\n`;
   t += `\n`;
 
-  if (g.structure_summary) t += `■ 구조 요약\n${g.structure_summary}\n\n`;
+  if (g.structure_summary) t += `■ 3레이어 구성\n${g.structure_summary}\n\n`;
   if (g.reference_note) t += `핵심 지시: ${g.reference_note}\n\n`;
-  if ((g.common_patterns || []).length) {
-    t += `■ 반복 공통 패턴 (A의 바이럴 공식)\n`;
-    g.common_patterns.forEach((p) => { t += `  · [${p.aspect}] ${p.finding}\n`; });
-    t += `\n`;
-  }
 
-  if ((g.reference_videos || []).length) {
-    t += `■ 레퍼런스 영상\n`;
-    g.reference_videos.forEach((v) => { t += `  - ${v.label}: ${v.url}\n`; });
+  if ((g.style_direction || []).length) {
+    t += `■ 스타일 디렉션 (레이어 3 · 촬영/편집)\n`;
+    g.style_direction.forEach((p) => { t += `  · [${p.aspect}] ${p.direction}\n`; });
     t += `\n`;
   }
 
   if ((g.hook_options || []).length) {
-    t += `■ Hook 3안 (A/B 테스트용)\n`;
+    t += `■ Hook 3안 (스택 · 레이어 1)\n`;
     g.hook_options.forEach((h) => {
       t += `  [${h.label}]\n`;
       if (h.text_overlay) t += `    화면텍스트: ${h.text_overlay}\n`;
@@ -32,7 +27,7 @@ export function guideToPlainText(guide = {}, meta = {}) {
   }
 
   (g.steps || []).forEach((s, i) => {
-    t += `── Step ${i + 1} — ${s.name || ''}${s.time_budget ? ' (' + s.time_budget + ')' : ''} ──\n`;
+    t += `── Step ${i + 1} — ${s.name || ''}${s.time_budget ? ' (' + s.time_budget + ')' : ''}${s.layer ? ' [' + s.layer + ']' : ''}${s.emotion_applied ? ' ★감정필터' : ''} ──\n`;
     if (s.directive) t += `[촬영] ${s.directive}\n`;
     if (s.text_overlay) t += `[화면텍스트] ${s.text_overlay}\n`;
     if (s.pip) t += `[PIP] ${s.pip}\n`;
