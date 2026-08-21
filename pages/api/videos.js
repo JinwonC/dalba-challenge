@@ -1,5 +1,5 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readVideoTable, readReviews, dumpReviewTab } from '../../lib/sheets';
+import { readVideoTable, readReviews, dumpReviewTab, backfillReviewMeta } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
@@ -21,6 +21,9 @@ export default async function handler(req, res) {
   try {
     if (req.query.debug === 'review') {
       return res.status(200).json({ rows: await dumpReviewTab() });
+    }
+    if (req.query.debug === 'backfill') {
+      return res.status(200).json(await backfillReviewMeta());
     }
     const { header, rows } = await readVideoTable();
     const reviews = await readReviews();
