@@ -13,7 +13,7 @@ function todayStr(offset = 0) {
 export default function Home() {
   const [from, setFrom] = useState(todayStr(-30));
   const [to, setTo] = useState(todayStr(0));
-  const [minGmv, setMinGmv] = useState(1);
+  const [minGmv, setMinGmv] = useState(0);
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,11 @@ export default function Home() {
     setLoading(false);
   }, [from, to, minGmv, headers]);
 
-  useEffect(() => { load(); /* 최초 1회 */ }, []); // eslint-disable-line
+  // 날짜/최소GMV가 바뀌면 자동 재조회(400ms 디바운스) — "조회" 버튼 없이도 필터 즉시 반영
+  useEffect(() => {
+    const t = setTimeout(() => { load(); }, 400);
+    return () => clearTimeout(t);
+  }, [from, to, minGmv, load]);
 
   const saveReview = async (id, patch) => {
     setRows((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch, _saving: true } : v)));
