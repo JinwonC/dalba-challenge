@@ -1,7 +1,8 @@
-"""영상성과_신API테스트 탭 UPSERT (행 위치 보존)
+"""pickdi video list 탭 UPSERT (행 위치 보존, 순수 append)
 
-- 기존 행은 '그 자리에서' 값만 갱신 (정렬하지 않음 → 행 위치 그대로)
-- 신규 영상만 맨 아래에 추가
+- 1행 배너 / 2행 헤더 / 3행부터 데이터 구조
+- 기존 행은 '그 자리에서' 값만 갱신 (전체 재정렬 안 함 → 행 위치 절대 안 바뀜)
+- 신규 영상은 '무조건 맨 아래'에만 차곡차곡 추가 (중간 삽입 없음)
 - 갱신 대상 기간(window)만 조회하므로 매일 돌려도 가볍다
 
 사용:
@@ -29,7 +30,8 @@ VIDEO_REFRESH_TOKEN = "TTP_77fQXQAAAACRYHgjQ_4vEa-Xhe5ikMt0yvs0Zs2i5flXWHMzwGfly
 VIDEO_SHOP_CIPHER = "TTP_uE19hAAAAADx5Flb4Y_fjmWFiQfOEyTT"
 
 SPREADSHEET_ID = "1_qkd6LZ1wFoihhJSuYdabQ4iRbx-jsFYVxeGIoEb-_g"
-SHEET_NAME = "영상성과_신API테스트"
+SHEET_NAME = "pickdi video list"   # (구 '영상성과_신API테스트'에서 리네임)
+HEADER_ROW = 2                     # 1행은 배너, 실제 헤더는 2행, 데이터는 3행부터
 SERVICE_ACCOUNT_FILE = "service_account.json"
 
 BASE = "https://open-api.tiktokglobalshop.com"
@@ -171,19 +173,20 @@ def main():
     sheet = ss.worksheet(SHEET_NAME)
 
     # 기존 시트의 헤더/행 위치 파악 (레이아웃 그대로 사용)
+    # pickdi 탭: 1행 배너 / 2행 헤더 / 3행부터 데이터
     existing = sheet.get_all_values()
-    if not existing:
-        print("  시트가 비어 있음 — 초기 적재부터 필요")
+    if len(existing) < HEADER_ROW:
+        print(f"  시트에 헤더({HEADER_ROW}행)가 없음 — 초기 적재부터 필요")
         return
-    header = existing[0]
+    header = existing[HEADER_ROW - 1]
     if "id" not in header:
-        print(f"  ❌ 헤더에 'id' 컬럼이 없습니다: {header[:8]}...")
+        print(f"  ❌ {HEADER_ROW}행에서 'id' 컬럼을 못 찾음: {header[:8]}...")
         sys.exit(1)
     id_idx = header.index("id")
     last_col = col_letter(len(header) - 1)
 
     id_to_row: dict[str, int] = {}
-    for r, row in enumerate(existing[1:], start=2):
+    for r, row in enumerate(existing[HEADER_ROW:], start=HEADER_ROW + 1):
         if len(row) > id_idx:
             vid = str(row[id_idx]).strip().lstrip("'")
             if vid:
@@ -233,21 +236,16 @@ def main():
         print(f"    갱신 진행 {min(i+500, len(updates))}/{len(updates)}", flush=True)
 
     if appends:
-        # 추가 자체도 포스팅일 순으로 넣어 하단이 뒤섞이지 않게 함
+        # 신규 블록만 게시일 순으로 정렬해서 하단에 차곡차곡 추가 (기존 행은 건드리지 않음)
         i_post = header.index("video_post_time") if "video_post_time" in header else None
         if i_post is not None:
             appends.sort(key=lambda r: str(r[i_post]))
         with_retry(lambda: sheet.append_rows(appends, value_input_option="USER_ENTERED"), "신규 추가")
 
-    # 마지막에 포스팅일(S열) 오름차순 재정렬 — 이미 정렬된 상태면 기존 행은 움직이지 않는다
-    if "video_post_time" in header:
-        sort_col = header.index("video_post_time") + 1   # 1-based
-        last_row = len(id_to_row) + len(appends) + 1
-        with_retry(lambda: sheet.sort((sort_col, "asc"),
-                                      range=f"A2:{last_col}{last_row}"), "정렬")
-        print(f"  정렬 완료 (A2:{last_col}{last_row}, {header[sort_col-1]} 오름차순)", flush=True)
+    # ⚠️ 전체 재정렬 없음 (의도적): 기존 행은 제자리, 신규는 무조건 맨 아래로만 쌓임.
+    #    → 행이 갑자기 바뀌거나 과거날짜 신규가 중간에 끼어드는 일이 없다.
 
-    print(f"  ✅ 완료 — 갱신 {len(updates)}행, 신규 {len(appends)}행", flush=True)
+    print(f"  ✅ 완료 — 갱신 {len(updates)}행, 신규 {len(appends)}행 (맨 아래 추가, 재정렬 없음)", flush=True)
 
 
 if __name__ == "__main__":
