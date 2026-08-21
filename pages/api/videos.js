@@ -1,5 +1,5 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readAll, listTabs, readHeadOf, listTabsOf, SHEET_ID, TAB } from '../../lib/sheets';
+import { readAll, listTabs, readHeadOf, readRangeOf, listTabsOf, SHEET_ID, TAB } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
@@ -11,6 +11,11 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
+    if (req.query.debug === 'dump') {
+      const t = req.query.tab || 'pickdi video list';
+      const rows = await readRangeOf(t, 'A1:Z6');
+      return res.status(200).json({ tab: t, rows });
+    }
     if (req.query.debug === 'probe') {
       const ids = {
         '1_qkd6(Video)': '1_qkd6LZ1wFoihhJSuYdabQ4iRbx-jsFYVxeGIoEb-_g',
