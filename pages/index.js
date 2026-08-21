@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 
 const RATINGS = ['상', '중', '하'];
 const fmt = (n) => (n || 0).toLocaleString();
@@ -15,10 +15,12 @@ export default function Home() {
   const [from, setFrom] = useState(todayStr(-30));
   const [to, setTo] = useState(todayStr(0));
   const [minGmv, setMinGmv] = useState(0);
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState([]);          // 영상 데이터 (로드 후 불변)
+  const [reviews, setReviews] = useState({});    // { id: {rating, note} } — 평가/특이사항만 따로
   const [count, setCount] = useState(0);
   const [visible, setVisible] = useState(PAGE);
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(0);     // 진행 중인 백그라운드 저장 수
   const [err, setErr] = useState('');
   const [appKey, setAppKey] = useState('');
 
@@ -44,7 +46,13 @@ export default function Home() {
       }
       const j = await r.json();
       if (j.error) throw new Error(j.error);
-      setRows(j.videos || []); setCount(j.count || 0); setVisible(PAGE);
+      const vids = j.videos || [];
+      setRows(vids);
+      setCount(j.count || 0);
+      setVisible(PAGE);
+      const rv = {};
+      for (const v of vids) rv[v.id] = { rating: v.rating || '', note: v.note || '' };
+      setReviews(rv);
     } catch (e) { setErr(String(e.message || e)); }
     setLoading(false);
   }, [from, to, minGmv, headers]);
@@ -55,26 +63,53 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [from, to, minGmv, load]);
 
-  // 저장은 useCallback으로 고정 → 행 memo가 유지되어 클릭한 행만 리렌더
-  const saveReview = useCallback(async (id, patch) => {
-    setRows((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch, _saving: true } : v)));
-    try {
-      const r = await fetch('/api/review', { method: 'POST', headers: headers(), body: JSON.stringify({ id, ...patch }) });
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.error || 'save fail');
-      setRows((prev) => prev.map((v) => (v.id === id ? { ...v, _saving: false, _saved: true } : v)));
-      setTimeout(() => setRows((prev) => prev.map((v) => (v.id === id ? { ...v, _saved: false } : v))), 1000);
-    } catch (e) {
-      alert('저장 실패: ' + (e.message || e));
-      setRows((prev) => prev.map((v) => (v.id === id ? { ...v, _saving: false } : v)));
-    }
+  // ── 배치 저장 큐 ──────────────────────────────────────────
+  const pendingRef = useRef({});   // { id: {rating?, note?} }
+  const timerRef = useRef(null);
+
+  const flush = useCallback(async () => {
+    const batch = pendingRef.current;
+    pendingRef.current = {};
+    const ids = Object.keys(batch);
+    if (!ids.length) return;
+    setSyncing((s) => s + ids.length);
+    await Promise.all(ids.map((id) =>
+      fetch('/api/review', { method: 'POST', headers: headers(), body: JSON.stringify({ id, ...batch[id] }) })
+        .then((r) => r.json())
+        .then((j) => { if (!j.ok) throw new Error(j.error || 'fail'); })
+        .catch((e) => { setErr('저장 실패: ' + (e.message || e)); })
+        .finally(() => setSyncing((s) => Math.max(0, s - 1)))
+    ));
   }, [headers]);
+
+  // 낙관적 로컬 반영 + 700ms 디바운스 후 백그라운드 배치 저장 (UI는 안 기다림)
+  const queueSave = useCallback((id, patch) => {
+    setReviews((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }));
+    pendingRef.current[id] = { ...(pendingRef.current[id] || {}), ...patch };
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(flush, 700);
+  }, [flush]);
+
+  const onRate = useCallback((id, rt) => {
+    setReviews((prev) => {
+      const curr = (prev[id] && prev[id].rating) || '';
+      const next = curr === rt ? '' : rt;
+      pendingRef.current[id] = { ...(pendingRef.current[id] || {}), rating: next };
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(flush, 700);
+      return { ...prev, [id]: { ...(prev[id] || {}), rating: next } };
+    });
+  }, [flush]);
+
+  const onNote = useCallback((id, note) => { queueSave(id, { note }); }, [queueSave]);
+
+  const shown = Math.min(visible, rows.length);
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: 20, maxWidth: 1400, margin: '0 auto', color: '#111' }}>
       <h2 style={{ margin: '0 0 4px' }}>d'Alba 영상 성과 · 크리에이터 평가</h2>
       <div style={{ color: '#666', fontSize: 13, marginBottom: 16 }}>
-        pickdi video list 시트 기반 · 평가(상/중/하)·특이사항은 별도 리뷰 탭에 저장됩니다
+        pickdi video list 시트 기반 · 평가·특이사항은 백그라운드로 리뷰 탭에 자동 저장됩니다
       </div>
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
@@ -85,8 +120,9 @@ export default function Home() {
           최소 GMV $<input type="number" value={minGmv} onChange={(e) => setMinGmv(Number(e.target.value))} style={{ width: 70 }} />
         </label>
         <button onClick={load} disabled={loading} style={btn}>{loading ? '불러오는 중…' : '새로고침'}</button>
-        <span style={{ color: '#888', fontSize: 13 }}>
-          {count.toLocaleString()}건 (표시 {Math.min(visible, rows.length).toLocaleString()})
+        <span style={{ color: '#888', fontSize: 13 }}>{count.toLocaleString()}건 (표시 {shown.toLocaleString()})</span>
+        <span style={{ fontSize: 13, color: syncing ? '#9a6700' : '#1a7f37' }}>
+          {syncing ? `● 동기화 중 ${syncing}` : '✓ 저장됨'}
         </span>
       </div>
 
@@ -103,7 +139,7 @@ export default function Home() {
           </thead>
           <tbody>
             {rows.slice(0, visible).map((v) => (
-              <VideoRow key={v.id} v={v} onSave={saveReview} />
+              <VideoRow key={v.id} v={v} review={reviews[v.id]} onRate={onRate} onNote={onNote} />
             ))}
             {!rows.length && !loading && (
               <tr><td colSpan={13} style={{ ...td, color: '#999', padding: 30, textAlign: 'center' }}>데이터 없음 — 날짜/최소GMV를 조정하세요</td></tr>
@@ -114,17 +150,17 @@ export default function Home() {
 
       {visible < rows.length && (
         <div style={{ textAlign: 'center', margin: '16px 0' }}>
-          <button onClick={() => setVisible((n) => n + PAGE)} style={btn}>
-            더 보기 (+{Math.min(PAGE, rows.length - visible)})
-          </button>
+          <button onClick={() => setVisible((n) => n + PAGE)} style={btn}>더 보기 (+{Math.min(PAGE, rows.length - visible)})</button>
         </div>
       )}
     </div>
   );
 }
 
-// 행 단위 memo — v 또는 onSave가 바뀔 때만 리렌더. 다른 행 클릭엔 영향 없음.
-const VideoRow = memo(function VideoRow({ v, onSave }) {
+// 행 memo: v(불변)·review(해당 id만 새 참조)·onRate/onNote(고정) → 바뀐 행 1개만 리렌더
+const VideoRow = memo(function VideoRow({ v, review, onRate, onNote }) {
+  const rating = (review && review.rating) || '';
+  const note = (review && review.note) || '';
   return (
     <tr style={{ borderBottom: '1px solid #eee' }}>
       <td style={{ ...td, maxWidth: 260 }}>
@@ -146,40 +182,37 @@ const VideoRow = memo(function VideoRow({ v, onSave }) {
       <td style={td}>
         <div style={{ display: 'flex', gap: 3 }}>
           {RATINGS.map((rt) => (
-            <button key={rt} onClick={() => onSave(v.id, { rating: v.rating === rt ? '' : rt })}
-              style={{ ...pill, ...(v.rating === rt ? pillOn(rt) : {}) }}>{rt}</button>
+            <button key={rt} onClick={() => onRate(v.id, rt)}
+              style={{ ...pill, ...(rating === rt ? pillOn(rt) : {}) }}>{rt}</button>
           ))}
         </div>
       </td>
-      <td style={td}>
-        <NoteCell value={v.note} saving={v._saving} saved={v._saved}
-          onSave={(note) => onSave(v.id, { note })} />
-      </td>
+      <td style={td}><NoteCell id={v.id} value={note} onNote={onNote} /></td>
     </tr>
   );
 });
 
-function NoteCell({ value, onSave, saving, saved }) {
-  const [v, setV] = useState(value || '');
-  useEffect(() => { setV(value || ''); }, [value]);
-  const dirty = v !== (value || '');
+// 타이핑은 100% 로컬. 포커스 아웃(blur) 시에만 상위로 올려 백그라운드 저장.
+const NoteCell = memo(function NoteCell({ id, value, onNote }) {
+  const [draft, setDraft] = useState(value || '');
+  useEffect(() => { setDraft(value || ''); }, [value]);
+  const commit = () => { if (draft !== (value || '')) onNote(id, draft); };
   return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
-      <textarea value={v} onChange={(e) => setV(e.target.value)} rows={1}
-        placeholder="특이사항…" style={{ width: 200, resize: 'vertical', fontSize: 12, padding: 4 }} />
-      <button onClick={() => onSave(v)} disabled={!dirty || saving}
-        style={{ ...btnSm, ...(dirty ? {} : { opacity: 0.4 }) }}>
-        {saving ? '…' : saved ? '✓' : '저장'}
-      </button>
-    </div>
+    <textarea
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      rows={1}
+      placeholder="특이사항… (칸 밖 클릭 시 저장)"
+      style={{ width: 210, resize: 'vertical', fontSize: 12, padding: 4 }}
+    />
   );
-}
+});
 
 const th = { padding: '8px 8px', borderBottom: '2px solid #ddd', whiteSpace: 'nowrap' };
 const td = { padding: '6px 8px', verticalAlign: 'top' };
 const tdR = { ...td, textAlign: 'right', whiteSpace: 'nowrap' };
 const btn = { padding: '6px 14px', border: '1px solid #ccc', borderRadius: 6, background: '#111', color: '#fff', cursor: 'pointer' };
-const btnSm = { padding: '4px 8px', border: '1px solid #ccc', borderRadius: 5, background: '#fff', cursor: 'pointer', fontSize: 12 };
 const pill = { padding: '3px 9px', border: '1px solid #ccc', borderRadius: 12, background: '#fff', cursor: 'pointer', fontSize: 12 };
 const pillOn = (rt) => ({
   background: rt === '상' ? '#1a7f37' : rt === '중' ? '#9a6700' : '#b62324',
