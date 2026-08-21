@@ -1,5 +1,5 @@
 // GET /api/videos?from=YYYY-MM-DD&to=YYYY-MM-DD&minGmv=0
-import { readAll, listTabs, SHEET_ID, TAB } from '../../lib/sheets';
+import { readAll, listTabs, readHeadOf, SHEET_ID, TAB } from '../../lib/sheets';
 
 function num(x) {
   const v = parseFloat(String(x == null ? '' : x).replace(/[$,%\s]/g, ''));
@@ -14,6 +14,13 @@ export default async function handler(req, res) {
     if (req.query.debug === 'tabs') {
       const tabs = await listTabs();
       return res.status(200).json({ sheetId: SHEET_ID, tab: TAB, tabs });
+    }
+    if (req.query.debug === 'head') {
+      const tabs = await listTabs();
+      const cand = tabs.filter((t) => /영상|성과|video|creator|creative/i.test(t || ''));
+      const heads = {};
+      for (const t of cand) { try { heads[t] = await readHeadOf(t); } catch (e) { heads[t] = String(e.message || e); } }
+      return res.status(200).json({ heads });
     }
     const rows = await readAll();
     const header = rows[0] || [];
